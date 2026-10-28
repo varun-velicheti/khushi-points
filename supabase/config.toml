@@ -1,0 +1,4 @@
+project_id = "khushi-points"
+
+[functions.send-otp]
+verify_jwt = true
