@@ -2,7 +2,7 @@
 
 Loyalty points for small shops, without paying for WhatsApp.
 
-- **Earn:** the cashier types the customer's mobile number and the bill. No OTP. One bill per number per day earns points, and each bill number earns once.
+- **Earn:** the cashier types the customer's mobile number and the bill. No OTP. Only the highest bill per number per day earns points (a bigger bill later that day tops the points up), and each bill number earns once.
 - **First redemption:** one SMS OTP proves the customer owns the number. The customer then sets a 4-digit PIN.
 - **Later redemptions:** the customer types the PIN. No SMS cost. Three wrong PINs lock it; an OTP unlocks it.
 - **Customer balance page:** a QR code at the counter opens `/b/<shop>`, where customers check their points with no login.

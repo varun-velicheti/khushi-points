@@ -106,9 +106,9 @@ function Settings({ shop }: { shop: Shop }) {
       </div>
       <div className="row">
         <div><label htmlFor="s-exp">Points expire after (days)</label><input id="s-exp" inputMode="numeric" value={f.expiry_days} onChange={set("expiry_days")} /></div>
-        <div><label htmlFor="s-day">Bills per number per day</label>
+        <div><label htmlFor="s-day">Several bills in one day</label>
           <select id="s-day" value={f.one_bill_per_day ? "1" : "0"} onChange={(e) => setF({ ...f, one_bill_per_day: e.target.value === "1" })}>
-            <option value="1">Only 1 bill earns</option><option value="0">No limit</option>
+            <option value="1">Only the highest bill earns</option><option value="0">Every bill earns</option>
           </select></div>
       </div>
       <div className="actions"><button className="btn">Save rules</button></div>

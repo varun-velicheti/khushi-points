@@ -56,7 +56,14 @@ select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '98480123
 -- 2% of 1250 = 25 points; +91 prefix and spaces are accepted
 select t.check((public.add_bill(:'shop', '+91 98480 12345', 'b-1001', 1250, 'Ravi', true))->>'points' = '25', '2% of 1250 = 25 pts');
 select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9701122334', 'B-1001', 900, null, true) $$, 'BILL_ALREADY_USED');
-select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9848012345', 'B-1002', 900, null, true) $$, 'ALREADY_EARNED_TODAY');
+select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9848012345', 'B-1002', 900, null, true) $$, 'LOWER_THAN_TODAYS_BILL');
+
+-- highest bill of the day earns: Rs 500 gives 10 pts, a Rs 10,000 bill later tops up to 200
+select t.check((public.add_bill(:'shop', '9701122334', 'S-1', 500, 'Anitha', true))->>'points' = '10', 'first bill 500 = 10 pts');
+select t.check((public.add_bill(:'shop', '9701122334', 'S-2', 10000, null, false))->>'points' = '190', 'bigger bill tops up by 190');
+select t.check((public.customer_balance(:'shop', '9701122334'))->>'balance' = '200', 'day total = what the highest bill earns');
+select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9701122334', 'S-3', 3000, null, false) $$, 'LOWER_THAN_TODAYS_BILL');
+select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9701122334', 'S-4', 10000, null, false) $$, 'LOWER_THAN_TODAYS_BILL');
 
 -- move that bill to yesterday, then a new bill today earns
 reset role;
@@ -104,7 +111,7 @@ select t.check((public.redeem_with_otp(:'shop', '9848012345', 500, 60, :'otp', n
 
 -- ---------------------------------------------------------------- redeem with PIN
 -- oldest points used first: the 25-pt lot is gone, 65 of the 100-pt lot remain
-select t.check((select string_agg(points_left::text, ',' order by id) from public.point_lots) = '0,65', 'FIFO deduction');
+select t.check((select string_agg(points_left::text, ',' order by id) from public.point_lots where customer_id = (select id from public.customers where mobile = '9848012345')) = '0,65', 'FIFO deduction');
 select t.check((public.redeem_with_pin(:'shop', '9848012345', 500, 50, '1111'))->>'error' = 'WRONG_PIN', 'wrong PIN 1');
 select t.check((public.redeem_with_pin(:'shop', '9848012345', 500, 50, '2222'))->>'tries_left' = '1', 'wrong PIN 2, 1 try left');
 select t.check((public.redeem_with_pin(:'shop', '9848012345', 500, 50, '3333'))->>'error' = 'PIN_LOCKED', 'third wrong PIN locks');

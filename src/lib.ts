@@ -25,6 +25,7 @@ const MESSAGES: Record<string, string> = {
   CONSENT_REQUIRED: "Ask the customer and tick the consent box before adding a new number.",
   BILL_ALREADY_USED: "This bill number already earned points. Each bill earns once.",
   ALREADY_EARNED_TODAY: "This number already earned points today. Only one bill per number per day earns points.",
+  LOWER_THAN_TODAYS_BILL: "This number already earned points today for a bigger bill. Only the highest bill each day earns points.",
   TOO_SMALL_FOR_POINTS: "This bill is too small to earn a point.",
   NO_CUSTOMER: "This number has no points at this shop yet.",
   NO_PIN: "This customer has not set a PIN yet. Use an OTP.",

@@ -72,11 +72,15 @@ function Earn({ shop }: { shop: Shop }) {
     e.preventDefault();
     setBusy(true); setResult(null);
     try {
-      const r = await rpc<{ points: number; balance: number; value: number; name: string; is_new: boolean }>("add_bill", {
+      const r = await rpc<{ points: number; bill_points: number; topped_up: boolean; earlier_today: number; earlier_bill: number;
+        balance: number; value: number; name: string; is_new: boolean }>("add_bill", {
         p_shop: shop.id, p_mobile: m, p_bill_no: billNo, p_amount: amt, p_name: name || null, p_consent: consent,
       });
-      setResult({ kind: "ok", title: `${r.points} points added${r.is_new ? " · new customer" : ""}`,
-        body: `${r.name} (${maskMobile(m)}) now has ${r.balance} points, worth ${inr(r.value)}.` });
+      setResult(r.topped_up
+        ? { kind: "ok", title: `${r.points} points added · bigger bill today`,
+            body: `This ${inr(amt)} bill earns ${r.bill_points} points. ${r.earlier_today} were already given today for the ${inr(r.earlier_bill)} bill, so ${r.points} more were added. ${r.name} now has ${r.balance} points, worth ${inr(r.value)}.` }
+        : { kind: "ok", title: `${r.points} points added${r.is_new ? " · new customer" : ""}`,
+            body: `${r.name} (${maskMobile(m)}) now has ${r.balance} points, worth ${inr(r.value)}.` });
       setMobile(""); setBillNo(""); setAmount(""); setName(""); setConsent(false);
     } catch (err) {
       setResult({ kind: "err", title: "Points not added", body: (err as Error).message });
