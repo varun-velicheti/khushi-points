@@ -36,7 +36,7 @@ npm run dev
 ```
 
 ### 3. Host it
-Any static host works (Vercel, Netlify, Cloudflare Pages): build command `npm run build`, output folder `dist`, and the same two `VITE_` variables. Page redirects for `/b/...` links are already configured (`vercel.json`, `public/_redirects`).
+Any static host works (Vercel, Netlify, Cloudflare Pages): build command `npm run build`, output folder `dist`. The public Supabase URL and anon key are in `.env.production`, so no host settings are needed. Page redirects for `/b/...` links are already configured (`vercel.json`, `public/_redirects`).
 
 ### 4. Real SMS (India)
 1. Register your company on a DLT portal (Jio, Vodafone Idea, Airtel, …) and get a sender ID (e.g. `KHUSHI`).
