@@ -128,7 +128,7 @@ function Earn({ shop }: { shop: Shop }) {
 type RedeemDone = { txn_id: number; points: number; discount: number; pay: number; balance: number; method: string; pin_set?: boolean };
 type Step =
   | { s: "find" }
-  | { s: "verify"; mobile: string; bill: number; points: number; info: Balance; useOtp: boolean; otpSent: boolean; demoCode?: string }
+  | { s: "verify"; mobile: string; bill: number; points: number; info: Balance; useOtp: boolean; otpSent: boolean; demoCode?: string; external?: boolean }
   | { s: "done"; mobile: string; bill: number; name: string; r: RedeemDone };
 
 function Redeem({ shop }: { shop: Shop }) {
@@ -193,7 +193,7 @@ function Redeem({ shop }: { shop: Shop }) {
       const { data, error } = await supabase.functions.invoke("send-otp", { body: { shop_id: shop.id, mobile: step.mobile } });
       if (error) throw error;
       if (data?.error) throw new Error(errorText(data.error));
-      setStep({ ...step, useOtp: true, otpSent: true, demoCode: data?.demo_code });
+      setStep({ ...step, useOtp: true, otpSent: true, demoCode: data?.demo_code, external: !!data?.external });
       setMsg({ kind: "info", text: `OTP sent to ${maskMobile(step.mobile)}. Ask the customer for the code.` });
     } catch (err) {
       setMsg({ kind: "err", text: errorText(err) });
@@ -233,9 +233,22 @@ function Redeem({ shop }: { shop: Shop }) {
     }
     setBusy(true); setMsg(null);
     try {
-      const r = await rpc<RedeemDone & { ok: boolean; error?: string; tries_left?: number }>("redeem_with_otp", {
-        p_shop: shop.id, p_mobile: step.mobile, p_bill_amount: step.bill, p_points: step.points, p_otp: otp.trim(), p_new_pin: newPin || null,
-      });
+      type OtpResult = RedeemDone & { ok: boolean; error?: string; tries_left?: number };
+      let r: OtpResult;
+      if (step.external) {
+        // Verify Now: the provider checks the code, through our server function
+        const { data, error } = await supabase.functions.invoke("send-otp", { body: {
+          action: "redeem", shop_id: shop.id, mobile: step.mobile, bill_amount: step.bill,
+          points: step.points, otp: otp.trim(), new_pin: newPin || null,
+        } });
+        if (error) throw error;
+        if (data?.ok === undefined && data?.error) throw new Error(errorText(data.error));
+        r = data as OtpResult;
+      } else {
+        r = await rpc<OtpResult>("redeem_with_otp", {
+          p_shop: shop.id, p_mobile: step.mobile, p_bill_amount: step.bill, p_points: step.points, p_otp: otp.trim(), p_new_pin: newPin || null,
+        });
+      }
       if (!r.ok) {
         setOtp("");
         if (r.error === "WRONG_OTP") setMsg({ kind: "err", text: `Wrong OTP. ${r.tries_left} ${r.tries_left === 1 ? "try" : "tries"} left.` });

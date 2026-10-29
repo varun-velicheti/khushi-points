@@ -40,6 +40,15 @@ npm run dev
 ### 3. Host it
 Any static host works (Vercel, Netlify, Cloudflare Pages): build command `npm run build`, output folder `dist`. The public Supabase URL and anon key are in `.env.production`, so no host settings are needed. Page redirects for `/b/...` links are already configured (`vercel.json`, `public/_redirects`).
 
+### 4a. Real SMS without your own DLT: Message Central Verify Now
+Verify Now sends the OTP from its own approved sender ID and checks the code itself, so you can go live before your DLT approval.
+1. Sign up at messagecentral.com and note your **Customer ID** and account **password**.
+2. In Supabase → Edge Functions → Secrets, add:
+   - `SMS_PROVIDER` = `verifynow`
+   - `MESSAGECENTRAL_CUSTOMER_ID` = your Customer ID
+   - `MESSAGECENTRAL_PASSWORD` = your password
+3. Redeem once with your own number to check the SMS arrives. Failed sends show in the `sms_log` table (`status = failed`, with the provider's reply).
+
 ### 4. Real SMS (India)
 1. Register your company on a DLT portal (Jio, Vodafone Idea, Airtel, …) and get a sender ID (e.g. `KHUSHI`).
 2. Register an OTP template, for example:

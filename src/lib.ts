@@ -47,6 +47,7 @@ const MESSAGES: Record<string, string> = {
   OTP_EXPIRED: "The OTP has expired or was already used. Send a new one.",
   WRONG_OTP: "Wrong OTP.",
   OTP_TOO_MANY_TRIES: "Too many wrong codes. Send a new OTP.",
+  REDEEM_FAILED: "The redemption did not go through. Try again.",
   OTP_RATE_LIMIT: "Too many OTPs for this number. Wait 15 minutes and try again.",
   SHOP_OTP_DAILY_LIMIT: "Your shop reached today's OTP limit. Contact support.",
   SMS_FAILED: "The SMS could not be sent. Check the SMS settings or try again.",
