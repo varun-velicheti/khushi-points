@@ -2,13 +2,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cleanMobile, errorText, fmtMobile, inr, maskMobile, rpc, supabase, validMobile, when, type Shop } from "../lib";
 import { useShop } from "../shop";
+import UndoButton from "../Undo";
 
 type Mode = "earn" | "redeem" | "balance";
 
 type Balance = {
   exists: boolean; name?: string; mobile?: string; balance?: number; value?: number; expiring_30d?: number;
   has_pin?: boolean; pin_locked?: boolean;
-  recent?: { kind: string; bill_no: string | null; amount: number; points: number; method: string | null; created_at: string }[];
+  recent?: { kind: string; bill_no: string | null; amount: number; points: number; method: string | null; created_at: string; undone?: boolean }[];
 };
 
 export default function Counter() {
@@ -51,7 +52,7 @@ function Earn({ shop }: { shop: Shop }) {
   const [consent, setConsent] = useState(false);
   const [isNew, setIsNew] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ kind: "ok" | "err"; title: string; body?: string } | null>(null);
+  const [result, setResult] = useState<{ kind: "ok" | "err" | "info"; title: string; body?: string; txnId?: number } | null>(null);
 
   const m = cleanMobile(mobile);
   const amt = parseFloat(amount) || 0;
@@ -72,14 +73,14 @@ function Earn({ shop }: { shop: Shop }) {
     e.preventDefault();
     setBusy(true); setResult(null);
     try {
-      const r = await rpc<{ points: number; bill_points: number; topped_up: boolean; earlier_today: number; earlier_bill: number;
+      const r = await rpc<{ txn_id: number; points: number; bill_points: number; topped_up: boolean; earlier_today: number; earlier_bill: number;
         balance: number; value: number; name: string; is_new: boolean }>("add_bill", {
         p_shop: shop.id, p_mobile: m, p_bill_no: billNo, p_amount: amt, p_name: name || null, p_consent: consent,
       });
       setResult(r.topped_up
-        ? { kind: "ok", title: `${r.points} points added · bigger bill today`,
+        ? { kind: "ok", txnId: r.txn_id, title: `${r.points} points added · bigger bill today`,
             body: `This ${inr(amt)} bill earns ${r.bill_points} points. ${r.earlier_today} were already given today for the ${inr(r.earlier_bill)} bill, so ${r.points} more were added. ${r.name} now has ${r.balance} points, worth ${inr(r.value)}.` }
-        : { kind: "ok", title: `${r.points} points added${r.is_new ? " · new customer" : ""}`,
+        : { kind: "ok", txnId: r.txn_id, title: `${r.points} points added${r.is_new ? " · new customer" : ""}`,
             body: `${r.name} (${maskMobile(m)}) now has ${r.balance} points, worth ${inr(r.value)}.` });
       setMobile(""); setBillNo(""); setAmount(""); setName(""); setConsent(false);
     } catch (err) {
@@ -113,13 +114,18 @@ function Earn({ shop }: { shop: Shop }) {
       </div>
       <div className="actions"><button className="btn" disabled={busy || (isNew === true && !consent)}>{busy ? "Adding…" : "Add points"}</button></div>
       {result && <div className={`msg ${result.kind}`} role="status"><strong>{result.title}</strong>{result.body}</div>}
+      {result?.txnId && (
+        <div className="actions"><span className="hint">Typed something wrong?</span>
+          <UndoButton shopId={shop.id} txnId={result.txnId} label="Undo this bill"
+            onDone={(msg) => setResult({ kind: "info", title: "Bill undone", body: msg + " You can enter it again with the right details." })} /></div>
+      )}
     </form>
   );
 }
 
 /* ------------------------------------------------------------------ redeem */
 
-type RedeemDone = { points: number; discount: number; pay: number; balance: number; method: string; pin_set?: boolean };
+type RedeemDone = { txn_id: number; points: number; discount: number; pay: number; balance: number; method: string; pin_set?: boolean };
 type Step =
   | { s: "find" }
   | { s: "verify"; mobile: string; bill: number; points: number; info: Balance; useOtp: boolean; otpSent: boolean; demoCode?: string }
@@ -140,6 +146,7 @@ function Redeem({ shop }: { shop: Shop }) {
   const [otp, setOtp] = useState("");
   const [newPin, setNewPin] = useState("");
   const [newPin2, setNewPin2] = useState("");
+  const [undoneMsg, setUndoneMsg] = useState("");
 
   const m = cleanMobile(mobile);
   const billAmt = parseFloat(bill) || 0;
@@ -244,7 +251,7 @@ function Redeem({ shop }: { shop: Shop }) {
   }
 
   function restart() {
-    setStep({ s: "find" }); setMobile(""); setBill(""); setPoints(""); setMsg(null);
+    setStep({ s: "find" }); setMobile(""); setBill(""); setPoints(""); setMsg(null); setUndoneMsg("");
   }
 
   const msgEl = msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>;
@@ -333,6 +340,10 @@ function Redeem({ shop }: { shop: Shop }) {
         <div className="r tot"><span>Customer pays</span><span>{inr(r.pay)}</span></div>
         <div className="r"><span>Points left</span><span>{r.balance} pts</span></div>
       </div>
+      {undoneMsg
+        ? <div className="msg info"><strong>Redemption undone</strong>{undoneMsg}</div>
+        : <div className="actions"><span className="hint">Wrong customer or amount?</span>
+            <UndoButton shopId={shop.id} txnId={r.txn_id} label="Undo this redemption" onDone={setUndoneMsg} /></div>}
       <div className="actions"><button className="btn" onClick={restart}>Next redemption</button></div>
     </div>
   );
@@ -369,7 +380,7 @@ function BalanceCheck({ shop, initial }: { shop: Shop; initial: string }) {
           <div className="r"><span>Redeem with</span><span>{b.has_pin ? (b.pin_locked ? "PIN locked → OTP" : "PIN (no SMS)") : "SMS OTP (first time)"}</span></div>
           <div style={{ marginTop: 8, borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
             {b.recent?.map((t, i) => (
-              <div className="r" key={i}><span>{when(t.created_at)} · {t.kind === "earn" ? `Bill ${t.bill_no}` : "Redeemed"}</span><span>{t.kind === "earn" ? "+" : "−"}{t.points}</span></div>
+              <div className={`r${t.undone ? " undone" : ""}`} key={i}><span>{when(t.created_at)} · {t.kind === "earn" ? `Bill ${t.bill_no}` : "Redeemed"}{t.undone ? " (undone)" : ""}</span><span>{t.kind === "earn" ? "+" : "−"}{t.points}</span></div>
             ))}
           </div>
         </div>

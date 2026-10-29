@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase, type Membership, type Shop } from "./lib";
+import { startedInRecovery, supabase, type Membership, type Shop } from "./lib";
 
 type Ctx = {
   session: Session | null;
@@ -10,6 +10,8 @@ type Ctx = {
   selectShop: (id: string) => void;
   reload: () => Promise<void>;
   updateShop: (s: Shop) => void;
+  recovery: boolean;
+  endRecovery: () => void;
 };
 
 const ShopContext = createContext<Ctx | null>(null);
@@ -18,6 +20,7 @@ const LAST = "kp-last-shop";
 export function ShopProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recovery, setRecovery] = useState(startedInRecovery);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(() => {
     try { return localStorage.getItem(LAST); } catch { return null; }
@@ -38,6 +41,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     reload();
     const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") reload();
     });
     return () => data.subscription.unsubscribe();
@@ -53,7 +57,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setMemberships((ms) => ms.map((m) => (m.shop.id === s.id ? { ...m, shop: s } : m)));
 
   return (
-    <ShopContext.Provider value={{ session, loading, memberships, current, selectShop, reload, updateShop }}>
+    <ShopContext.Provider value={{ session, loading, memberships, current, selectShop, reload, updateShop, recovery, endRecovery: () => setRecovery(false) }}>
       {children}
     </ShopContext.Provider>
   );

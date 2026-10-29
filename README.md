@@ -6,6 +6,8 @@ Loyalty points for small shops, without paying for WhatsApp.
 - **First redemption:** one SMS OTP proves the customer owns the number. The customer then sets a 4-digit PIN.
 - **Later redemptions:** the customer types the PIN. No SMS cost. Three wrong PINs lock it; an OTP unlocks it.
 - **Customer balance page:** a QR code at the counter opens `/b/<shop>`, where customers check their points with no login.
+- **Undo:** owners can undo any bill or redemption; cashiers can undo their own within 15 minutes. An undone bill number can be entered again.
+- **Public pages:** landing page at `/`, `/privacy`, `/terms`. Set `VITE_SUPPORT_EMAIL` in `.env.production` to show a contact email on them.
 
 ## How it is built
 

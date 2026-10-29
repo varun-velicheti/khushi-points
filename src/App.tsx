@@ -7,6 +7,9 @@ import Counter from "./pages/Counter";
 import Customers from "./pages/Customers";
 import Owner from "./pages/Owner";
 import PublicBalance from "./pages/PublicBalance";
+import Landing from "./pages/Landing";
+import ResetPassword from "./pages/ResetPassword";
+import { Privacy, Terms } from "./pages/Legal";
 
 export default function App() {
   if (!configured) return <NotConfigured />;
@@ -14,6 +17,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/b/:slug" element={<PublicBalance />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/*" element={<ShopProvider><StaffApp /></ShopProvider>} />
       </Routes>
     </BrowserRouter>
@@ -21,9 +26,16 @@ export default function App() {
 }
 
 function StaffApp() {
-  const { loading, session, memberships } = useShop();
+  const { loading, session, memberships, recovery } = useShop();
   if (loading) return <div className="wrap hint">Loading…</div>;
-  if (!session) return <Login />;
+  if (recovery && session) return <ResetPassword />;
+  if (!session) return (
+    <Routes>
+      <Route index element={<Landing />} />
+      <Route path="login" element={<Login />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
   if (memberships.length === 0) return <ShopSetup />;
   return (
     <Routes>
@@ -32,6 +44,7 @@ function StaffApp() {
         <Route path="customers" element={<Customers />} />
         <Route path="owner" element={<OwnerOnly />} />
         <Route path="add-shop" element={<ShopSetup embedded />} />
+        <Route path="login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

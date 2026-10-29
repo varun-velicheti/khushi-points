@@ -111,3 +111,37 @@ tr.click:hover td { background: var(--bg) }
 .codebox { font-family: var(--f-mono); font-size: 22px; letter-spacing: .15em; background: var(--sunk); padding: 6px 12px; border-radius: 8px; display: inline-block }
 .center { text-align: center }
 .spacer { flex: 1 }
+.undo { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.undo-err { color: var(--bad); font-size: 13px; flex-basis: 100% }
+.chip.undone { background: var(--sunk); color: var(--muted); text-decoration: line-through }
+tr.undone td { color: var(--muted) }
+.r.undone span { text-decoration: line-through; opacity: .6 }
+
+/* landing */
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); margin: 0 }
+.hero { margin-top: 48px; display: flex; flex-direction: column; gap: 16px; max-width: 680px }
+.hero-h { font-family: var(--f-display); font-weight: 800; font-stretch: 82%; font-size: clamp(36px, 8vw, 60px); line-height: 1.02; letter-spacing: -.015em; margin: 0; text-wrap: balance }
+.hero-p { font-size: 18px; color: var(--muted); margin: 0; max-width: 60ch }
+.how { margin-top: 48px; display: flex; flex-direction: column; gap: 14px }
+.section-h { font-family: var(--f-display); font-weight: 750; font-stretch: 90%; font-size: 22px; margin: 0 }
+.how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px }
+.compare-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px }
+@media (max-width: 680px) { .how-grid, .compare-grid { grid-template-columns: 1fr } }
+.how h4 { font-family: var(--f-display); font-size: 17px; margin: 6px 0 4px }
+.how p { margin: 0 }
+.how .panel p:not(.hint):not(.label):not(.price) { color: var(--muted); font-size: 14.5px }
+.step-n { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--brand-ink); font-family: var(--f-display); font-weight: 800; font-size: 14px }
+.price { font-family: var(--f-display); font-weight: 800; font-stretch: 85%; font-size: 30px; margin: 4px 0 }
+.price span { font-family: var(--f-body); font-weight: 500; font-size: 14px; color: var(--muted) }
+.panel.accent { border: 2px solid var(--accent) }
+.features { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 70ch }
+.features b { color: var(--ink) }
+.features li { color: var(--muted) }
+.foot { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted) }
+.foot a { color: var(--muted) }
+
+/* legal pages */
+.legal article h3 { font-family: var(--f-display); font-size: 16.5px; margin: 22px 0 6px }
+.legal article p, .legal article li { color: var(--ink); font-size: 15px; max-width: 68ch }
+.legal article ul { padding-left: 20px; margin: 6px 0 }
+.legal article p { margin: 8px 0 }

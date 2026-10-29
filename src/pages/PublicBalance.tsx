@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { cleanMobile, errorText, inr, rpc, validMobile } from "../lib";
 
 // Page customers open from the QR code on the counter. No login.
@@ -47,6 +47,7 @@ export default function PublicBalance() {
           </div>
         )}
       </form>
+      <footer className="foot"><span>Khushi Points</span><Link to="/privacy">Privacy</Link></footer>
     </div>
   );
 }

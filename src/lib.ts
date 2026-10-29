@@ -1,5 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
+// Read before the Supabase client consumes the link: a password-reset link lands with type=recovery.
+export const startedInRecovery = typeof window !== "undefined" && window.location.hash.includes("type=recovery");
+export const SUPPORT_EMAIL = (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) ?? "";
+
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
@@ -25,6 +29,10 @@ const MESSAGES: Record<string, string> = {
   CONSENT_REQUIRED: "Ask the customer and tick the consent box before adding a new number.",
   BILL_ALREADY_USED: "This bill number already earned points. Each bill earns once.",
   ALREADY_EARNED_TODAY: "This number already earned points today. Only one bill per number per day earns points.",
+  NO_TRANSACTION: "That entry was not found.",
+  ALREADY_UNDONE: "This was already undone.",
+  UNDO_OWNER_ONLY: "Only the owner can undo this. Cashiers can undo their own entries within 15 minutes.",
+  POINTS_ALREADY_USED: "The customer already used these points, so this bill cannot be undone.",
   LOWER_THAN_TODAYS_BILL: "This number already earned points today for a bigger bill. Only the highest bill each day earns points.",
   TOO_SMALL_FOR_POINTS: "This bill is too small to earn a point.",
   NO_CUSTOMER: "This number has no points at this shop yet.",

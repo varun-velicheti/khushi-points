@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import QRCode from "qrcode";
 import { cleanMobile, errorText, inr, maskMobile, rpc, validMobile, when, type Shop } from "../lib";
 import { useShop } from "../shop";
+import UndoButton from "../Undo";
 
 type Dash = {
   customers: number; customers_pin: number; bills_30d: number; sales_30d: number;
@@ -10,7 +11,7 @@ type Dash = {
   points_owed: number; point_value: number; sms_30d: number; sms_total: number;
 };
 type Staff = { user_id: string; email: string; role: string; joined_at: string };
-type Activity = { created_at: string; kind: string; name: string; mobile: string; bill_no: string | null; amount: number; points: number; method: string | null };
+type Activity = { id: number; undone: boolean; created_at: string; kind: string; name: string; mobile: string; bill_no: string | null; amount: number; points: number; method: string | null };
 
 export default function Owner() {
   const { current } = useShop();
@@ -153,22 +154,26 @@ function StaffPanel({ shop }: { shop: Shop }) {
 
 function ActivityPanel({ shop }: { shop: Shop }) {
   const [rows, setRows] = useState<Activity[] | null>(null);
-  useEffect(() => { rpc<Activity[]>("recent_activity", { p_shop: shop.id, p_limit: 50 }).then(setRows).catch(() => setRows([])); }, [shop.id]);
+  const [note, setNote] = useState("");
+  const load = () => rpc<Activity[]>("recent_activity", { p_shop: shop.id, p_limit: 50 }).then(setRows).catch(() => setRows([]));
+  useEffect(() => { load(); }, [shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="panel">
-      <h2>Recent activity</h2><p className="sub">The last 50 bills and redemptions.</p>
+      <h2>Recent activity</h2><p className="sub">The last 50 bills and redemptions. Undo a wrong entry here.</p>
+      {note && <div className="msg ok" role="status" style={{ marginBottom: 12 }}>{note}</div>}
       <div className="tbl-wrap"><table>
-        <thead><tr><th>When</th><th>Type</th><th>Customer</th><th>Bill</th><th className="num">Amount</th><th className="num">Points</th></tr></thead>
+        <thead><tr><th>When</th><th>Type</th><th>Customer</th><th>Bill</th><th className="num">Amount</th><th className="num">Points</th><th></th></tr></thead>
         <tbody>
-          {rows?.length === 0 && <tr><td colSpan={6} className="hint">Nothing yet.</td></tr>}
-          {rows?.map((t, i) => (
-            <tr key={i}>
+          {rows?.length === 0 && <tr><td colSpan={7} className="hint">Nothing yet.</td></tr>}
+          {rows?.map((t) => (
+            <tr key={t.id} className={t.undone ? "undone" : ""}>
               <td>{when(t.created_at)}</td>
-              <td><span className={`chip ${t.kind}`}>{t.kind === "earn" ? "Earned" : "Redeemed"}</span>{t.method && <span className="hint"> {t.method.toUpperCase()}</span>}</td>
+              <td><span className={`chip ${t.undone ? "undone" : t.kind}`}>{t.kind === "earn" ? "Earned" : "Redeemed"}</span>{t.undone ? <span className="hint"> Undone</span> : t.method && <span className="hint"> {t.method.toUpperCase()}</span>}</td>
               <td>{t.name}<div className="hint mono">{maskMobile(t.mobile)}</div></td>
               <td className="mono">{t.bill_no ?? ""}</td>
               <td className="num">{inr(t.amount)}</td>
               <td className="num">{t.kind === "earn" ? "+" : "−"}{t.points}</td>
+              <td className="num">{!t.undone && <UndoButton shopId={shop.id} txnId={t.id} onDone={(m) => { setNote(`${t.kind === "earn" ? "Bill" : "Redemption"} undone for ${t.name}. ${m}`); load(); }} />}</td>
             </tr>
           ))}
         </tbody>

@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Points rules tests
         env: { PGHOST: localhost, PGPORT: 5432, PGUSER: postgres, PGPASSWORD: postgres }
-        run: supabase/tests/run_local.sh | tee out.txt && grep -q "ALL TESTS PASSED" out.txt
+        run: supabase/tests/run_local.sh | tee out.txt && [ "$(grep -c "ALL TESTS PASSED" out.txt)" = "$(ls supabase/tests/*_test.sql | wc -l)" ]
 
   app:
     runs-on: ubuntu-latest
