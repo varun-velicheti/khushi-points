@@ -1,4 +1,4 @@
-import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { configured, supabase } from "./lib";
 import { ShopProvider, useShop } from "./shop";
 import Login from "./pages/Login";
@@ -85,6 +85,11 @@ function Layout() {
         {current.role === "owner" && <NavLink to="/owner">Owner</NavLink>}
       </nav>
       <Outlet key={current.shop.id} />
+      <footer className="foot">
+        <span>Khushi Points</span>
+        <Link to="/privacy">Privacy policy</Link>
+        <Link to="/terms">Terms</Link>
+      </footer>
     </div>
   );
 }
