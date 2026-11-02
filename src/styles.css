@@ -145,3 +145,37 @@ tr.undone td { color: var(--muted) }
 .legal article p, .legal article li { color: var(--ink); font-size: 15px; max-width: 68ch }
 .legal article ul { padding-left: 20px; margin: 6px 0 }
 .legal article p { margin: 8px 0 }
+
+/* admin */
+.admin .kpis { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) }
+.daybars { margin: 0; width: 100% }
+.db-plot { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--line) }
+.db-col { flex: 1; height: 100%; display: flex; align-items: flex-end; position: relative; min-width: 0; outline: none }
+.db-bar { width: 100%; background: var(--brand); border-radius: 4px 4px 0 0 }
+.db-col:hover .db-bar, .db-col:focus .db-bar { background: var(--accent) }
+.db-tip { display: none; position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+  background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 6px; z-index: 2; pointer-events: none }
+.db-col:hover .db-tip, .db-col:focus .db-tip { display: block }
+.db-col:first-child .db-tip { left: 0; transform: none }
+.db-col:last-child .db-tip { left: auto; right: 0; transform: none }
+.db-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px }
+.admin-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 12px }
+.admin-head input { max-width: 280px }
+.shop-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px }
+.shop-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); min-width: 0 }
+.sc-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start }
+.sc-top h3 { font-family: var(--f-display); font-size: 16px; margin: 0; overflow-wrap: anywhere }
+.sc-owner { overflow-wrap: anywhere }
+.sc-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 0 }
+.sc-stats div { display: flex; justify-content: space-between; gap: 6px; font-size: 13.5px; border-bottom: 1px dashed var(--line); padding-bottom: 3px }
+.sc-stats dt { color: var(--muted) }
+.sc-stats dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right }
+.sc-fail { color: var(--bad) }
+.cap { text-transform: capitalize }
+.status { flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap }
+.status::before { content: "●"; margin-right: 5px; font-size: 9px; vertical-align: 1px }
+.st-good { background: var(--good-bg); color: var(--good) }
+.st-ok { background: var(--sunk); color: var(--brand) }
+.st-warn { background: var(--warn-bg); color: var(--warn) }
+.st-bad { background: var(--bad-bg); color: var(--bad) }
+.st-none { background: var(--sunk); color: var(--muted) }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { configured, supabase } from "./lib";
 import { ShopProvider, useShop } from "./shop";
 import Login from "./pages/Login";
@@ -10,6 +10,7 @@ import PublicBalance from "./pages/PublicBalance";
 import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import { Privacy, Terms } from "./pages/Legal";
+import Admin from "./pages/Admin";
 
 export default function App() {
   if (!configured) return <NotConfigured />;
@@ -26,9 +27,11 @@ export default function App() {
 }
 
 function StaffApp() {
-  const { loading, session, memberships, recovery } = useShop();
+  const { loading, session, memberships, recovery, isAdmin } = useShop();
+  const location = useLocation();
   if (loading) return <div className="wrap hint">Loading…</div>;
   if (recovery && session) return <ResetPassword />;
+  if (session && location.pathname.startsWith("/admin")) return isAdmin ? <Admin /> : <Navigate to="/" replace />;
   if (!session) return (
     <Routes>
       <Route index element={<Landing />} />
@@ -58,7 +61,7 @@ function OwnerOnly() {
 }
 
 function Layout() {
-  const { current, memberships, selectShop } = useShop();
+  const { current, memberships, selectShop, isAdmin } = useShop();
   if (!current) return null;
   return (
     <div className="wrap">
@@ -76,6 +79,7 @@ function Layout() {
               {memberships.map((m) => <option key={m.shop.id} value={m.shop.id}>{m.shop.name}</option>)}
             </select>
           )}
+          {isAdmin && <Link className="btn alt small" to="/admin">Admin</Link>}
           <button className="btn alt small" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
       </header>

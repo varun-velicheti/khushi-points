@@ -12,6 +12,7 @@ type Ctx = {
   updateShop: (s: Shop) => void;
   recovery: boolean;
   endRecovery: () => void;
+  isAdmin: boolean;
 };
 
 const ShopContext = createContext<Ctx | null>(null);
@@ -21,6 +22,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [recovery, setRecovery] = useState(startedInRecovery);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(() => {
     try { return localStorage.getItem(LAST); } catch { return null; }
@@ -29,7 +31,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
-    if (!session) { setMemberships([]); setLoading(false); return; }
+    if (!session) { setMemberships([]); setIsAdmin(false); setLoading(false); return; }
+    const { data: admin } = await supabase.rpc("is_platform_admin");
+    setIsAdmin(admin === true);
     const { data } = await supabase
       .from("shop_members")
       .select("role, shop:shops(*)")
@@ -57,7 +61,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setMemberships((ms) => ms.map((m) => (m.shop.id === s.id ? { ...m, shop: s } : m)));
 
   return (
-    <ShopContext.Provider value={{ session, loading, memberships, current, selectShop, reload, updateShop, recovery, endRecovery: () => setRecovery(false) }}>
+    <ShopContext.Provider value={{ session, loading, memberships, current, selectShop, reload, updateShop, recovery, endRecovery: () => setRecovery(false), isAdmin }}>
       {children}
     </ShopContext.Provider>
   );
