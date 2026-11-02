@@ -2,3 +2,10 @@ project_id = "khushi-points"
 
 [functions.send-otp]
 verify_jwt = true
+
+[functions.push]
+verify_jwt = true
+
+# Sign-in starts signed out, so this function checks callers itself.
+[functions.customer-auth]
+verify_jwt = false
