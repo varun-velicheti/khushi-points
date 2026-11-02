@@ -35,9 +35,9 @@ export function Privacy() {
       <ul>
         <li>Your mobile number, and a name if you gave one</li>
         <li>Your bills at that shop: bill number, amount, date and points</li>
-        <li>Your 4-digit PIN, stored scrambled so nobody can read it</li>
+        <li>If you use the Khushi Points app: your name, your sign-in (Google, Apple or mobile number), the shops you follow, and a notification token for your phone</li>
       </ul>
-      <p>We use this only to give and redeem your points, and to send you one-time codes (OTPs) by SMS when you redeem. We do not sell your data, share it with other shops, or send you advertising.</p>
+      <p>We use this only to give and redeem your points, and to show you offers from shops you follow. We send a one-time code by SMS only when you ask for one to sign in. We do not sell your data, share it with other shops, or send you advertising by SMS or WhatsApp. You can unfollow any shop to stop its offers.</p>
       <p>The shop asks for your agreement before adding your number. You can ask the shop to delete your number, points and history at any time. Deleted data cannot be recovered.</p>
 
       <h3>If you run a shop</h3>
@@ -47,14 +47,15 @@ export function Privacy() {
       <ul>
         <li>Supabase stores the data and runs sign-in.</li>
         <li>Vercel serves the app pages.</li>
-        <li>An SMS provider registered with Indian telecom operators delivers OTP messages. It receives only the mobile number and the message.</li>
+        <li>An SMS provider delivers sign-in codes you request. It receives only the mobile number.</li>
+        <li>Expo, Google and Apple deliver app notifications.</li>
       </ul>
 
       <h3>How long we keep it</h3>
       <p>As long as the shop uses Khushi Points, or until the customer or shop asks us to delete it. Points expire on the schedule the shop sets, but the history stays until deletion.</p>
 
       <h3>Security</h3>
-      <p>Each shop can see only its own customers. Shop staff never see OTPs. PINs and OTPs are stored scrambled. Connections are encrypted.</p>
+      <p>Each shop can see only its own customers. Points can only be used after you approve in your own app. Connections are encrypted.</p>
 
       <h3>Questions or requests</h3>
       <p>To see, correct or delete your data, {contact}.</p>
@@ -68,7 +69,7 @@ export function Terms() {
       <p>These terms apply to shops and staff who use Khushi Points. By creating an account you agree to them.</p>
 
       <h3>The service</h3>
-      <p>Khushi Points lets a shop give loyalty points to customers by mobile number and let them redeem points as a discount, verified by SMS code or PIN. During the pilot the service is free and features may change.</p>
+      <p>Khushi Points lets a shop give loyalty points to customers by mobile number or app QR, and let them redeem points as a discount that the customer approves in the Khushi Points app. During the pilot the service is free and features may change.</p>
 
       <h3>Your responsibilities as a shop</h3>
       <ul>

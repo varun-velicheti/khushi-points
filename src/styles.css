@@ -179,3 +179,19 @@ tr.undone td { color: var(--muted) }
 .st-warn { background: var(--warn-bg); color: var(--warn) }
 .st-bad { background: var(--bad-bg); color: var(--bad) }
 .st-none { background: var(--sunk); color: var(--muted) }
+
+/* QR scanner + customer picker */
+.scanner { position: fixed; inset: 0; z-index: 50; background: rgb(0 0 0 / .85); display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) }
+.scanner-box { width: min(480px, 100%); display: flex; flex-direction: column; gap: 12px; align-items: stretch; text-align: center }
+.scanner video { width: 100%; border-radius: 14px; background: #000; aspect-ratio: 3 / 4; object-fit: cover; max-height: 60vh }
+.picker { display: flex; gap: 8px; align-items: stretch }
+.picker input { flex: 1; min-width: 0 }
+.who { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; background: var(--sunk); padding: 8px 12px; border-radius: 10px }
+.chip.app { background: var(--good-bg); color: var(--good) }
+.waiting { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 10px 0 }
+.waiting .big { font-size: 56px }
+.pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--accent) }
+@media (prefers-reduced-motion: no-preference) { .pulse { animation: pulse 1.2s ease-in-out infinite } @keyframes pulse { 50% { transform: scale(1.6); opacity: .4 } } }
+details.extra summary { cursor: pointer; color: var(--brand); font-weight: 600; font-size: 14px }
+textarea { width: 100%; font: 500 15px var(--f-body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); resize: vertical }

@@ -1,25 +1,38 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { cleanMobile, errorText, fmtMobile, inr, maskMobile, rpc, supabase, validMobile, when, type Shop } from "../lib";
 import { useShop } from "../shop";
 import UndoButton from "../Undo";
+import Scanner from "../Scanner";
 
 type Mode = "earn" | "redeem" | "balance";
 
 type Balance = {
-  exists: boolean; name?: string; mobile?: string; balance?: number; value?: number; expiring_30d?: number;
-  has_pin?: boolean; pin_locked?: boolean;
-  recent?: { kind: string; bill_no: string | null; amount: number; points: number; method: string | null; created_at: string; undone?: boolean }[];
+  exists: boolean; has_app?: boolean; name?: string; mobile?: string | null; balance?: number; value?: number; expiring_30d?: number;
+  recent?: { kind: string; bill_no: string | null; amount: number; points: number; method: string | null; created_at: string; undone?: boolean; note?: string | null }[];
 };
+
+// Who the customer is: a mobile number they say, or the member QR from their app.
+type Who = { mobile?: string; member?: string };
+const MEMBER_RE = /^(KP:)?K[A-Z0-9]{7}$/i;
+function parseWho(raw: string): Who | null {
+  const t = raw.trim();
+  if (MEMBER_RE.test(t.replace(/\s/g, ""))) return { member: t.replace(/\s/g, "").toUpperCase() };
+  const m = cleanMobile(t);
+  return validMobile(m) ? { mobile: m } : null;
+}
+const whoArgs = (w: Who) => ({ p_mobile: w.mobile ?? null, p_member: w.member ?? null });
+const whoLabel = (w: Who, b?: Balance | null) =>
+  `${b?.name && b.name !== "Customer" ? b.name + " · " : ""}${w.member ? "App member " + w.member.replace(/^KP:/, "") : maskMobile(w.mobile!)}`;
 
 export default function Counter() {
   const { current } = useShop();
   const [params, setParams] = useSearchParams();
-  const initialMobile = params.get("balance") ?? "";
-  const [mode, setMode] = useState<Mode>(initialMobile ? "balance" : "earn");
+  const initial = params.get("balance") ?? "";
+  const [mode, setMode] = useState<Mode>(initial ? "balance" : "earn");
   const shop = current!.shop;
 
-  useEffect(() => { if (initialMobile) setParams({}, { replace: true }); }, [initialMobile, setParams]);
+  useEffect(() => { if (initial) setParams({}, { replace: true }); }, [initial, setParams]);
 
   return (
     <div className="page">
@@ -33,8 +46,42 @@ export default function Counter() {
         </div>
         {mode === "earn" && <Earn shop={shop} />}
         {mode === "redeem" && <Redeem shop={shop} />}
-        {mode === "balance" && <BalanceCheck shop={shop} initial={initialMobile} />}
+        {mode === "balance" && <BalanceCheck shop={shop} initial={initial} />}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ customer picker */
+
+function CustomerPicker({ id, value, onChange, shop, onLookup }: {
+  id: string; value: string; onChange: (v: string) => void; shop: Shop; onLookup: (w: Who | null, b: Balance | null) => void;
+}) {
+  const [scan, setScan] = useState(false);
+  const who = parseWho(value);
+  const key = who ? (who.member ?? who.mobile) : "";
+
+  useEffect(() => {
+    onLookup(who, null);
+    if (!who) return;
+    let stale = false;
+    rpc<Balance>("customer_balance", { p_shop: shop.id, ...whoArgs(who) })
+      .then((b) => { if (!stale) onLookup(who, b); })
+      .catch(() => { if (!stale) onLookup(who, { exists: false }); });
+    return () => { stale = true; };
+  }, [key, shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const gotScan = useCallback((text: string) => { setScan(false); onChange(text.trim()); }, [onChange]);
+
+  return (
+    <div>
+      <label htmlFor={id}>Customer mobile or app QR</label>
+      <div className="picker">
+        <input id={id} className="mono" inputMode="text" autoComplete="off" maxLength={16} value={value}
+          onChange={(e) => onChange(e.target.value)} placeholder="98480 12345 or K7PQ2MXA" />
+        <button type="button" className="btn alt" onClick={() => setScan(true)}>Scan QR</button>
+      </div>
+      {scan && <Scanner onResult={gotScan} onClose={() => setScan(false)} />}
     </div>
   );
 }
@@ -45,44 +92,39 @@ const pointsFor = (shop: Shop, amount: number) =>
 /* ------------------------------------------------------------------ earn */
 
 function Earn({ shop }: { shop: Shop }) {
-  const [mobile, setMobile] = useState("");
+  const [raw, setRaw] = useState("");
+  const [who, setWho] = useState<Who | null>(null);
+  const [info, setInfo] = useState<Balance | null>(null);
   const [billNo, setBillNo] = useState("");
   const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
   const [name, setName] = useState("");
   const [consent, setConsent] = useState(false);
-  const [isNew, setIsNew] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ kind: "ok" | "err" | "info"; title: string; body?: string; txnId?: number } | null>(null);
 
-  const m = cleanMobile(mobile);
   const amt = parseFloat(amount) || 0;
   const pts = pointsFor(shop, amt);
-
-  // look up the number once it is complete, to know if it is a new customer
-  useEffect(() => {
-    setIsNew(null);
-    if (!validMobile(m)) return;
-    let stale = false;
-    rpc<Balance>("customer_balance", { p_shop: shop.id, p_mobile: m })
-      .then((b) => { if (!stale) setIsNew(!b.exists); })
-      .catch(() => {});
-    return () => { stale = true; };
-  }, [m, shop.id]);
+  const isNewByNumber = !!who?.mobile && info?.exists === false && !info?.has_app;
+  const onLookup = useCallback((w: Who | null, b: Balance | null) => { setWho(w); setInfo(b); }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (!who) return setResult({ kind: "err", title: "Who is the customer?", body: "Type their 10-digit mobile number or scan the QR in their app." });
     setBusy(true); setResult(null);
     try {
       const r = await rpc<{ txn_id: number; points: number; bill_points: number; topped_up: boolean; earlier_today: number; earlier_bill: number;
-        balance: number; value: number; name: string; is_new: boolean }>("add_bill", {
-        p_shop: shop.id, p_mobile: m, p_bill_no: billNo, p_amount: amt, p_name: name || null, p_consent: consent,
+        balance: number; value: number; name: string; is_new: boolean; has_app: boolean }>("add_bill", {
+        p_shop: shop.id, ...whoArgs(who), p_bill_no: billNo || null, p_amount: amt, p_name: name || null,
+        p_consent: consent, p_note: note || null,
       });
+      const appLine = r.has_app ? " It shows in their Khushi Points app now." : " Ask them to install the Khushi Points app to see and use their points.";
       setResult(r.topped_up
         ? { kind: "ok", txnId: r.txn_id, title: `${r.points} points added · bigger bill today`,
-            body: `This ${inr(amt)} bill earns ${r.bill_points} points. ${r.earlier_today} were already given today for the ${inr(r.earlier_bill)} bill, so ${r.points} more were added. ${r.name} now has ${r.balance} points, worth ${inr(r.value)}.` }
+            body: `This ${inr(amt)} bill earns ${r.bill_points} points. ${r.earlier_today} were already given today for the ${inr(r.earlier_bill)} bill, so ${r.points} more were added. Balance ${r.balance} points.${appLine}` }
         : { kind: "ok", txnId: r.txn_id, title: `${r.points} points added${r.is_new ? " · new customer" : ""}`,
-            body: `${r.name} (${maskMobile(m)}) now has ${r.balance} points, worth ${inr(r.value)}.` });
-      setMobile(""); setBillNo(""); setAmount(""); setName(""); setConsent(false);
+            body: `${r.name} now has ${r.balance} points, worth ${inr(r.value)}.${appLine}` });
+      setRaw(""); setBillNo(""); setAmount(""); setNote(""); setName(""); setConsent(false);
     } catch (err) {
       setResult({ kind: "err", title: "Points not added", body: (err as Error).message });
     } finally {
@@ -92,27 +134,34 @@ function Earn({ shop }: { shop: Shop }) {
 
   return (
     <form className="stack" onSubmit={submit} autoComplete="off">
-      <div><h2>Add bill, give points</h2><p className="sub">No OTP needed. Just the mobile number and the bill.</p></div>
-      <div className="row">
-        <div><label htmlFor="e-mobile">Customer mobile</label>
-          <input id="e-mobile" className="mono" inputMode="numeric" maxLength={14} required value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="98480 12345" /></div>
-        {isNew && <div><label htmlFor="e-name">Name (new customer)</label><input id="e-name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="Optional" /></div>}
-      </div>
-      {isNew && (
+      <div><h2>Add bill, give points</h2><p className="sub">Scan the customer's app QR, or type their mobile number.</p></div>
+      <CustomerPicker id="e-who" value={raw} onChange={setRaw} shop={shop} onLookup={onLookup} />
+      {who && info && (
+        <div className="who">
+          <span>{info.exists ? `${whoLabel(who, info)} · ${info.balance} points` : who.member ? "New to this shop · app member" : "New customer"}</span>
+          {info.has_app ? <span className="chip app">Has app</span> : <span className="chip">No app yet</span>}
+        </div>
+      )}
+      {isNewByNumber && <>
+        <div><label htmlFor="e-name">Name (optional)</label><input id="e-name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} /></div>
         <label className="check" htmlFor="e-consent">
           <input id="e-consent" type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          <span>Customer agrees that {shop.name} keeps their mobile number to give loyalty points and send OTPs.</span>
+          <span>Customer agrees that {shop.name} keeps their mobile number for loyalty points.</span>
         </label>
-      )}
+      </>}
       <div className="row">
-        <div><label htmlFor="e-bill">Bill number</label><input id="e-bill" className="mono" required value={billNo} onChange={(e) => setBillNo(e.target.value)} placeholder="B-1043" /></div>
         <div><label htmlFor="e-amt">Bill amount (₹)</label><input id="e-amt" inputMode="decimal" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1250" /></div>
+        <div><label htmlFor="e-bill">Bill number (optional)</label><input id="e-bill" className="mono" value={billNo} onChange={(e) => setBillNo(e.target.value)} placeholder="B-1043" /></div>
       </div>
+      <details className="extra">
+        <summary>Add items for the customer's receipt</summary>
+        <textarea id="e-note" rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} placeholder="2 Chicken Biryani, 1 Coke" style={{ marginTop: 8 }} />
+      </details>
       <div className="preview">
         <span>{amt && amt < Number(shop.min_bill) ? `Bills under ${inr(shop.min_bill)} earn no points` : `Points for this bill (${Number(shop.earn_pct)}% back)`}</span>
         <b>{pts} pts</b>
       </div>
-      <div className="actions"><button className="btn" disabled={busy || (isNew === true && !consent)}>{busy ? "Adding…" : "Add points"}</button></div>
+      <div className="actions"><button className="btn" disabled={busy || (isNewByNumber && !consent)}>{busy ? "Adding…" : "Add points"}</button></div>
       {result && <div className={`msg ${result.kind}`} role="status"><strong>{result.title}</strong>{result.body}</div>}
       {result?.txnId && (
         <div className="actions"><span className="hint">Typed something wrong?</span>
@@ -123,100 +172,65 @@ function Earn({ shop }: { shop: Shop }) {
   );
 }
 
-/* ------------------------------------------------------------------ redeem */
+/* ------------------------------------------------------------------ redeem: the customer approves in their app */
 
-type RedeemDone = { txn_id: number; points: number; discount: number; pay: number; balance: number; method: string; pin_set?: boolean };
-type Step =
-  | { s: "find" }
-  | { s: "verify"; mobile: string; bill: number; points: number; info: Balance; useOtp: boolean; otpSent: boolean; demoCode?: string; external?: boolean }
-  | { s: "done"; mobile: string; bill: number; name: string; r: RedeemDone };
+type Status = { status: string; error?: string | null; txn_id?: number | null; points: number; discount: number; pay: number; balance: number; expires_at: string };
 
 function Redeem({ shop }: { shop: Shop }) {
-  const [step, setStep] = useState<Step>({ s: "find" });
-  const [msg, setMsg] = useState<{ kind: "ok" | "err" | "info"; text: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  // find step
-  const [mobile, setMobile] = useState("");
-  const [bill, setBill] = useState("");
+  const [raw, setRaw] = useState("");
+  const [who, setWho] = useState<Who | null>(null);
   const [info, setInfo] = useState<Balance | null>(null);
+  const [bill, setBill] = useState("");
   const [points, setPoints] = useState("");
-  // verify step
-  const [pin, setPin] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPin, setNewPin] = useState("");
-  const [newPin2, setNewPin2] = useState("");
-  const [undoneMsg, setUndoneMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err" | "info"; text: string } | null>(null);
+  const [req, setReq] = useState<{ id: string; name: string; bill: number } | null>(null);
+  const [st, setSt] = useState<Status | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [undone, setUndone] = useState("");
+  const onLookup = useCallback((w: Who | null, b: Balance | null) => { setWho(w); setInfo(b); }, []);
 
-  const m = cleanMobile(mobile);
   const billAmt = parseFloat(bill) || 0;
   const cap = Math.floor((billAmt * shop.max_redeem_pct) / 100 / Number(shop.point_value));
   const maxPts = Math.min(info?.balance ?? 0, cap);
-
-  useEffect(() => {
-    setInfo(null);
-    if (!validMobile(m)) return;
-    let stale = false;
-    rpc<Balance>("customer_balance", { p_shop: shop.id, p_mobile: m }).then((b) => { if (!stale) setInfo(b); }).catch(() => {});
-    return () => { stale = true; };
-  }, [m, shop.id]);
-
   useEffect(() => { if (billAmt && info?.exists) setPoints(String(maxPts)); }, [billAmt, info, maxPts]);
 
-  const order = ["find", "verify", "done"];
-  const stepBar = (
-    <div className="steps">
-      {["1 · Points", "2 · Verify", "3 · Discount"].map((t, k) => {
-        const i = order.indexOf(step.s);
-        return <span key={t} className={k === i ? "on" : k < i ? "done" : ""}>{t}</span>;
-      })}
-    </div>
-  );
+  // poll the request until the customer decides or it expires
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!req) return;
+    let stop = false;
+    const poll = async () => {
+      try {
+        const s = await rpc<Status>("redemption_status", { p_shop: shop.id, p_request: req.id });
+        if (stop) return;
+        setSt(s); setNow(Date.now());
+        if (s.status === "pending") timer.current = window.setTimeout(poll, 2000);
+      } catch { if (!stop) timer.current = window.setTimeout(poll, 3000); }
+    };
+    poll();
+    const tick = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => { stop = true; window.clearTimeout(timer.current); window.clearInterval(tick); };
+  }, [req, shop.id]);
 
-  function toVerify(e: FormEvent) {
+  async function send(e: FormEvent) {
     e.preventDefault(); setMsg(null);
     const p = parseInt(points, 10) || 0;
-    if (!validMobile(m)) return setMsg({ kind: "err", text: errorText("BAD_MOBILE") });
+    if (!who) return setMsg({ kind: "err", text: "Scan the customer's app QR or type their mobile number." });
     if (!info?.exists) return setMsg({ kind: "err", text: errorText("NO_CUSTOMER") });
+    if (!info.has_app) return setMsg({ kind: "info", text: errorText("NEEDS_APP") });
     if (!(billAmt > 0)) return setMsg({ kind: "err", text: "Enter today's bill amount." });
     if ((info.balance ?? 0) < shop.min_redeem) return setMsg({ kind: "err", text: `Needs ${shop.min_redeem} points to redeem. Has ${info.balance}.` });
     if (p < shop.min_redeem) return setMsg({ kind: "err", text: `Minimum ${shop.min_redeem} points per redemption.` });
     if (p > maxPts) return setMsg({ kind: "err", text: `At most ${maxPts} points can be used on this bill.` });
-    setPin(""); setOtp(""); setNewPin(""); setNewPin2("");
-    setStep({ s: "verify", mobile: m, bill: billAmt, points: p, info, useOtp: !info.has_pin || !!info.pin_locked, otpSent: false });
-  }
-
-  async function sendOtp() {
-    if (step.s !== "verify") return;
-    setBusy(true); setMsg(null);
+    setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-otp", { body: { shop_id: shop.id, mobile: step.mobile } });
-      if (error) throw error;
-      if (data?.error) throw new Error(errorText(data.error));
-      setStep({ ...step, useOtp: true, otpSent: true, demoCode: data?.demo_code, external: !!data?.external });
-      setMsg({ kind: "info", text: `OTP sent to ${maskMobile(step.mobile)}. Ask the customer for the code.` });
-    } catch (err) {
-      setMsg({ kind: "err", text: errorText(err) });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verifyPin(e: FormEvent) {
-    e.preventDefault();
-    if (step.s !== "verify") return;
-    setBusy(true); setMsg(null);
-    try {
-      const r = await rpc<RedeemDone & { ok: boolean; error?: string; tries_left?: number }>("redeem_with_pin", {
-        p_shop: shop.id, p_mobile: step.mobile, p_bill_amount: step.bill, p_points: step.points, p_pin: pin,
+      const r = await rpc<{ request_id: string; name: string }>("start_redemption", {
+        p_shop: shop.id, ...whoArgs(who), p_bill_amount: billAmt, p_points: p,
       });
-      if (!r.ok) {
-        setPin("");
-        if (r.error === "PIN_LOCKED") { setStep({ ...step, useOtp: true }); setMsg({ kind: "err", text: errorText("PIN_LOCKED") }); }
-        else setMsg({ kind: "err", text: `Wrong PIN. ${r.tries_left} ${r.tries_left === 1 ? "try" : "tries"} left.` });
-        return;
-      }
-      setStep({ s: "done", mobile: step.mobile, bill: step.bill, name: step.info.name ?? "", r });
+      supabase.functions.invoke("push", { body: { action: "redeem", shop_id: shop.id, request_id: r.request_id } }).catch(() => {});
+      setSt(null); setUndone("");
+      setReq({ id: r.request_id, name: r.name, bill: billAmt });
     } catch (err) {
       setMsg({ kind: "err", text: (err as Error).message });
     } finally {
@@ -224,180 +238,111 @@ function Redeem({ shop }: { shop: Shop }) {
     }
   }
 
-  async function verifyOtp(e: FormEvent) {
-    e.preventDefault();
-    if (step.s !== "verify") return;
-    if (newPin || newPin2) {
-      if (!/^\d{4}$/.test(newPin)) return setMsg({ kind: "err", text: errorText("PIN_FORMAT") });
-      if (newPin !== newPin2) return setMsg({ kind: "err", text: "The two PINs do not match." });
-    }
-    setBusy(true); setMsg(null);
-    try {
-      type OtpResult = RedeemDone & { ok: boolean; error?: string; tries_left?: number };
-      let r: OtpResult;
-      if (step.external) {
-        // Verify Now: the provider checks the code, through our server function
-        const { data, error } = await supabase.functions.invoke("send-otp", { body: {
-          action: "redeem", shop_id: shop.id, mobile: step.mobile, bill_amount: step.bill,
-          points: step.points, otp: otp.trim(), new_pin: newPin || null,
-        } });
-        if (error) throw error;
-        if (data?.ok === undefined && data?.error) throw new Error(errorText(data.error));
-        r = data as OtpResult;
-      } else {
-        r = await rpc<OtpResult>("redeem_with_otp", {
-          p_shop: shop.id, p_mobile: step.mobile, p_bill_amount: step.bill, p_points: step.points, p_otp: otp.trim(), p_new_pin: newPin || null,
-        });
-      }
-      if (!r.ok) {
-        setOtp("");
-        if (r.error === "WRONG_OTP") setMsg({ kind: "err", text: `Wrong OTP. ${r.tries_left} ${r.tries_left === 1 ? "try" : "tries"} left.` });
-        else { setStep({ ...step, otpSent: false, demoCode: undefined }); setMsg({ kind: "err", text: errorText(r.error) }); }
-        return;
-      }
-      setStep({ s: "done", mobile: step.mobile, bill: step.bill, name: step.info.name ?? "", r });
-    } catch (err) {
-      setMsg({ kind: "err", text: (err as Error).message });
-    } finally {
-      setBusy(false);
-    }
+  async function cancel() {
+    if (req) await rpc("cancel_redemption", { p_shop: shop.id, p_request: req.id }).catch(() => {});
+    setReq(null); setSt(null);
   }
+  function restart() { setReq(null); setSt(null); setRaw(""); setBill(""); setPoints(""); setMsg(null); setUndone(""); }
 
-  function restart() {
-    setStep({ s: "find" }); setMobile(""); setBill(""); setPoints(""); setMsg(null); setUndoneMsg("");
-  }
-
-  const msgEl = msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>;
-
-  if (step.s === "find") {
-    return (
-      <form className="stack" onSubmit={toVerify} autoComplete="off">
-        {stepBar}
-        <div><h2>Redeem points</h2><p className="sub">Up to {shop.max_redeem_pct}% of the bill. Minimum {shop.min_redeem} points.</p></div>
-        <div className="row">
-          <div><label htmlFor="r-mobile">Customer mobile</label><input id="r-mobile" className="mono" inputMode="numeric" maxLength={14} value={mobile} onChange={(e) => setMobile(e.target.value)} /></div>
-          <div><label htmlFor="r-bill">Today's bill (₹)</label><input id="r-bill" inputMode="decimal" value={bill} onChange={(e) => setBill(e.target.value)} /></div>
-        </div>
-        {info && !info.exists && <div className="msg info">This number has no points yet.</div>}
-        {info?.exists && (
-          <div className="preview">
-            <span>{info.name} has <b style={{ fontSize: 16 }}>{info.balance}</b> pts {billAmt ? `· max ${maxPts} on this bill` : ""}</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <label htmlFor="r-pts" style={{ margin: 0 }}>Use</label>
-              <input id="r-pts" inputMode="numeric" style={{ width: 90 }} value={points} onChange={(e) => setPoints(e.target.value.replace(/\D/g, ""))} />
-              <span>= {inr((parseInt(points, 10) || 0) * Number(shop.point_value))}</span>
-            </span>
+  if (req) {
+    const secs = st ? Math.max(0, Math.round((new Date(st.expires_at).getTime() - now) / 1000)) : 120;
+    const status = st?.status === "pending" && secs === 0 ? "expired" : st?.status ?? "pending";
+    if (status === "done" && st) {
+      return (
+        <div className="stack">
+          <div className="msg ok"><strong>Approved. Give {inr(st.discount)} off.</strong>{req.name} approved in their app.</div>
+          <div className="receipt">
+            <div className="r"><span>Bill amount</span><span>{inr(req.bill)}</span></div>
+            <div className="r"><span>Points discount ({st.points} pts)</span><span>− {inr(st.discount)}</span></div>
+            <div className="r tot"><span>Customer pays</span><span>{inr(st.pay)}</span></div>
+            <div className="r"><span>Points left</span><span>{st.balance} pts</span></div>
           </div>
-        )}
-        <div className="actions"><button className="btn">Continue to verify</button></div>
-        {msgEl}
-      </form>
-    );
-  }
-
-  if (step.s === "verify") {
-    const usePin = !step.useOtp;
+          {undone ? <div className="msg info"><strong>Redemption undone</strong>{undone}</div>
+            : st.txn_id ? <div className="actions"><span className="hint">Wrong amount?</span>
+                <UndoButton shopId={shop.id} txnId={st.txn_id} label="Undo this redemption" onDone={setUndone} /></div> : null}
+          <div className="actions"><button className="btn" onClick={restart}>Next redemption</button></div>
+        </div>
+      );
+    }
+    if (status !== "pending") {
+      const text = status === "declined" ? `${req.name} declined in their app. No points were used.`
+        : status === "expired" ? "The customer did not approve in time. No points were used."
+        : status === "cancelled" ? "Cancelled. No points were used."
+        : `It did not go through: ${errorText(st?.error ?? "")}`;
+      return (
+        <div className="stack">
+          <div className={`msg ${status === "declined" ? "info" : "err"}`}><strong>Not redeemed</strong>{text}</div>
+          <div className="actions"><button className="btn" onClick={() => { setReq(null); setSt(null); }}>Try again</button>
+            <button className="btn alt" onClick={restart}>New customer</button></div>
+        </div>
+      );
+    }
     return (
       <div className="stack">
-        {stepBar}
-        <div><h2>Verify {step.info.name}</h2>
-          <p className="sub">Redeeming <b>{step.points} points</b> ({inr(step.points * Number(shop.point_value))}) for {maskMobile(step.mobile)}.</p></div>
-        {usePin ? (
-          <form className="stack" onSubmit={verifyPin} autoComplete="off">
-            <div><label htmlFor="r-pin">Customer types their 4-digit PIN</label>
-              <input id="r-pin" className="code" type="password" inputMode="numeric" maxLength={4} autoFocus value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} /></div>
-            <div className="actions">
-              <button className="btn" disabled={busy || pin.length !== 4}>Verify PIN</button>
-              <button type="button" className="btn link" onClick={() => { setStep({ ...step, useOtp: true }); setMsg(null); }}>Forgot PIN? Use OTP</button>
-            </div>
-            <p className="hint">No SMS is sent, so this check is free.</p>
-          </form>
-        ) : !step.otpSent ? (
-          <>
-            <div className="msg info"><strong>{step.info.has_pin ? "Verify with an OTP" : "First redemption: one SMS OTP"}</strong>
-              We send a 6-digit code to {maskMobile(step.mobile)}. {step.info.has_pin ? "The customer can set a new PIN after." : "Then the customer sets a PIN, so next time needs no SMS."}</div>
-            <div className="actions"><button className="btn gold" onClick={sendOtp} disabled={busy}>{busy ? "Sending…" : "Send OTP by SMS"}</button></div>
-          </>
-        ) : (
-          <form className="stack" onSubmit={verifyOtp} autoComplete="off">
-            {step.demoCode && <div className="msg info"><strong>Demo mode: no real SMS sent</strong>The code is <span className="demo-otp">{step.demoCode}</span></div>}
-            <div><label htmlFor="r-otp">OTP the customer received</label>
-              <input id="r-otp" className="code" inputMode="numeric" maxLength={6} autoComplete="one-time-code" autoFocus value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} /></div>
-            <div className="row">
-              <div><label htmlFor="r-np1">New PIN for next time</label><input id="r-np1" className="code" type="password" inputMode="numeric" maxLength={4} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))} /></div>
-              <div><label htmlFor="r-np2">Repeat PIN</label><input id="r-np2" className="code" type="password" inputMode="numeric" maxLength={4} value={newPin2} onChange={(e) => setNewPin2(e.target.value.replace(/\D/g, ""))} /></div>
-            </div>
-            <p className="hint">The customer types the PIN themselves. Leave it empty to skip.{step.info.has_pin ? " Leaving it empty keeps the old PIN." : ""}</p>
-            <div className="actions">
-              <button className="btn" disabled={busy || otp.length !== 6}>Verify and redeem</button>
-              <button type="button" className="btn link" onClick={sendOtp} disabled={busy}>Resend OTP</button>
-            </div>
-          </form>
-        )}
-        {msgEl}
-        <div className="actions"><button className="btn alt" onClick={restart}>Cancel</button></div>
+        <div className="waiting">
+          <span className="pulse" aria-hidden="true" />
+          <h2>Waiting for {req.name} to approve</h2>
+          <p className="sub" style={{ margin: 0 }}>Ask them to open the Khushi Points app and tap <b>Approve</b>.</p>
+          <div className="big" aria-live="polite">{Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}</div>
+        </div>
+        <div className="actions" style={{ justifyContent: "center" }}><button className="btn alt" onClick={cancel}>Cancel</button></div>
       </div>
     );
   }
 
-  const { r } = step;
   return (
-    <div className="stack">
-      {stepBar}
-      <div className="msg ok"><strong>Redeemed {r.points} points</strong>
-        Verified by {r.method === "pin" ? "PIN (no SMS cost)" : "SMS OTP"}{r.pin_set ? " · PIN saved for next time" : ""}.</div>
-      <div className="receipt">
-        <div className="r"><span>{step.name}</span><span>{maskMobile(step.mobile)}</span></div>
-        <div className="r"><span>Bill amount</span><span>{inr(step.bill)}</span></div>
-        <div className="r"><span>Points discount ({r.points} pts)</span><span>− {inr(r.discount)}</span></div>
-        <div className="r tot"><span>Customer pays</span><span>{inr(r.pay)}</span></div>
-        <div className="r"><span>Points left</span><span>{r.balance} pts</span></div>
-      </div>
-      {undoneMsg
-        ? <div className="msg info"><strong>Redemption undone</strong>{undoneMsg}</div>
-        : <div className="actions"><span className="hint">Wrong customer or amount?</span>
-            <UndoButton shopId={shop.id} txnId={r.txn_id} label="Undo this redemption" onDone={setUndoneMsg} /></div>}
-      <div className="actions"><button className="btn" onClick={restart}>Next redemption</button></div>
-    </div>
+    <form className="stack" onSubmit={send} autoComplete="off">
+      <div><h2>Redeem points</h2><p className="sub">The customer approves in their app. No OTP. Up to {shop.max_redeem_pct}% of the bill, minimum {shop.min_redeem} points.</p></div>
+      <CustomerPicker id="r-who" value={raw} onChange={setRaw} shop={shop} onLookup={onLookup} />
+      <div><label htmlFor="r-bill">Today's bill (₹)</label><input id="r-bill" inputMode="decimal" value={bill} onChange={(e) => setBill(e.target.value)} /></div>
+      {who && info && !info.exists && <div className="msg info">This customer has no points at {shop.name} yet.</div>}
+      {who && info?.exists && !info.has_app && <div className="msg info"><strong>Needs the Khushi Points app</strong>
+        {info.name} has {info.balance} points. To use them, they install the Khushi Points app and sign in with {info.mobile ? maskMobile(info.mobile) : "their number"}.</div>}
+      {info?.exists && info.has_app && (
+        <div className="preview">
+          <span>{info.name} has <b style={{ fontSize: 16 }}>{info.balance}</b> pts {billAmt ? `· max ${maxPts} on this bill` : ""}</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label htmlFor="r-pts" style={{ margin: 0 }}>Use</label>
+            <input id="r-pts" inputMode="numeric" style={{ width: 90 }} value={points} onChange={(e) => setPoints(e.target.value.replace(/\D/g, ""))} />
+            <span>= {inr((parseInt(points, 10) || 0) * Number(shop.point_value))}</span>
+          </span>
+        </div>
+      )}
+      <div className="actions"><button className="btn gold" disabled={busy}>{busy ? "Sending…" : "Send to customer's app"}</button></div>
+      {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
+    </form>
   );
 }
 
 /* ------------------------------------------------------------------ balance */
 
 function BalanceCheck({ shop, initial }: { shop: Shop; initial: string }) {
-  const [mobile, setMobile] = useState(initial);
+  const [raw, setRaw] = useState(initial);
+  const [who, setWho] = useState<Who | null>(null);
   const [b, setB] = useState<Balance | null>(null);
-  const [err, setErr] = useState("");
-
-  async function look(m: string) {
-    setErr(""); setB(null);
-    const c = cleanMobile(m);
-    if (!validMobile(c)) return setErr(errorText("BAD_MOBILE"));
-    try { setB(await rpc<Balance>("customer_balance", { p_shop: shop.id, p_mobile: c })); }
-    catch (e) { setErr((e as Error).message); }
-  }
-  useEffect(() => { if (initial) look(initial); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const onLookup = useCallback((w: Who | null, x: Balance | null) => { setWho(w); setB(x); }, []);
 
   return (
-    <form className="stack" onSubmit={(e) => { e.preventDefault(); look(mobile); }} autoComplete="off">
-      <div><h2>Check balance</h2><p className="sub">No OTP needed to look.</p></div>
-      <div><label htmlFor="b-mobile">Customer mobile</label><input id="b-mobile" className="mono" inputMode="numeric" maxLength={14} value={mobile} onChange={(e) => setMobile(e.target.value)} /></div>
-      <div className="actions"><button className="btn">Show balance</button></div>
-      {err && <div className="msg err">{err}</div>}
-      {b && !b.exists && <div className="msg info"><strong>No points yet</strong>This number has not earned points here. Add a bill to start.</div>}
-      {b?.exists && (
+    <div className="stack">
+      <div><h2>Check balance</h2><p className="sub">Scan the customer's app QR or type their number.</p></div>
+      <CustomerPicker id="b-who" value={raw} onChange={setRaw} shop={shop} onLookup={onLookup} />
+      {who && b && !b.exists && <div className="msg info"><strong>No points yet</strong>This customer has not earned points here. Add a bill to start.</div>}
+      {who && b?.exists && (
         <div className="receipt">
-          <div className="r"><span>{b.name}</span><span>{fmtMobile(b.mobile!)}</span></div>
+          <div className="r"><span>{b.name}</span><span>{b.mobile ? fmtMobile(b.mobile) : "App member"}</span></div>
           <div className="r tot"><span>Balance</span><span>{b.balance} pts = {inr(b.value!)}</span></div>
           {!!b.expiring_30d && <div className="r" style={{ color: "var(--warn)" }}><span>Expiring within 30 days</span><span>{b.expiring_30d} pts</span></div>}
-          <div className="r"><span>Redeem with</span><span>{b.has_pin ? (b.pin_locked ? "PIN locked → OTP" : "PIN (no SMS)") : "SMS OTP (first time)"}</span></div>
+          <div className="r"><span>Khushi Points app</span><span>{b.has_app ? "Yes, can redeem" : "Not yet"}</span></div>
           <div style={{ marginTop: 8, borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
             {b.recent?.map((t, i) => (
-              <div className={`r${t.undone ? " undone" : ""}`} key={i}><span>{when(t.created_at)} · {t.kind === "earn" ? `Bill ${t.bill_no}` : "Redeemed"}{t.undone ? " (undone)" : ""}</span><span>{t.kind === "earn" ? "+" : "−"}{t.points}</span></div>
+              <div className={`r${t.undone ? " undone" : ""}`} key={i}>
+                <span>{when(t.created_at)} · {t.kind === "earn" ? (t.bill_no ? `Bill ${t.bill_no}` : "Bill") : "Redeemed"}{t.undone ? " (undone)" : ""}</span>
+                <span>{t.kind === "earn" ? "+" : "−"}{t.points}</span>
+              </div>
             ))}
           </div>
         </div>
       )}
-    </form>
+    </div>
   );
 }

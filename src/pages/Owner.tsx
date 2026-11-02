@@ -1,14 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import QRCode from "qrcode";
-import { cleanMobile, errorText, inr, maskMobile, rpc, validMobile, when, type Shop } from "../lib";
+import { cleanMobile, errorText, inr, maskMobile, rpc, supabase, validMobile, when, type Shop } from "../lib";
 import { useShop } from "../shop";
 import UndoButton from "../Undo";
 
 type Dash = {
-  customers: number; customers_pin: number; bills_30d: number; sales_30d: number;
-  points_given: number; points_redeemed: number; redeems_pin: number; redeems_otp: number;
-  points_owed: number; point_value: number; sms_30d: number; sms_total: number;
+  customers: number; customers_app: number; followers: number; bills_30d: number; sales_30d: number;
+  active_30d: number; repeat_30d: number; lapsed: number;
+  points_given: number; points_redeemed: number; points_expired: number; redeems_app: number;
+  points_owed: number; point_value: number; offers_7d: number;
 };
 type Staff = { user_id: string; email: string; role: string; joined_at: string };
 type Activity = { id: number; undone: boolean; created_at: string; kind: string; name: string; mobile: string; bill_no: string | null; amount: number; points: number; method: string | null };
@@ -19,8 +20,10 @@ export default function Owner() {
   return (
     <div className="page">
       <Dashboard shop={shop} />
-      <CustomerPage shop={shop} />
+      <Offers shop={shop} />
+      <Profile shop={shop} />
       <Settings shop={shop} />
+      <CustomerPage shop={shop} />
       <StaffPanel shop={shop} />
       <ActivityPanel shop={shop} />
       <DeleteCustomer shop={shop} />
@@ -33,17 +36,121 @@ function Dashboard({ shop }: { shop: Shop }) {
   const [d, setD] = useState<Dash | null>(null);
   useEffect(() => { rpc<Dash>("shop_dashboard", { p_shop: shop.id }).then(setD).catch(() => {}); }, [shop.id]);
   if (!d) return <div className="kpis"><div className="kpi"><div className="k">Loading…</div></div></div>;
-  const redeems = d.redeems_pin + d.redeems_otp;
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) + "%" : "–");
   const tiles: [string, string | number, string][] = [
-    ["Customers", d.customers, `${d.customers_pin} have a PIN`],
-    ["Sales, last 30 days", inr(d.sales_30d), `${d.bills_30d} bills with points`],
-    ["Points given", d.points_given, `${d.points_redeemed} redeemed`],
-    ["Points still owed", inr(d.points_owed * d.point_value), `${d.points_owed} unused points`],
-    ["SMS, last 30 days", d.sms_30d, `${d.redeems_pin} of ${redeems} redemptions used a free PIN`],
+    ["Repeat customers, 30 days", d.repeat_30d, `${pct(d.repeat_30d, d.active_30d)} of ${d.active_30d} customers came back`],
+    ["Sales with points, 30 days", inr(d.sales_30d), `${d.bills_30d} bills`],
+    ["Customers", d.customers, `${d.customers_app} use the app · ${d.followers} follow you`],
+    ["Not back in 30 days", d.lapsed, "Send them an offer"],
+    ["Points still owed", inr(d.points_owed * d.point_value), `${d.points_redeemed} redeemed · ${d.points_expired} expired`],
   ];
   return (
     <div className="kpis">
       {tiles.map(([k, v, n]) => <div className="kpi" key={k}><div className="k">{k}</div><div className="v">{v}</div><div className="n">{n}</div></div>)}
+    </div>
+  );
+}
+
+const CATEGORIES: [string, string][] = [
+  ["restaurant", "Restaurant"], ["cafe", "Café"], ["bakery", "Bakery"], ["sweets", "Sweets"], ["icecream", "Ice cream"],
+  ["grocery", "Grocery / kirana"], ["supermarket", "Supermarket"], ["clothing", "Clothing"], ["salon", "Salon / beauty"],
+  ["pharmacy", "Pharmacy"], ["electronics", "Electronics"], ["other", "Other"],
+];
+
+function Profile({ shop }: { shop: Shop }) {
+  const { updateShop } = useShop();
+  const [f, setF] = useState({
+    category: shop.category ?? "", about: shop.about ?? "", address: shop.address ?? "", area: shop.area ?? "",
+    city: shop.city ?? "", contact_phone: shop.contact_phone ?? "", hours: shop.hours ?? "",
+    lat: shop.lat?.toString() ?? "", lng: shop.lng?.toString() ?? "",
+  });
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+
+  function locate() {
+    if (!navigator.geolocation) return setMsg({ kind: "err", text: "This browser cannot share location. Skip it for now." });
+    navigator.geolocation.getCurrentPosition(
+      (p) => setF((x) => ({ ...x, lat: p.coords.latitude.toFixed(6), lng: p.coords.longitude.toFixed(6) })),
+      () => setMsg({ kind: "err", text: "Could not get the location. Allow location access, or do this from the shop later." }),
+      { enableHighAccuracy: true, timeout: 10000 });
+  }
+  async function save(e: FormEvent) {
+    e.preventDefault(); setMsg(null);
+    try {
+      const s = await rpc<Shop>("update_shop_settings", { p_shop: shop.id, p: f });
+      updateShop(s);
+      setMsg({ kind: "ok", text: "Saved. Customers see this in the Khushi Points app." });
+    } catch (err) { setMsg({ kind: "err", text: errorText(err) }); }
+  }
+  return (
+    <form className="panel stack" onSubmit={save} autoComplete="off">
+      <div><h2>Shop profile</h2><p className="sub">What customers see about {shop.name} in their app.</p></div>
+      <div className="row">
+        <div><label htmlFor="p-cat">Type of shop</label>
+          <select id="p-cat" value={f.category} onChange={set("category")}><option value="">Choose…</option>
+            {CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+        <div><label htmlFor="p-hours">Opening hours</label><input id="p-hours" maxLength={80} value={f.hours} onChange={set("hours")} placeholder="10am – 10pm, closed Monday" /></div>
+        <div><label htmlFor="p-phone">Shop phone</label><input id="p-phone" inputMode="tel" maxLength={16} value={f.contact_phone} onChange={set("contact_phone")} /></div>
+      </div>
+      <div><label htmlFor="p-about">About the shop</label><textarea id="p-about" rows={2} maxLength={300} value={f.about} onChange={set("about")} placeholder="Hyderabadi dum biryani since 2009." /></div>
+      <div><label htmlFor="p-addr">Address</label><input id="p-addr" maxLength={200} value={f.address} onChange={set("address")} /></div>
+      <div className="row">
+        <div><label htmlFor="p-area">Area</label><input id="p-area" maxLength={60} value={f.area} onChange={set("area")} placeholder="Madhapur" /></div>
+        <div><label htmlFor="p-city">City</label><input id="p-city" maxLength={60} value={f.city} onChange={set("city")} placeholder="Hyderabad" /></div>
+      </div>
+      <div className="actions">
+        <button type="button" className="btn alt small" onClick={locate}>Use this phone's location</button>
+        <span className="hint">{f.lat && f.lng ? `Location saved: ${Number(f.lat).toFixed(4)}, ${Number(f.lng).toFixed(4)}` : "Do this while standing in the shop, for directions in the app."}</span>
+      </div>
+      <div className="actions"><button className="btn">Save profile</button></div>
+      {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
+    </form>
+  );
+}
+
+type Offer = { id: number; title: string; body: string; valid_until: string | null; created_at: string; recipients: number };
+
+function Offers({ shop }: { shop: Shop }) {
+  const [list, setList] = useState<Offer[]>([]);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [until, setUntil] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const load = () => rpc<Offer[]>("shop_offers", { p_shop: shop.id }).then(setList).catch(() => {});
+  useEffect(() => { load(); }, [shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const weekCount = list.filter((o) => Date.now() - new Date(o.created_at).getTime() < 7 * 864e5).length;
+
+  async function send(e: FormEvent) {
+    e.preventDefault(); setMsg(null); setBusy(true);
+    try {
+      const r = await rpc<{ offer_id: number; followers: number }>("send_offer", { p_shop: shop.id, p_title: title, p_body: body, p_valid_until: until || null });
+      const { data } = await supabase.functions.invoke("push", { body: { action: "offer", shop_id: shop.id, offer_id: r.offer_id } });
+      setMsg({ kind: "ok", text: `Offer posted for ${r.followers} follower${r.followers === 1 ? "" : "s"}.${data?.devices ? ` Notification sent to ${data.devices} phone${data.devices === 1 ? "" : "s"}.` : ""}` });
+      setTitle(""); setBody(""); setUntil(""); load();
+    } catch (err) { setMsg({ kind: "err", text: errorText(err) }); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="panel stack">
+      <div><h2>Send an offer</h2><p className="sub">Goes to customers who follow {shop.name} in the app, as a notification. Up to 2 a week, so it never feels like spam. {weekCount}/2 used this week.</p></div>
+      <form className="stack" onSubmit={send} autoComplete="off">
+        <div><label htmlFor="o-title">Offer</label><input id="o-title" required minLength={3} maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Weekend special: double points on biryani" /></div>
+        <div><label htmlFor="o-body">Details (optional)</label><textarea id="o-body" rows={2} maxLength={300} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Saturday and Sunday, dine-in and takeaway." /></div>
+        <div className="row"><div><label htmlFor="o-until">Valid until (optional)</label><input id="o-until" type="date" value={until} onChange={(e) => setUntil(e.target.value)} /></div></div>
+        <div className="actions"><button className="btn gold" disabled={busy || weekCount >= 2}>{busy ? "Sending…" : "Send offer"}</button></div>
+        {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
+      </form>
+      {list.length > 0 && (
+        <div className="tbl-wrap"><table>
+          <thead><tr><th>Sent</th><th>Offer</th><th>Valid until</th><th className="num">Followers</th></tr></thead>
+          <tbody>{list.map((o) => (
+            <tr key={o.id}><td>{when(o.created_at)}</td><td>{o.title}{o.body && <div className="hint">{o.body}</div>}</td>
+              <td>{o.valid_until ? new Date(o.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "–"}</td>
+              <td className="num">{o.recipients}</td></tr>))}</tbody>
+        </table></div>
+      )}
     </div>
   );
 }

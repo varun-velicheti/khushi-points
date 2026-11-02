@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fmtMobile, inr, rpc, when } from "../lib";
 import { useShop } from "../shop";
 
-type Row = { mobile: string; name: string; balance: number; visits: number; has_pin: boolean; pin_locked: boolean; last_visit: string | null };
+type Row = { mobile: string | null; name: string; balance: number; visits: number; has_app: boolean; last_visit: string | null };
 
 export default function Customers() {
   const { current } = useShop();
@@ -32,17 +32,17 @@ export default function Customers() {
         {err && <div className="msg err">{err}</div>}
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>Customer</th><th>Mobile</th><th className="num">Visits</th><th className="num">Balance</th><th>Redeem with</th><th>Last visit</th></tr></thead>
+            <thead><tr><th>Customer</th><th>Mobile</th><th className="num">Visits</th><th className="num">Balance</th><th>App</th><th>Last visit</th></tr></thead>
             <tbody>
               {rows === null && <tr><td colSpan={6} className="hint">Loading…</td></tr>}
               {rows?.length === 0 && <tr><td colSpan={6} className="hint">{q ? "No customers match." : "No customers yet. Add the first bill on the Counter tab."}</td></tr>}
               {rows?.map((r) => (
-                <tr key={r.mobile} className="click" onClick={() => navigate(`/?balance=${r.mobile}`)}>
+                <tr key={r.mobile ?? r.name + r.last_visit} className={r.mobile ? "click" : ""} onClick={() => r.mobile && navigate(`/?balance=${r.mobile}`)}>
                   <td>{r.name}</td>
                   <td className="mono">{fmtMobile(r.mobile)}</td>
                   <td className="num">{r.visits}</td>
                   <td className="num"><b>{r.balance}</b> <span className="hint">{inr(r.balance * Number(shop.point_value))}</span></td>
-                  <td>{r.has_pin ? (r.pin_locked ? <span className="chip locked">PIN locked</span> : <span className="chip pin">PIN</span>) : <span className="chip">OTP first</span>}</td>
+                  <td>{r.has_app ? <span className="chip app">Has app</span> : <span className="chip">No app yet</span>}</td>
                   <td className="hint">{r.last_visit ? when(r.last_visit) : ""}</td>
                 </tr>
               ))}

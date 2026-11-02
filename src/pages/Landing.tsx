@@ -15,8 +15,8 @@ export default function Landing() {
 
         <section className="hero">
           <p className="eyebrow">For kirana, clothing, salons, bakeries and every small shop</p>
-          <h2 className="hero-h">Loyalty points for your shop. No WhatsApp bill.</h2>
-          <p className="hero-p">Customers earn points with just their mobile number. They redeem with a one-time SMS code, then a 4-digit PIN. You stop paying a WhatsApp provider every month.</p>
+          <h2 className="hero-h">Loyalty points for your shop. No SMS, no WhatsApp spam.</h2>
+          <p className="hero-p">Your customers keep points from every Khushi shop in one free app. They earn on each bill, redeem by tapping Approve in the app, and get your offers as app notifications. Nothing lands in their SMS or WhatsApp.</p>
           <div className="actions">
             <Link className="btn gold" to="/login?mode=signup">Start free</Link>
             <Link className="btn link" to="/login">I already have an account</Link>
@@ -27,9 +27,9 @@ export default function Landing() {
         <section className="how">
           <h3 className="section-h">How it works at the counter</h3>
           <div className="how-grid">
-            <div className="panel"><span className="step-n">1</span><h4>Earn</h4><p>Type the customer's number and the bill. Points are added instantly. No OTP, no app for the customer.</p></div>
-            <div className="panel"><span className="step-n">2</span><h4>First redemption</h4><p>One SMS code proves it's really their number. Then they set a 4-digit PIN.</p></div>
-            <div className="panel"><span className="step-n">3</span><h4>Every redemption after</h4><p>The customer types their PIN. No SMS, so it costs you nothing.</p></div>
+            <div className="panel"><span className="step-n">1</span><h4>Earn</h4><p>Scan the QR in the customer's app, or type their mobile number, and enter the bill. Points show in their app instantly.</p></div>
+            <div className="panel"><span className="step-n">2</span><h4>Redeem</h4><p>Start the redemption at the counter. The customer taps Approve in their app. No OTP, no PIN.</p></div>
+            <div className="panel"><span className="step-n">3</span><h4>Bring them back</h4><p>Send up to 2 offers a week as app notifications to customers who follow your shop.</p></div>
           </div>
         </section>
 
@@ -44,7 +44,7 @@ export default function Landing() {
             <div className="panel accent">
               <p className="label">Khushi Points</p>
               <p className="price">Under ₹500<span> a month</span></p>
-              <p className="hint">One SMS per customer for the first redemption, about ₹0.20. After that the PIN is free.</p>
+              <p className="hint">No per-message charges. Offers and redemptions go through the free Khushi Points app.</p>
             </div>
           </div>
           <p className="hint">Typical market prices from public listings, October 2026. Your costs depend on your provider.</p>
@@ -57,7 +57,7 @@ export default function Landing() {
             <li><b>Your staff, your control.</b> Cashiers join with a shop code. They can add bills and redeem, but can't change rules or see your reports.</li>
             <li><b>Mistakes can be undone.</b> Fix a wrong bill or redemption in two taps.</li>
             <li><b>QR code for customers.</b> Print it for the counter. Customers check their points without any app.</li>
-            <li><b>Safe by design.</b> Cashiers never see a customer's OTP. PINs are stored scrambled. Each shop sees only its own customers.</li>
+            <li><b>Safe by design.</b> Only the customer can approve using their points, from their own phone. Each shop sees only its own customers.</li>
           </ul>
           <div className="actions"><Link className="btn gold" to="/login?mode=signup">Start free</Link></div>
         </section>

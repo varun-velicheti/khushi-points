@@ -12,6 +12,8 @@ export const supabase = createClient(url || "http://localhost", key || "missing-
 
 export type Shop = {
   id: string; name: string; slug: string; join_code: string;
+  category?: string | null; about?: string | null; address?: string | null; area?: string | null; city?: string | null;
+  contact_phone?: string | null; hours?: string | null; lat?: number | null; lng?: number | null;
   earn_pct: number; point_value: number; min_bill: number; min_redeem: number;
   max_redeem_pct: number; expiry_days: number; one_bill_per_day: boolean; plan: string;
 };
@@ -30,6 +32,12 @@ const MESSAGES: Record<string, string> = {
   BILL_ALREADY_USED: "This bill number already earned points. Each bill earns once.",
   ALREADY_EARNED_TODAY: "This number already earned points today. Only one bill per number per day earns points.",
   NO_TRANSACTION: "That entry was not found.",
+  NEEDS_APP: "To use points, the customer installs the Khushi Points app and signs in with this mobile number. Then try again.",
+  BAD_MEMBER_CODE: "That QR or member code is not a Khushi Points member. Ask the customer to show the QR in their app again.",
+  OFFER_LIMIT: "You can send 2 offers a week, so customers do not get too many. Try again in a few days.",
+  BAD_DATE: "The end date cannot be in the past.",
+  NO_REQUEST: "That redemption request was not found.",
+  PHONE_IN_USE: "This mobile number is already used by another Khushi Points account.",
   ALREADY_UNDONE: "This was already undone.",
   UNDO_OWNER_ONLY: "Only the owner can undo this. Cashiers can undo their own entries within 15 minutes.",
   POINTS_ALREADY_USED: "The customer already used these points, so this bill cannot be undone.",
@@ -78,8 +86,8 @@ export const cleanMobile = (s: string) => {
   return m;
 };
 export const validMobile = (m: string) => /^[6-9]\d{9}$/.test(m);
-export const fmtMobile = (m: string) => (m.length === 10 ? m.slice(0, 5) + " " + m.slice(5) : m);
-export const maskMobile = (m: string) => "XXXXXX" + m.slice(6);
+export const fmtMobile = (m: string | null | undefined) => (!m ? "App member" : m.length === 10 ? m.slice(0, 5) + " " + m.slice(5) : m);
+export const maskMobile = (m: string | null | undefined) => (m ? "XXXXXX" + m.slice(6) : "App member");
 export const inr = (n: number | string) =>
   "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 export const when = (t: string) => {
