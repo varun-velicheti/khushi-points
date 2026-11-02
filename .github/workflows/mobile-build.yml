@@ -1,0 +1,41 @@
+name: Build customer app
+
+# Run from GitHub: Actions -> "Build customer app" -> Run workflow.
+# Needs the EXPO_TOKEN repository secret (expo.dev -> Account settings -> Access tokens).
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "android (test APK to share) or ios"
+        default: android
+        type: choice
+        options: [android, ios]
+      profile:
+        description: "preview = test build, production = store build"
+        default: preview
+        type: choice
+        options: [preview, production]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - name: Check the Expo token is set
+        working-directory: .
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add EXPO_TOKEN under Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: Start the build on Expo (takes 10-20 minutes there)
+        run: eas build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive --no-wait

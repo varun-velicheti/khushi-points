@@ -50,7 +50,17 @@
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoeW54b3hoYmdud3hmaGpycmFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDc1MDIsImV4cCI6MjEwODc4MzUwMn0.hlOE32BrGWFGuIgdBY62htj30GV8pDLZ1uRosd_fLuo",
       "googleSignIn": false,
       "appleSignIn": false,
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "0eeafdc5-f73d-47dd-a543-593d0beac886"
+      }
+    },
+    "owner": "varun-velichetis-team",
+    "updates": {
+      "url": "https://u.expo.dev/0eeafdc5-f73d-47dd-a543-593d0beac886"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
