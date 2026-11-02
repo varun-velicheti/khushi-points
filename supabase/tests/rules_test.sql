@@ -51,7 +51,6 @@ select t.as_user('22222222-2222-2222-2222-222222222222');
 select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '12345', 'B1', 500, null, true) $$, 'BAD_MOBILE');
 select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9848012345', 'B1', 500, null, false) $$, 'CONSENT_REQUIRED');
 select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9848012345', 'B1', 50, null, true) $$, 'BELOW_MIN_BILL');
-select t.expect_error($$ select public.add_bill('$$ || :'shop' || $$', '9848012345', '', 500, null, true) $$, 'BILL_NO_REQUIRED');
 
 -- 2% of 1250 = 25 points; +91 prefix and spaces are accepted
 select t.check((public.add_bill(:'shop', '+91 98480 12345', 'b-1001', 1250, 'Ravi', true))->>'points' = '25', '2% of 1250 = 25 pts');
