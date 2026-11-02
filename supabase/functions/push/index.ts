@@ -1,34 +1,12 @@
 // push: app notifications to customers (Expo push service).
 //   { action: "offer",  shop_id, offer_id }     owner sends a new offer to the shop's followers
 //   { action: "redeem", shop_id, request_id }   cashier asks the customer to approve a redemption
+//   { action: "earn",   shop_id, txn_id }       "You earned N points" after a bill at the counter
 // Never sends SMS or WhatsApp.
 
-import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
+import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { cors, env, json } from "../_shared/http.ts";
-
-type Msg = { to: string; title: string; body: string; data: Record<string, unknown>; sound?: string; priority?: string; channelId?: string };
-
-async function sendExpo(admin: SupabaseClient, msgs: Msg[]) {
-  let sent = 0;
-  for (let i = 0; i < msgs.length; i += 100) {
-    const chunk = msgs.slice(i, i + 100);
-    const res = await fetch(env("EXPO_PUSH_URL") || "https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json", accept: "application/json",
-        ...(env("EXPO_ACCESS_TOKEN") ? { Authorization: `Bearer ${env("EXPO_ACCESS_TOKEN")}` } : {}),
-      },
-      body: JSON.stringify(chunk),
-    });
-    const body = await res.json().catch(() => ({}));
-    const tickets: { status: string; details?: { error?: string } }[] = body?.data ?? [];
-    for (let j = 0; j < tickets.length; j++) {
-      if (tickets[j].status === "ok") sent++;
-      else if (tickets[j].details?.error === "DeviceNotRegistered") await admin.rpc("push_token_remove", { p_token: chunk[j].to });
-    }
-  }
-  return sent;
-}
+import { sendEarned, sendExpo, type PushMsg as Msg } from "../_shared/expo.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -52,6 +30,12 @@ Deno.serve(async (req) => {
       data: { type: "offer", shop_id: b.shop_id, offer_id: b.offer_id }, channelId: "offers",
     }));
     return json({ sent: msgs.length ? await sendExpo(admin, msgs) : 0, devices: msgs.length });
+  }
+
+  if (b.action === "earn") {
+    const { data: txn } = await admin.from("transactions").select("shop_id").eq("id", b.txn_id).maybeSingle();
+    if (!txn || txn.shop_id !== b.shop_id) return json({ error: "NOT_FOUND" }, 404);
+    return json({ sent: await sendEarned(admin, Number(b.txn_id)) });
   }
 
   if (b.action === "redeem") {

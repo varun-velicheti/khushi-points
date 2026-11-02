@@ -25,6 +25,7 @@ export default function Owner() {
       <Settings shop={shop} />
       <CustomerPage shop={shop} />
       <StaffPanel shop={shop} />
+      <PosConnect shop={shop} />
       <ActivityPanel shop={shop} />
       <DeleteCustomer shop={shop} />
       <div className="actions"><Link className="btn link" to="/add-shop">Add or join another shop</Link></div>
@@ -184,10 +185,15 @@ function Settings({ shop }: { shop: Shop }) {
   const [f, setF] = useState({
     name: shop.name, earn_pct: String(shop.earn_pct), point_value: String(shop.point_value), min_bill: String(shop.min_bill),
     min_redeem: String(shop.min_redeem), max_redeem_pct: String(shop.max_redeem_pct), expiry_days: String(shop.expiry_days),
-    one_bill_per_day: shop.one_bill_per_day,
+    one_bill_per_day: shop.one_bill_per_day, reminder_days: shop.reminder_days ?? [7, 1],
   });
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const toggleDay = (d: number) => setF((x) => {
+    const has = x.reminder_days.includes(d);
+    if (!has && x.reminder_days.length >= 3) return x;
+    return { ...x, reminder_days: has ? x.reminder_days.filter((y) => y !== d) : [...x.reminder_days, d].sort((a, b) => b - a) };
+  });
 
   async function save(e: FormEvent) {
     e.preventDefault(); setMsg(null);
@@ -218,6 +224,18 @@ function Settings({ shop }: { shop: Shop }) {
           <select id="s-day" value={f.one_bill_per_day ? "1" : "0"} onChange={(e) => setF({ ...f, one_bill_per_day: e.target.value === "1" })}>
             <option value="1">Only the highest bill earns</option><option value="0">Every bill earns</option>
           </select></div>
+      </div>
+      <div>
+        <span className="label">Remind customers before points expire</span>
+        <div className="actions">
+          {[30, 14, 7, 3, 1].map((d) => (
+            <label key={d} className="check" htmlFor={`s-rem-${d}`} style={{ marginBottom: 0 }}>
+              <input id={`s-rem-${d}`} type="checkbox" checked={f.reminder_days.includes(d)} onChange={() => toggleDay(d)} />
+              <span>{d === 1 ? "1 day" : `${d} days`}</span>
+            </label>
+          ))}
+        </div>
+        <p className="hint">Sent in the Khushi Points app at 10:30 AM, once each. Pick up to 3. Customers can turn reminders off.</p>
       </div>
       <div className="actions"><button className="btn">Save rules</button></div>
       {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
@@ -313,5 +331,56 @@ function DeleteCustomer({ shop }: { shop: Shop }) {
       </div>
       {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
     </form>
+  );
+}
+
+// Billing software (POS) connection: each bill sent here gives points automatically.
+function PosConnect({ shop }: { shop: Shop }) {
+  const [status, setStatus] = useState<{ hint: string; created_at: string } | null | undefined>(undefined);
+  const [key, setKey] = useState("");
+  const [armed, setArmed] = useState(false);
+  const [copied, setCopied] = useState("");
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pos-bill`;
+  const load = () => rpc<{ hint: string; created_at: string } | null>("pos_key_status", { p_shop: shop.id }).then(setStatus).catch(() => setStatus(null));
+  useEffect(() => { load(); }, [shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function make() {
+    if (status && !armed) return setArmed(true);
+    setArmed(false);
+    try { setKey(await rpc<string>("new_pos_key", { p_shop: shop.id })); load(); } catch { /* owner only */ }
+  }
+  async function remove() { await rpc("remove_pos_key", { p_shop: shop.id }).catch(() => {}); setKey(""); load(); }
+  const copy = (t: string, what: string) => navigator.clipboard?.writeText(t).then(() => setCopied(what)).catch(() => {});
+  const sample = JSON.stringify({ mobile: "9848012345", amount: 1250, bill_no: "B-1043", items: "2 Chicken Biryani, 1 Coke" }, null, 2);
+
+  return (
+    <div className="panel stack">
+      <div><h2>Connect billing software</h2>
+        <p className="sub">If your shop uses Petpooja or another billing system, it can send each bill here. The customer gets points and a notification in their app, with no typing at the counter.</p></div>
+      {status === undefined ? <p className="hint">Loading…</p> : (
+        <>
+          <div className="actions">
+            <span>{status ? <>Connected · key ending <span className="mono">{status.hint}</span></> : "Not connected"}</span>
+            <button className="btn alt small" onClick={make}>{armed ? "Tap again: old key stops working" : status ? "Make a new key" : "Create connection key"}</button>
+            {status && <button className="btn danger small" onClick={remove}>Disconnect</button>}
+          </div>
+          {key && (
+            <div className="msg info"><strong>Copy this key now. It is shown only once.</strong>
+              <div className="mono" style={{ wordBreak: "break-all", margin: "6px 0" }}>{key}</div>
+              <button className="btn alt small" onClick={() => copy(key, "key")}>{copied === "key" ? "Copied" : "Copy key"}</button></div>
+          )}
+          <details className="extra">
+            <summary>Details for your billing software provider</summary>
+            <div className="stack" style={{ marginTop: 8 }}>
+              <p className="hint">Send a POST request for every bill to:</p>
+              <div className="mono" style={{ wordBreak: "break-all" }}>{url}</div>
+              <p className="hint">With the header <span className="mono">x-api-key: (your key)</span> and a JSON body like:</p>
+              <pre className="mono" style={{ background: "var(--sunk)", padding: 10, borderRadius: 8, overflowX: "auto", margin: 0 }}>{sample}</pre>
+              <button className="btn alt small" onClick={() => copy(`POST ${url}\nx-api-key: <key>\n\n${sample}`, "details")}>{copied === "details" ? "Copied" : "Copy details"}</button>
+            </div>
+          </details>
+        </>
+      )}
+    </div>
   );
 }

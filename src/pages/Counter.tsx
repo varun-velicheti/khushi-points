@@ -119,6 +119,7 @@ function Earn({ shop }: { shop: Shop }) {
         p_consent: consent, p_note: note || null,
       });
       const appLine = r.has_app ? " It shows in their Khushi Points app now." : " Ask them to install the Khushi Points app to see and use their points.";
+      if (r.has_app) supabase.functions.invoke("push", { body: { action: "earn", shop_id: shop.id, txn_id: r.txn_id } }).catch(() => {});
       setResult(r.topped_up
         ? { kind: "ok", txnId: r.txn_id, title: `${r.points} points added · bigger bill today`,
             body: `This ${inr(amt)} bill earns ${r.bill_points} points. ${r.earlier_today} were already given today for the ${inr(r.earlier_bill)} bill, so ${r.points} more were added. Balance ${r.balance} points.${appLine}` }

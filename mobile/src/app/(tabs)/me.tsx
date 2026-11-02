@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Switch, Text, TextInput, View } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { callFn, errorText, rpc } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -89,6 +89,17 @@ export default function Profile() {
       </Card>
 
       {msg ? <Note kind={msg.kind}>{msg.text}</Note> : null}
+
+      <Card>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: c.ink, fontSize: 16, fontWeight: "700" }}>Expiry reminders</Text>
+            <Text style={{ color: c.muted, fontSize: 13 }}>A note before your points at a shop expire. Sent at 10:30 AM.</Text>
+          </View>
+          <Switch value={me?.reminders ?? true} trackColor={{ true: c.brand, false: c.line }} accessibilityLabel="Expiry reminders"
+            onValueChange={async (v) => { await rpc("app_set_reminders", { p_on: v }).catch(() => {}); refreshMe(); }} />
+        </View>
+      </Card>
 
       <Card>
         <Label>Sign-in</Label>

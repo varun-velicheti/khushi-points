@@ -1,6 +1,15 @@
 # Khushi Points
 
-Loyalty points for small shops, without paying for WhatsApp.
+A loyalty network that helps independent local shops keep their customers. Customers keep points from every
+Khushi shop in one app; each shop's points work only at that shop. No SMS or WhatsApp to shoppers.
+
+- **Customer app** (`mobile/`): wallet per shop, member QR, approve redemptions, offers, expiry reminders.
+- **Earned-points notification**: right after every bill, from the counter screen or billing software.
+- **Expiry reminders**: daily at 10:30 AM IST, on the days before expiry each shop chooses (default 7 and 1).
+- **Billing software (POS)**: Owner page → "Connect billing software" gives a key; the POS posts each bill to
+  `/functions/v1/pos-bill` (see `supabase/functions/pos-bill/index.ts` for the fields). Ready for Petpooja.
+
+Earlier notes (shop web app):
 
 - **Earn:** the cashier types the customer's mobile number and the bill. No OTP. Only the highest bill per number per day earns points (a bigger bill later that day tops the points up), and each bill number earns once.
 - **First redemption:** one SMS OTP proves the customer owns the number. The customer then sets a 4-digit PIN.

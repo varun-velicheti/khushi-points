@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [version, setVersion] = useState(0);   // bump to make screens reload their data
 
+  const bump = useCallback(() => setVersion((v) => v + 1), []);
   const refreshMe = useCallback(async () => {
     try { setMe(await rpc<Me>("app_me")); } catch { /* offline: keep last */ }
   }, []);
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (session) refreshMe(); else setMe(null); }, [session?.user.id, refreshMe]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AuthContext.Provider value={{ session, ready, me, refreshMe, version, bump: () => setVersion((v) => v + 1) }}>
+    <AuthContext.Provider value={{ session, ready, me, refreshMe, version, bump }}>
       {children}
     </AuthContext.Provider>
   );

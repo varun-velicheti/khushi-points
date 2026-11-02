@@ -16,8 +16,11 @@ export async function registerForPush(): Promise<"on" | "off" | "unavailable"> {
       await Notifications.setNotificationChannelAsync("redeem", {
         name: "Approve redemptions", importance: Notifications.AndroidImportance.HIGH, sound: "default",
       });
+      await Notifications.setNotificationChannelAsync("earned", {
+        name: "Points earned", importance: Notifications.AndroidImportance.DEFAULT,
+      });
       await Notifications.setNotificationChannelAsync("offers", {
-        name: "Offers from shops you follow", importance: Notifications.AndroidImportance.DEFAULT,
+        name: "Offers and expiry reminders", importance: Notifications.AndroidImportance.DEFAULT,
       });
     }
     let { status } = await Notifications.getPermissionsAsync();

@@ -5,7 +5,8 @@ export type WalletShop = {
   points: number; value: number; expiring_30d: number; last_visit: string | null; following: boolean;
   latest_offer: string | null; latest_offer_at: string | null;
 };
-export type Me = { name: string | null; phone: string | null; member_code: string; email: string | null };
+export type Me = { name: string | null; phone: string | null; member_code: string; email: string | null; reminders: boolean };
+export type Activity = { shop_id: string; shop_name: string; kind: "earn" | "redeem"; points: number; amount: number; at: string };
 export type HistoryItem = { kind: "earn" | "redeem" | "expired"; points: number; amount: number | null; bill_no: string | null; note: string | null; at: string; undone: boolean };
 export type Offer = { id: number; title: string; body: string; valid_until: string | null; created_at: string };
 export type ShopDetail = {

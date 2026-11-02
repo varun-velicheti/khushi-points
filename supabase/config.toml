@@ -9,3 +9,7 @@ verify_jwt = true
 # Sign-in starts signed out, so this function checks callers itself.
 [functions.customer-auth]
 verify_jwt = false
+
+# Billing software calls this with the shop's key, not a user login.
+[functions.pos-bill]
+verify_jwt = false

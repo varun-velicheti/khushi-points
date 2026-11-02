@@ -21,7 +21,7 @@ export default function RootLayout() {
 
 function Gate() {
   const c = useColors();
-  const { session, ready } = useAuth();
+  const { session, ready, bump } = useAuth();
   const segments = useSegments();
 
   // signed out -> sign-in screen; signed in -> wallet
@@ -34,15 +34,19 @@ function Gate() {
 
   useEffect(() => { if (session) registerForPush(); }, [session?.user.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // tapping an offer notification opens that shop
+  // new points arrive: refresh the wallet; tapping an offer, points or expiry notification opens that shop
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const sub = Notifications.addNotificationResponseReceivedListener((r) => {
-      const d = r.notification.request.content.data as { type?: string; shop_id?: string };
-      if (d?.type === "offer" && d.shop_id) router.push(`/shop/${d.shop_id}`);
+    const got = Notifications.addNotificationReceivedListener((n) => {
+      const t = (n.request.content.data as { type?: string })?.type;
+      if (t === "earn" || t === "expiry" || t === "offer") bump();
     });
-    return () => sub.remove();
-  }, []);
+    const tap = Notifications.addNotificationResponseReceivedListener((r) => {
+      const d = r.notification.request.content.data as { type?: string; shop_id?: string };
+      if (d?.shop_id && (d.type === "offer" || d.type === "earn" || d.type === "expiry")) { bump(); router.push(`/shop/${d.shop_id}`); }
+    });
+    return () => { got.remove(); tap.remove(); };
+  }, [bump]);
 
   return (
     <>
