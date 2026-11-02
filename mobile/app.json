@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Khushi Points",
+    "slug": "khushi-points",
+    "scheme": "khushipoints",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D5C55"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.khushipoints",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.khushipoints",
+      "adaptiveIcon": {
+        "backgroundColor": "#0D5C55",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "color": "#0D5C55"
+        }
+      ],
+      "expo-apple-authentication"
+    ],
+    "extra": {
+      "supabaseUrl": "https://dhynxoxhbgnwxfhjrraf.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoeW54b3hoYmdud3hmaGpycmFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMDc1MDIsImV4cCI6MjEwODc4MzUwMn0.hlOE32BrGWFGuIgdBY62htj30GV8pDLZ1uRosd_fLuo",
+      "googleSignIn": false,
+      "appleSignIn": false,
+      "router": {}
+    }
+  }
+}

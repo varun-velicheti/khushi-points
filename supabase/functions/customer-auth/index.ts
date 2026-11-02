@@ -33,9 +33,23 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
   const body = await req.json().catch(() => ({}));
+  const admin = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
+
+  // Customer deletes their own app account (shops keep their own bill records).
+  if (body.action === "delete") {
+    const asUser = createClient(env("SUPABASE_URL"), env("SUPABASE_ANON_KEY"), {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    });
+    const { data: who } = await asUser.auth.getUser();
+    if (!who?.user) return json({ error: "NOT_SIGNED_IN" }, 401);
+    const { data: staff } = await admin.rpc("app_is_staff", { p_user: who.user.id });
+    if (staff === true) return json({ error: "STAFF_ACCOUNT" });
+    const { error } = await admin.auth.admin.deleteUser(who.user.id);
+    return error ? json({ error: "DELETE_FAILED" }) : json({ ok: true });
+  }
+
   const phone = clean(body.phone);
   if (!phone) return json({ error: "BAD_MOBILE" });
-  const admin = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
 
   if (body.action === "send") {
     const p = provider();
