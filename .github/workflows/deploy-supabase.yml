@@ -52,6 +52,6 @@ jobs:
       - name: Link project
         run: supabase link --project-ref "$PROJECT_REF"
       - name: Apply database migrations
-        run: supabase db push --include-all --remote
+        run: supabase db push --include-all --remote --yes
       - name: Deploy send-otp function
         run: supabase functions deploy send-otp --project-ref "$PROJECT_REF"
