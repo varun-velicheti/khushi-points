@@ -1,0 +1,38 @@
+name: Show customer app build errors
+
+# Prints the error part of an Expo build's logs, so failures can be read from GitHub.
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: "Expo build ID (from the build page URL)"
+        required: true
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build status and errors
+        env: { BUILD_ID: "${{ inputs.build_id }}" }
+        run: |
+          eas build:view "$BUILD_ID" --json > build.json
+          jq '{status, error, platform, sdkVersion, logFiles: (.logFiles|length)}' build.json
+          mkdir -p logs
+          i=0
+          for url in $(jq -r '.logFiles[]?' build.json); do
+            i=$((i+1)); curl -sSL "$url" -o "logs/part$i.txt" || true
+          done
+          echo "===== error lines ====="
+          cat logs/*.txt 2>/dev/null | jq -r 'select(type=="object") | .msg? // empty' 2>/dev/null > logs/all.txt || cat logs/*.txt > logs/all.txt
+          [ -s logs/all.txt ] || cat logs/*.txt > logs/all.txt
+          grep -n -i -E "what went wrong|error:|failed|exception|could not|unresolved|cannot find|duplicate class" logs/all.txt | head -80 || true
+          echo "===== around 'What went wrong' ====="
+          grep -n -i -A25 "what went wrong" logs/all.txt | head -120 || true
+          echo "===== last 60 lines ====="
+          tail -60 logs/all.txt
