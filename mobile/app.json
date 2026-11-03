@@ -55,12 +55,6 @@
         "projectId": "0eeafdc5-f73d-47dd-a543-593d0beac886"
       }
     },
-    "owner": "varun-velichetis-team",
-    "updates": {
-      "url": "https://u.expo.dev/0eeafdc5-f73d-47dd-a543-593d0beac886"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
+    "owner": "varun-velichetis-team"
   }
 }
