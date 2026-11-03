@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0D5C55"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.khushipoints",
@@ -43,7 +38,16 @@
           "color": "#0D5C55"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#0D5C55"
+        }
+      ]
     ],
     "extra": {
       "supabaseUrl": "https://dhynxoxhbgnwxfhjrraf.supabase.co",
