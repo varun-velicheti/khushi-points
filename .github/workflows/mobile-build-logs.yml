@@ -29,7 +29,9 @@ jobs:
           mkdir -p logs
           i=0
           for url in $(jq -r '.logFiles[]?' build.json); do
-            i=$((i+1)); curl -sSL "$url" -o "logs/part$i.txt" || true
+            i=$((i+1)); curl -sSL --compressed "$url" -o "logs/raw$i" || true
+            # logs may arrive gzip- or zstd-compressed
+            (gunzip -c "logs/raw$i" 2>/dev/null || zstd -dc "logs/raw$i" 2>/dev/null || cat "logs/raw$i") > "logs/part$i.txt"
           done
           echo "===== error lines ====="
           cat logs/*.txt 2>/dev/null | jq -r 'select(type=="object") | .msg? // empty' 2>/dev/null > logs/all.txt || cat logs/*.txt > logs/all.txt
