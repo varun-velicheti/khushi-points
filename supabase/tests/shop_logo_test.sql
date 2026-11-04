@@ -81,4 +81,4 @@ select t.as_user('cccccccc-cccc-cccc-cccc-cccccccccccc');
 set role authenticated;
 select t.check((select count(*) from public.app_wallet()) = 0, 'shop gone from customer wallet');
 reset role;
-\echo shop_logo_test passed
+select 'ALL TESTS PASSED' as result;
