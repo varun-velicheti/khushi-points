@@ -55,4 +55,19 @@ select t.check(position('7353862216' in (select string_agg(r::text, '') from pub
 -- admin cannot read other shops' raw tables
 select t.check((select count(*) from public.customers) = 0, 'no raw customer access');
 reset role;
+-- only the admin can delete any shop; the name must match; everything goes with it
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select t.expect_error($$ select public.admin_delete_shop('$$ || :'s1' || $$', 'Sahasra Clothing') $$, 'ADMIN_ONLY');
+select t.check(not public._owns_logo_path(:'s1' || '/logo.jpg'), 'other owner cannot touch logo');
+reset role;
+select t.as_user('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+set role authenticated;
+select t.check(public._owns_logo_path(:'s1' || '/logo.jpg'), 'admin can clear any logo');
+select t.expect_error($$ select public.admin_delete_shop('$$ || :'s1' || $$', 'Sahasra') $$, 'CONFIRM_NAME');
+select public.admin_delete_shop(:'s1', 'sahasra clothing');
+select t.check((select count(*) from public.admin_shops() where shop_id = :'s1') = 0, 'gone from admin list');
+reset role;
+select t.check(not exists (select 1 from public.customers where shop_id = :'s1'), 'customers gone');
+select t.check(exists (select 1 from public.deleted_shops where shop_id = :'s1'), 'deletion recorded');
 select 'ALL TESTS PASSED' as result;

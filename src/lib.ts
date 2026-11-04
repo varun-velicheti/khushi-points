@@ -28,6 +28,7 @@ const MESSAGES: Record<string, string> = {
   NOT_SIGNED_IN: "Please sign in again.",
   NOT_A_MEMBER: "You are not staff at this shop.",
   OWNER_ONLY: "Only the shop owner can do this.",
+  NO_SHOP: "That shop no longer exists.",
   CONFIRM_NAME: "Type the shop name exactly as shown to confirm.",
   BAD_LOGO: "That picture could not be saved. Try another one.",
   BAD_MOBILE: "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",

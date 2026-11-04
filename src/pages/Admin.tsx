@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { inr, rpc, supabase, when } from "../lib";
+import { errorText, inr, rpc, supabase, when } from "../lib";
 import { useShop } from "../shop";
 
 // Founder-only view of every shop. Totals only: no customer numbers or names.
@@ -158,6 +158,7 @@ export default function Admin() {
                       <div><dt>Staff</dt><dd>{r.staff}</dd></div>
                       <div><dt>Plan</dt><dd className="cap">{r.plan}</dd></div>
                     </dl>
+                    <AdminDeleteShop id={r.shop_id} name={r.name} customers={r.customers} onDone={load} />
                   </article>
                 );
               })}
@@ -167,6 +168,43 @@ export default function Admin() {
           {loadedAt && <p className="hint">Updated {loadedAt.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}. Customer numbers and names are never shown here.</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+// App creator removes a shop and all its data. Type the shop name to confirm.
+function AdminDeleteShop({ id, name, customers, onDone }: { id: string; name: string; customers: number; onDone: () => void }) {
+  const { reload } = useShop();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const matches = typed.trim().toLowerCase() === name.trim().toLowerCase();
+
+  async function del() {
+    setBusy(true); setErr("");
+    try {
+      // remove the shop's logo files first (best effort)
+      const { data: files } = await supabase.storage.from("shop-logos").list(id);
+      if (files?.length) await supabase.storage.from("shop-logos").remove(files.map((f) => `${id}/${f.name}`));
+      await rpc("admin_delete_shop", { p_shop: id, p_confirm: typed });
+      onDone();
+      reload();   // in case it was one of my own shops
+    } catch (e) { setErr(errorText(e)); setBusy(false); }
+  }
+
+  if (!open) return (
+    <div className="actions"><button type="button" className="btn link small sc-del" onClick={() => setOpen(true)}>Delete shop…</button></div>
+  );
+  return (
+    <div className="sc-confirm stack" style={{ gap: 10 }}>
+      <p className="hint" style={{ margin: 0 }}>Deletes {name} for good: {customers} customer{customers === 1 ? "" : "s"}, their points and history, offers, staff and billing connection. Cannot be undone.</p>
+      <input aria-label={`Type ${name} to confirm`} placeholder={`Type ${name} to confirm`} value={typed} onChange={(e) => setTyped(e.target.value)} />
+      <div className="actions">
+        <button type="button" className="btn danger small" disabled={!matches || busy} onClick={del}>{busy ? "Deleting…" : "Delete for good"}</button>
+        <button type="button" className="btn alt small" onClick={() => { setOpen(false); setTyped(""); setErr(""); }}>Cancel</button>
+      </div>
+      {err && <div className="msg err" role="status">{err}</div>}
     </div>
   );
 }

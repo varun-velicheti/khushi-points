@@ -172,6 +172,8 @@ tr.undone td { color: var(--muted) }
 .sc-stats dd { margin: 4px 0 0; font-family: var(--f-display); font-weight: 800; font-size: 17px; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
 .sc-stats dd small { display: block; font-family: var(--f-body); font-weight: 600; font-size: 12px; color: var(--muted); margin-top: 2px }
 .sc-fail, .sc-stats dd small.sc-fail { color: var(--bad) }
+.btn.link.sc-del { color: var(--bad) }
+.sc-confirm { border-top: 1px solid var(--line); padding-top: 14px }
 .cap { text-transform: capitalize }
 .status { flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap }
 .status::before { content: "●"; margin-right: 5px; font-size: 9px; vertical-align: 1px }
