@@ -41,7 +41,7 @@ export default function Customers() {
                   <td>{r.name}</td>
                   <td className="mono">{fmtMobile(r.mobile)}</td>
                   <td className="num">{r.visits}</td>
-                  <td className="num"><b>{r.balance}</b> <span className="hint">{inr(r.balance * Number(shop.point_value))}</span></td>
+                  <td className="num"><b>{r.balance} pts</b><div className="hint">worth {inr(r.balance * Number(shop.point_value))}</div></td>
                   <td>{r.has_app ? <span className="chip app">Has app</span> : <span className="chip">No app yet</span>}</td>
                   <td className="hint">{r.last_visit ? when(r.last_visit) : ""}</td>
                 </tr>
