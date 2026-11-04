@@ -18,7 +18,7 @@
     "android": {
       "package": "app.khushipoints",
       "adaptiveIcon": {
-        "backgroundColor": "#0D5C55",
+        "backgroundColor": "#F0475A",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -35,7 +35,7 @@
       [
         "expo-notifications",
         {
-          "color": "#0D5C55"
+          "color": "#F0475A"
         }
       ],
       "expo-apple-authentication",
@@ -43,9 +43,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 180,
+          "imageWidth": 170,
           "resizeMode": "contain",
-          "backgroundColor": "#0D5C55"
+          "backgroundColor": "#F0475A"
         }
       ]
     ],

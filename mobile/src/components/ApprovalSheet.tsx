@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, Modal, Text, View } from "react-native";
+import { AppState, Modal, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { errorText, inr, rpc, type Pending } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useColors } from "../lib/theme";
-import { Btn, Note, ShopAvatar } from "./ui";
+import { Btn, K, Note, ShopAvatar } from "./ui";
 
 // Shows "Approve ₹X off at Shop?" when a cashier starts a redemption.
 // Checks every few seconds while the app is open, and right away when a notification arrives.
@@ -61,13 +61,13 @@ export default function ApprovalSheet() {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={() => (done ? close() : decide(false))}>
       <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }}>
-        <View style={{ backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, paddingBottom: 36, gap: 14 }}>
+        <View style={{ backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 36, gap: 14 }}>
           {req && !done && <>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
               <ShopAvatar size={48} />
               <View style={{ flex: 1 }}>
-                <Text style={{ color: c.muted, fontSize: 14 }}>{req.shop_name} wants to use your points</Text>
-                <Text style={{ color: c.ink, fontSize: 26, fontWeight: "800" }} accessibilityRole="header">Approve {inr(req.discount)} off?</Text>
+                <K s={14} c={c.muted}>{req.shop_name} wants to use your points</K>
+                <K w="heavy" s={24} accessibilityRole="header">Approve {inr(req.discount)} off?</K>
               </View>
             </View>
             <View style={{ backgroundColor: c.sunk, borderRadius: 14, padding: 14, gap: 6 }}>
@@ -75,10 +75,10 @@ export default function ApprovalSheet() {
               <Row label="Points used" value={`${req.points} pts`} />
               <Row label="You pay" value={inr(req.bill_amount - req.discount)} strong />
             </View>
-            <Text style={{ color: c.muted, fontSize: 13, textAlign: "center" }}>
+            <K s={13} c={c.muted} style={{ textAlign: "center" }}>
               Only approve if you are at {req.shop_name}'s counter now. Expires in {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}.
-            </Text>
-            <Btn title="Approve" kind="gold" icon="checkmark-circle" busy={busy === "approve"} disabled={!!busy} onPress={() => decide(true)} />
+            </K>
+            <Btn title="Approve" icon="checkmark-circle" busy={busy === "approve"} disabled={!!busy} onPress={() => decide(true)} />
             <Btn title="Decline" kind="alt" busy={busy === "decline"} disabled={!!busy} onPress={() => decide(false)} />
           </>}
           {done && <>
@@ -93,8 +93,8 @@ export default function ApprovalSheet() {
   function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
     return (
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={{ color: strong ? c.ink : c.muted, fontSize: 15, fontWeight: strong ? "800" : "500" }}>{label}</Text>
-        <Text style={{ color: c.ink, fontSize: 15, fontWeight: strong ? "800" : "600" }}>{value}</Text>
+        <K w={strong ? "heavy" : "regular"} s={15} c={strong ? c.ink : c.muted}>{label}</K>
+        <K w={strong ? "heavy" : "semibold"} s={15}>{value}</K>
       </View>
     );
   }

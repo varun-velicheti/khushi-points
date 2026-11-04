@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Linking, Pressable, Switch, Text, View } from "react-native";
+import { Linking, Pressable, Switch, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { errorText, inr, rpc, shortDate, when, type ShopDetail } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { category, useColors } from "../../lib/theme";
-import { Card, Label, Loading, Note, Screen, ShopAvatar } from "../../components/ui";
+import { Card, GradientHeader, HeaderButton, K, Loading, Note, Page, SectionTitle, ShopAvatar, type IconName } from "../../components/ui";
 
 export default function ShopPage() {
   const c = useColors();
@@ -27,13 +27,14 @@ export default function ShopPage() {
     try { await rpc("app_follow", { p_shop: id, p_follow: v }); } catch { setD({ ...d, following: !v }); }
   }
 
-  const back = (
-    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} accessibilityRole="button" accessibilityLabel="Back"
-      style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 6 }}>
-      <Ionicons name="chevron-back" size={22} color={c.brand} /><Text style={{ color: c.brand, fontSize: 16, fontWeight: "600" }}>Wallet</Text>
-    </Pressable>
+  const back = <HeaderButton icon="chevron-back" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />;
+  if (!d) return (
+    <Page header={<GradientHeader left={back} title="Shop" />}>
+      <View style={{ height: 16 }} />
+      {err ? <Note kind="err">{err}</Note> : <Loading />}
+    </Page>
   );
-  if (!d) return <Screen>{back}{err ? <Note kind="err">{err}</Note> : <Loading />}</Screen>;
+
   const s = d.shop;
   const place = [s.area, s.city].filter(Boolean).join(", ");
   const maps = s.lat != null && s.lng != null
@@ -41,90 +42,120 @@ export default function ShopPage() {
     : s.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.name}, ${s.address}`)}` : null;
 
   return (
-    <Screen refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }}>
-      {back}
-      <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
-        <ShopAvatar cat={s.category} size={60} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: c.ink, fontSize: 24, fontWeight: "900" }} accessibilityRole="header">{s.name}</Text>
-          <Text style={{ color: c.muted, fontSize: 14 }}>{[category(s.category).label, place].filter(Boolean).join(" · ")}</Text>
+    <Page refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} overlap={52}
+      header={
+        <GradientHeader tall left={back}>
+          <View style={{ alignItems: "center", gap: 6, marginTop: 2 }}>
+            <View style={{ borderRadius: 40, borderWidth: 4, borderColor: "rgba(255,255,255,0.35)" }}>
+              <ShopAvatar cat={s.category} size={68} onBrand />
+            </View>
+            <K w="heavy" s={22} c="#FFFFFF" accessibilityRole="header" style={{ textAlign: "center" }}>{s.name}</K>
+            <K w="semibold" s={13} c="rgba(255,255,255,0.9)" style={{ textAlign: "center" }}>{[category(s.category).label, place].filter(Boolean).join(" · ")}</K>
+          </View>
+        </GradientHeader>
+      }>
+      {/* points here */}
+      <Card>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+          <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="star" size={28} color={c.brand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <K s={13} c={c.muted}>Your points here</K>
+            <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+              <K w="heavy" s={30}>{d.points}</K>
+              <K w="semibold" s={14} c={c.muted}>worth {inr(d.value)}</K>
+            </View>
+          </View>
         </View>
-      </View>
-
-      <Card style={{ backgroundColor: c.brand, borderColor: c.brand }}>
-        <Text style={{ color: c.brandInk, opacity: 0.85, fontSize: 13, fontWeight: "700" }}>YOUR POINTS HERE</Text>
-        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-          <Text style={{ color: c.brandInk, fontSize: 44, fontWeight: "900" }}>{d.points}</Text>
-          <Text style={{ color: c.brandInk, fontSize: 16 }}>worth {inr(d.value)}</Text>
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+          <Fact top={`${Number(s.earn_pct)}%`} label="back on bills" />
+          <Fact top={`${s.min_redeem}`} label="pts to use" />
+          <Fact top={`${s.expiry_days}d`} label="points last" />
         </View>
-        <Text style={{ color: c.brandInk, opacity: 0.9, fontSize: 13, lineHeight: 19 }}>
-          {Number(s.earn_pct)}% back on every bill · use from {s.min_redeem} points, up to {s.max_redeem_pct}% of a bill · points last {s.expiry_days} days.
-          Only usable at {s.name}.
-        </Text>
+        <K s={12.5} c={c.muted}>Use up to {s.max_redeem_pct}% of a bill. Points work only at {s.name}.</K>
       </Card>
 
       {d.expiring.length > 0 && (
         <Note title="Use them soon">{d.expiring.map((x) => `${x.points} points expire on ${shortDate(x.expires_at)}`).join("\n")}</Note>
       )}
 
-      <Card>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: c.ink, fontSize: 16, fontWeight: "700" }}>Follow {s.name}</Text>
-            <Text style={{ color: c.muted, fontSize: 13 }}>Get their offers as notifications. At most 2 a week.</Text>
-          </View>
-          <Switch value={d.following} onValueChange={follow} trackColor={{ true: c.brand, false: c.line }} accessibilityLabel={`Follow ${s.name}`} />
+      <Card style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+          <Ionicons name={d.following ? "heart" : "heart-outline"} size={20} color={c.brand} />
         </View>
+        <View style={{ flex: 1 }}>
+          <K w="bold" s={15}>Follow {s.name}</K>
+          <K s={13} c={c.muted}>Get their offers as notifications. At most 2 a week.</K>
+        </View>
+        <Switch value={d.following} onValueChange={follow} trackColor={{ true: c.brand, false: c.line }} thumbColor="#FFFFFF" accessibilityLabel={`Follow ${s.name}`} />
       </Card>
 
-      {d.offers.length > 0 && <Label style={{ marginTop: 6 }}>Offers</Label>}
+      {d.offers.length > 0 && <SectionTitle title="Offers" />}
       {d.offers.map((o) => (
-        <Card key={o.id} style={{ borderColor: c.accent }}>
-          <Text style={{ color: c.ink, fontSize: 16, fontWeight: "800" }}>{o.title}</Text>
-          {o.body ? <Text style={{ color: c.muted, fontSize: 14 }}>{o.body}</Text> : null}
-          <Text style={{ color: c.muted, fontSize: 12 }}>{when(o.created_at)}{o.valid_until ? ` · valid until ${shortDate(o.valid_until)}` : ""}</Text>
+        <Card key={o.id} style={{ borderLeftWidth: 4, borderLeftColor: c.brand }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="pricetag" size={16} color={c.brand} />
+            <K w="heavy" s={16} style={{ flex: 1 }}>{o.title}</K>
+          </View>
+          {o.body ? <K s={14} c={c.muted}>{o.body}</K> : null}
+          <K s={12} c={c.muted}>{when(o.created_at)}{o.valid_until ? ` · valid until ${shortDate(o.valid_until)}` : ""}</K>
         </Card>
       ))}
 
-      {(s.about || s.address || s.hours || s.contact_phone) && (
+      {(s.about || s.address || s.hours || s.contact_phone) && <>
+        <SectionTitle title="About" />
         <Card>
-          {s.about ? <Text style={{ color: c.ink, fontSize: 15, lineHeight: 21 }}>{s.about}</Text> : null}
-          {s.hours ? <Info icon="time-outline" text={s.hours} /> : null}
-          {s.address ? <Info icon="location-outline" text={s.address} onPress={maps ? () => Linking.openURL(maps) : undefined} action="Directions" /> : null}
-          {s.contact_phone ? <Info icon="call-outline" text={s.contact_phone} onPress={() => Linking.openURL(`tel:${s.contact_phone}`)} action="Call" /> : null}
+          {s.about ? <K s={15} style={{ marginBottom: 4 }}>{s.about}</K> : null}
+          {s.hours ? <Info icon="time" text={s.hours} /> : null}
+          {s.address ? <Info icon="location" text={s.address} onPress={maps ? () => Linking.openURL(maps) : undefined} action="Directions" /> : null}
+          {s.contact_phone ? <Info icon="call" text={s.contact_phone} onPress={() => Linking.openURL(`tel:${s.contact_phone}`)} action="Call" /> : null}
         </Card>
-      )}
+      </>}
 
-      <Label style={{ marginTop: 6 }}>History</Label>
+      <SectionTitle title="History" />
       <Card style={{ gap: 0, paddingVertical: 6 }}>
-        {d.history.length === 0 ? <Text style={{ color: c.muted, paddingVertical: 10 }}>No visits yet.</Text> : d.history.map((h, i) => {
+        {d.history.length === 0 ? <K c={c.muted} style={{ paddingVertical: 10 }}>No visits yet.</K> : d.history.map((h, i) => {
           const sign = h.kind === "earn" ? "+" : "−";
           const col = h.undone ? c.muted : h.kind === "earn" ? c.good : h.kind === "redeem" ? c.ink : c.bad;
           const title = h.kind === "earn" ? `Bill ${h.amount != null ? inr(h.amount) : ""}` : h.kind === "redeem" ? `Used on a ${inr(h.amount ?? 0)} bill` : "Expired";
+          const icon: IconName = h.kind === "earn" ? "add-circle" : h.kind === "redeem" ? "gift" : "hourglass";
           return (
-            <View key={i} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line, gap: 2 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
-                <Text style={{ color: c.ink, fontSize: 15, fontWeight: "600", textDecorationLine: h.undone ? "line-through" : "none" }}>
-                  {title}{h.undone ? " (undone)" : ""}
-                </Text>
-                <Text style={{ color: col, fontSize: 15, fontWeight: "800" }}>{sign}{h.points}</Text>
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line }}>
+              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name={icon} size={18} color={c.brand} />
               </View>
-              <Text style={{ color: c.muted, fontSize: 12 }}>{when(h.at)}{h.bill_no ? ` · ${h.bill_no}` : ""}</Text>
-              {h.note ? <Text style={{ color: c.muted, fontSize: 13 }}>{h.note}</Text> : null}
+              <View style={{ flex: 1, gap: 1 }}>
+                <K w="semibold" s={15} style={{ textDecorationLine: h.undone ? "line-through" : "none" }}>{title}{h.undone ? " (undone)" : ""}</K>
+                <K s={12} c={c.muted}>{when(h.at)}{h.bill_no ? ` · ${h.bill_no}` : ""}</K>
+                {h.note ? <K s={13} c={c.muted}>{h.note}</K> : null}
+              </View>
+              <K w="heavy" s={16} c={col}>{sign}{h.points}</K>
             </View>
           );
         })}
       </Card>
-    </Screen>
+    </Page>
   );
 
-  function Info({ icon, text, onPress, action }: { icon: keyof typeof Ionicons.glyphMap; text: string; onPress?: () => void; action?: string }) {
+  function Fact({ top, label }: { top: string; label: string }) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.sunk, borderRadius: 14, paddingVertical: 10, alignItems: "center" }}>
+        <K w="heavy" s={16} c={c.brand}>{top}</K>
+        <K s={11.5} c={c.muted}>{label}</K>
+      </View>
+    );
+  }
+
+  function Info({ icon, text, onPress, action }: { icon: IconName; text: string; onPress?: () => void; action?: string }) {
     return (
       <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? "link" : undefined}
-        style={{ flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 4 }}>
-        <Ionicons name={icon} size={18} color={c.muted} />
-        <Text style={{ color: c.ink, fontSize: 14, flex: 1 }}>{text}</Text>
-        {action ? <Text style={{ color: c.brand, fontWeight: "700" }}>{action}</Text> : null}
+        style={{ flexDirection: "row", gap: 12, alignItems: "center", paddingVertical: 6 }}>
+        <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+          <Ionicons name={icon} size={16} color={c.brand} />
+        </View>
+        <K s={14} style={{ flex: 1 }}>{text}</K>
+        {action ? <K w="bold" s={14} c={c.brand}>{action}</K> : null}
       </Pressable>
     );
   }
