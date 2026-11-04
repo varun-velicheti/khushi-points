@@ -49,7 +49,7 @@ export default function Login() {
   return (
     <div className="wrap narrow">
       <Link to="/" className="brand" style={{ marginTop: 24, textDecoration: "none", color: "inherit" }}>
-        <div className="logo" aria-hidden="true">K</div>
+        <img className="logo" src="/icon.svg" alt="" />
         <div><h1>Khushi Points</h1><div className="shop">Loyalty points for your shop. No WhatsApp needed.</div></div>
       </Link>
       <form className="panel stack" style={{ marginTop: 20 }} onSubmit={submit}>

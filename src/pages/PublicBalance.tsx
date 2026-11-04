@@ -28,7 +28,7 @@ export default function PublicBalance() {
   return (
     <div className="wrap narrow">
       <div className="brand" style={{ marginTop: 24 }}>
-        <div className="logo" aria-hidden="true">K</div>
+        <img className="logo" src="/icon.svg" alt="" />
         <div><h1>{shop.shop}</h1><div className="shop">Loyalty points · Khushi Points</div></div>
       </div>
       <form className="panel stack" style={{ marginTop: 20 }} onSubmit={check} autoComplete="off">

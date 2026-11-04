@@ -7,7 +7,7 @@ export default function Landing() {
       <div className="wrap">
         <header className="top">
           <div className="brand">
-            <div className="logo" aria-hidden="true">K</div>
+            <img className="logo" src="/icon.svg" alt="" />
             <h1 style={{ fontSize: 21 }}>Khushi Points</h1>
           </div>
           <Link className="btn alt small" to="/login">Sign in</Link>

@@ -8,7 +8,7 @@ function Page({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="wrap narrow legal">
       <Link to="/" className="brand" style={{ marginTop: 24, textDecoration: "none", color: "inherit" }}>
-        <div className="logo" aria-hidden="true">K</div>
+        <img className="logo" src="/icon.svg" alt="" />
         <h1 style={{ fontSize: 21 }}>Khushi Points</h1>
       </Link>
       <article className="panel" style={{ marginTop: 20 }}>

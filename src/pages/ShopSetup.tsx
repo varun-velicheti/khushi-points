@@ -31,7 +31,7 @@ export default function ShopSetup({ embedded = false }: { embedded?: boolean }) 
     <div className={embedded ? "page" : "wrap narrow"}>
       {!embedded && (
         <div className="brand" style={{ marginTop: 24 }}>
-          <div className="logo" aria-hidden="true">K</div>
+          <img className="logo" src="/icon.svg" alt="" />
           <div><h1>Welcome</h1><div className="shop">{session?.user.email}</div></div>
         </div>
       )}

@@ -88,7 +88,7 @@ export default function Admin() {
     <div className="wrap admin">
       <header className="top">
         <div className="brand">
-          <div className="logo" aria-hidden="true">K</div>
+          <img className="logo" src="/icon.svg" alt="" />
           <div><h1>Khushi Points</h1><div className="shop">Admin · {session?.user.email}</div></div>
         </div>
         <div className="top-actions">

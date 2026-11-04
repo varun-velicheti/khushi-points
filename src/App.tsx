@@ -67,7 +67,7 @@ function Layout() {
     <div className="wrap">
       <header className="top">
         <div className="brand">
-          <div className="logo" aria-hidden="true">K</div>
+          <img className="logo" src="/icon.svg" alt="" />
           <div style={{ minWidth: 0 }}>
             <h1>Khushi Points</h1>
             <div className="shop">{current.shop.name} · {current.role === "owner" ? "Owner" : "Cashier"}</div>

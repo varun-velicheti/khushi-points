@@ -31,7 +31,7 @@ export default function ResetPassword() {
   return (
     <div className="wrap narrow">
       <div className="brand" style={{ marginTop: 24 }}>
-        <div className="logo" aria-hidden="true">K</div>
+        <img className="logo" src="/icon.svg" alt="" />
         <div><h1>Khushi Points</h1><div className="shop">{session?.user.email}</div></div>
       </div>
       {done ? (
