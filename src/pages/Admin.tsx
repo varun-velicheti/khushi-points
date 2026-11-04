@@ -137,24 +137,27 @@ export default function Admin() {
                 return (
                   <article className="shop-card" key={r.shop_id}>
                     <div className="sc-top">
-                      <div style={{ minWidth: 0 }}>
-                        <h3>{r.name}</h3>
-                        <div className="hint sc-owner">{r.owner_email ?? "no owner"} · joined {when(r.created_at)}</div>
-                      </div>
+                      <h3>{r.name}</h3>
                       <span className={`status ${st.cls}`}>{st.label}</span>
                     </div>
-                    <DayBars values={r.bills_by_day} height={44} />
+                    <div className="sc-meta">
+                      <div className="sc-owner" title={r.owner_email ?? ""}>{r.owner_email ?? "No owner"}</div>
+                      <div className="hint">Joined {when(r.created_at)} · last activity {r.last_activity ? when(r.last_activity) : "none yet"}</div>
+                    </div>
+                    <div className="sc-chart">
+                      <span className="sc-chart-label">Bills, last 14 days</span>
+                      <DayBars values={r.bills_by_day} height={48} />
+                    </div>
                     <dl className="sc-stats">
                       <div><dt>Bills 7d</dt><dd>{r.bills_7d}</dd></div>
                       <div><dt>Bills 30d</dt><dd>{r.bills_30d}</dd></div>
                       <div><dt>Sales 30d</dt><dd>{inr(r.sales_30d)}</dd></div>
                       <div><dt>Customers</dt><dd>{r.customers}</dd></div>
-                      <div><dt>Redeems 30d</dt><dd>{r.redeems_30d}{r.redeems_30d ? <span className="hint"> · {pct(r.redeems_pin_30d, r.redeems_30d)} PIN</span> : null}</dd></div>
-                      <div><dt>SMS 30d</dt><dd>{r.sms_30d}{r.sms_failed_7d ? <span className="sc-fail"> · {r.sms_failed_7d} failed</span> : null}</dd></div>
+                      <div><dt>Redeems 30d</dt><dd>{r.redeems_30d}{r.redeems_30d ? <small>{pct(r.redeems_pin_30d, r.redeems_30d)} by PIN</small> : null}</dd></div>
+                      <div><dt>SMS 30d</dt><dd>{r.sms_30d}{r.sms_failed_7d ? <small className="sc-fail">{r.sms_failed_7d} failed</small> : null}</dd></div>
                       <div><dt>Staff</dt><dd>{r.staff}</dd></div>
                       <div><dt>Plan</dt><dd className="cap">{r.plan}</dd></div>
                     </dl>
-                    <div className="hint">Last activity: {r.last_activity ? when(r.last_activity) : "none yet"}</div>
                   </article>
                 );
               })}
