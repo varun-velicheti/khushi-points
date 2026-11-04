@@ -5,12 +5,14 @@ import { Platform } from "react-native";
 import { errorText, inr, rpc, type Pending } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useColors } from "../lib/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Btn, K, Note, ShopAvatar } from "./ui";
 
 // Shows "Approve ₹X off at Shop?" when a cashier starts a redemption.
 // Checks every few seconds while the app is open, and right away when a notification arrives.
 export default function ApprovalSheet() {
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const { session, bump } = useAuth();
   const [req, setReq] = useState<Pending | null>(null);
   const [busy, setBusy] = useState<"approve" | "decline" | null>(null);
@@ -61,7 +63,7 @@ export default function ApprovalSheet() {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={() => (done ? close() : decide(false))}>
       <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" }}>
-        <View style={{ backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 36, gap: 14 }}>
+        <View style={{ backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 24 + insets.bottom, gap: 14 }}>
           {req && !done && <>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
               <ShopAvatar logo={req.logo_path} size={48} />

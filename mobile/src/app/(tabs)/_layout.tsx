@@ -1,10 +1,12 @@
 import type { ColorValue } from "react-native";
 import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { F, useColors } from "../../lib/theme";
 
 export default function TabsLayout() {
   const c = useColors();
+  const insets = useSafeAreaInsets();   // room for the phone's own buttons / gesture bar
   const icon = (on: keyof typeof Ionicons.glyphMap, off: keyof typeof Ionicons.glyphMap) =>
     ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) =>
       <Ionicons name={focused ? on : off} size={size} color={color} />;
@@ -12,7 +14,7 @@ export default function TabsLayout() {
     <Tabs screenOptions={{
       headerShown: false, tabBarActiveTintColor: c.brand, tabBarInactiveTintColor: c.muted,
       tabBarLabelStyle: { fontFamily: F.semibold, fontSize: 11.5 },
-      tabBarStyle: { backgroundColor: c.surface, borderTopWidth: 0, height: 64, paddingTop: 6,
+      tabBarStyle: { backgroundColor: c.surface, borderTopWidth: 0, height: 64 + insets.bottom, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 8),
         shadowColor: c.shadow, shadowOffset: { width: 0, height: -4 }, shadowOpacity: 1, shadowRadius: 12, elevation: 12 },
       sceneStyle: { backgroundColor: c.bg },
     }}>
