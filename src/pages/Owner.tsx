@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
-import { cleanMobile, errorText, inr, maskMobile, rpc, supabase, validMobile, when, type Shop } from "../lib";
+import { cleanMobile, errorText, inr, logoUrl, maskMobile, rpc, supabase, validMobile, when, type Shop } from "../lib";
 import { useShop } from "../shop";
 import UndoButton from "../Undo";
 
@@ -29,6 +29,7 @@ export default function Owner() {
       <ActivityPanel shop={shop} />
       <DeleteCustomer shop={shop} />
       <div className="actions"><Link className="btn link" to="/add-shop">Add or join another shop</Link></div>
+      <DeleteShop shop={shop} />
     </div>
   );
 }
@@ -61,7 +62,7 @@ const CATEGORIES: [string, string][] = [
 function Profile({ shop }: { shop: Shop }) {
   const { updateShop } = useShop();
   const [f, setF] = useState({
-    category: shop.category ?? "", about: shop.about ?? "", address: shop.address ?? "", area: shop.area ?? "",
+    name: shop.name, category: shop.category ?? "", about: shop.about ?? "", address: shop.address ?? "", area: shop.area ?? "",
     city: shop.city ?? "", contact_phone: shop.contact_phone ?? "", hours: shop.hours ?? "",
     lat: shop.lat?.toString() ?? "", lng: shop.lng?.toString() ?? "",
   });
@@ -85,7 +86,9 @@ function Profile({ shop }: { shop: Shop }) {
   }
   return (
     <form className="panel stack" onSubmit={save} autoComplete="off">
-      <div><h2>Shop profile</h2><p className="sub">What customers see about {shop.name} in their app.</p></div>
+      <div><h2>Shop details</h2><p className="sub">What customers see about {shop.name} in their app.</p></div>
+      <LogoPicker shop={shop} />
+      <div><label htmlFor="p-name">Shop name</label><input id="p-name" maxLength={80} value={f.name} onChange={set("name")} required /></div>
       <div className="row">
         <div><label htmlFor="p-cat">Type of shop</label>
           <select id="p-cat" value={f.category} onChange={set("category")}><option value="">Choose…</option>
@@ -103,7 +106,7 @@ function Profile({ shop }: { shop: Shop }) {
         <button type="button" className="btn alt small" onClick={locate}>Use this phone's location</button>
         <span className="hint">{f.lat && f.lng ? `Location saved: ${Number(f.lat).toFixed(4)}, ${Number(f.lng).toFixed(4)}` : "Do this while standing in the shop, for directions in the app."}</span>
       </div>
-      <div className="actions"><button className="btn">Save profile</button></div>
+      <div className="actions"><button className="btn">Save details</button></div>
       {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
     </form>
   );
@@ -247,7 +250,7 @@ function CustomerPage({ shop }: { shop: Shop }) {
 function Settings({ shop }: { shop: Shop }) {
   const { updateShop } = useShop();
   const [f, setF] = useState({
-    name: shop.name, earn_pct: String(shop.earn_pct), point_value: String(shop.point_value), min_bill: String(shop.min_bill),
+    earn_pct: String(shop.earn_pct), point_value: String(shop.point_value), min_bill: String(shop.min_bill),
     min_redeem: String(shop.min_redeem), max_redeem_pct: String(shop.max_redeem_pct), expiry_days: String(shop.expiry_days),
     one_bill_per_day: shop.one_bill_per_day, reminder_days: shop.reminder_days ?? [7, 1],
   });
@@ -273,7 +276,6 @@ function Settings({ shop }: { shop: Shop }) {
     <form className="panel stack" onSubmit={save} autoComplete="off">
       <div><h2>Points rules</h2><p className="sub">Example: a {inr(ex)} bill earns {exPts} points, worth {inr(exPts * (parseFloat(f.point_value) || 0))}.</p></div>
       <div className="row">
-        <div><label htmlFor="s-name">Shop name</label><input id="s-name" value={f.name} onChange={set("name")} /></div>
         <div><label htmlFor="s-pct">Points earned (% of bill)</label><input id="s-pct" inputMode="decimal" value={f.earn_pct} onChange={set("earn_pct")} /></div>
         <div><label htmlFor="s-val">Value of 1 point (₹)</label><input id="s-val" inputMode="decimal" value={f.point_value} onChange={set("point_value")} /></div>
       </div>
@@ -446,5 +448,103 @@ function PosConnect({ shop }: { shop: Shop }) {
         </>
       )}
     </div>
+  );
+}
+
+// Square shop picture shown to customers. Resized in the browser to 512x512 before upload.
+function LogoPicker({ shop }: { shop: Shop }) {
+  const { updateShop } = useShop();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const url = logoUrl(shop.logo_path);
+
+  async function pick(file: File | undefined) {
+    if (!file) return;
+    setMsg(null);
+    if (!file.type.startsWith("image/")) return setMsg({ kind: "err", text: "Choose a photo or image file." });
+    setBusy(true);
+    try {
+      const blob = await squareJpeg(file, 512);
+      const path = `${shop.id}/logo-${Date.now()}.jpg`;
+      const up = await supabase.storage.from("shop-logos").upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+      if (up.error) throw up.error;
+      const s = await rpc<Shop>("set_shop_logo", { p_shop: shop.id, p_path: path });
+      if (shop.logo_path) await supabase.storage.from("shop-logos").remove([shop.logo_path]);
+      updateShop(s);
+      setMsg({ kind: "ok", text: "Logo saved. Customers see it in the app." });
+    } catch (err) { setMsg({ kind: "err", text: errorText(err) }); } finally { setBusy(false); }
+  }
+  async function remove() {
+    setBusy(true); setMsg(null);
+    try {
+      const s = await rpc<Shop>("set_shop_logo", { p_shop: shop.id, p_path: null });
+      if (shop.logo_path) await supabase.storage.from("shop-logos").remove([shop.logo_path]);
+      updateShop(s);
+    } catch (err) { setMsg({ kind: "err", text: errorText(err) }); } finally { setBusy(false); }
+  }
+
+  return (
+    <div>
+      <span className="label">Logo or shop photo</span>
+      <div className="logo-pick">
+        <div className="logo-preview">{url ? <img src={url} alt={`${shop.name} logo`} /> : <span>{shop.name.trim().charAt(0).toUpperCase()}</span>}</div>
+        <div className="stack" style={{ gap: 8 }}>
+          <div className="actions">
+            <label className="btn alt small" style={{ margin: 0, textTransform: "none", letterSpacing: 0 }}>
+              {busy ? "Saving…" : url ? "Change picture" : "Add picture"}
+              <input type="file" accept="image/*" hidden disabled={busy} onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ""; }} />
+            </label>
+            {url && <button type="button" className="btn link small" onClick={remove} disabled={busy}>Remove</button>}
+          </div>
+          <span className="hint">A square picture works best. Customers see it next to your shop in the app.</span>
+        </div>
+      </div>
+      {msg && <div className={`msg ${msg.kind}`} role="status" style={{ marginTop: 10 }}>{msg.text}</div>}
+    </div>
+  );
+}
+
+// Crops the middle square of an image and shrinks it, so uploads stay small.
+async function squareJpeg(file: File, size: number): Promise<Blob> {
+  const img = await createImageBitmap(file);
+  const side = Math.min(img.width, img.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, size, size);
+  ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+  img.close();
+  return new Promise((ok, bad) => canvas.toBlob((b) => (b ? ok(b) : bad(new Error("BAD_LOGO"))), "image/jpeg", 0.85));
+}
+
+// Owner deletes the whole shop. They must type its name first.
+function DeleteShop({ shop }: { shop: Shop }) {
+  const { reload } = useShop();
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const matches = name.trim().toLowerCase() === shop.name.trim().toLowerCase();
+
+  async function del(e: FormEvent) {
+    e.preventDefault(); setErr("");
+    if (!matches) return setErr(errorText("CONFIRM_NAME"));
+    setBusy(true);
+    try {
+      if (shop.logo_path) await supabase.storage.from("shop-logos").remove([shop.logo_path]);
+      await rpc("delete_shop", { p_shop: shop.id, p_confirm: name });
+      await reload();
+      navigate("/", { replace: true });
+    } catch (e2) { setErr(errorText(e2)); setBusy(false); }
+  }
+  return (
+    <form className="panel stack danger-zone" onSubmit={del} autoComplete="off">
+      <div><h2>Delete this shop</h2>
+        <p className="sub">Deletes {shop.name} for good: all customers, their points and history, offers, staff and the billing connection. Customers lose their points here. This cannot be undone.</p></div>
+      <div><label htmlFor="del-shop">Type <b style={{ textTransform: "none" }}>{shop.name}</b> to confirm</label>
+        <input id="del-shop" value={name} onChange={(e) => setName(e.target.value)} placeholder={shop.name} /></div>
+      <div className="actions"><button className="btn danger" disabled={!matches || busy}>{busy ? "Deleting…" : "Delete shop for good"}</button></div>
+      {err && <div className="msg err" role="status">{err}</div>}
+    </form>
   );
 }

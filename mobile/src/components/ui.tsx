@@ -6,6 +6,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { logoUrl } from "../lib/api";
 import { category, F, useColors } from "../lib/theme";
 
 export type IconName = keyof typeof Ionicons.glyphMap;
@@ -116,8 +117,14 @@ export function IconTile({ icon, label, onPress }: { icon: IconName; label: stri
   );
 }
 
-export function ShopAvatar({ cat, size = 48, onBrand = false }: { cat?: string | null; size?: number; onBrand?: boolean }) {
+// Shop's own logo when it has one, otherwise an icon for its type of shop.
+export function ShopAvatar({ cat, logo, size = 48, onBrand = false }: { cat?: string | null; logo?: string | null; size?: number; onBrand?: boolean }) {
   const c = useColors();
+  const uri = logoUrl(logo);
+  if (uri) return (
+    <Image source={{ uri }} accessibilityIgnoresInvertColors
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: onBrand ? "#FFFFFF" : c.brandSoft }} />
+  );
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center",
       backgroundColor: onBrand ? "#FFFFFF" : c.brandSoft }}>

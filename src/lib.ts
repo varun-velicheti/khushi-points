@@ -10,11 +10,14 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 export const configured = Boolean(url && key);
 export const supabase = createClient(url || "http://localhost", key || "missing-key");
 
+// Public web address of a shop logo stored in the "shop-logos" bucket.
+export const logoUrl = (path?: string | null) => (path ? supabase.storage.from("shop-logos").getPublicUrl(path).data.publicUrl : null);
+
 export type Shop = {
   id: string; name: string; slug: string; join_code: string;
   category?: string | null; about?: string | null; address?: string | null; area?: string | null; city?: string | null;
   contact_phone?: string | null; hours?: string | null; lat?: number | null; lng?: number | null;
-  reminder_days?: number[];
+  reminder_days?: number[]; logo_path?: string | null;
   earn_pct: number; point_value: number; min_bill: number; min_redeem: number;
   max_redeem_pct: number; expiry_days: number; one_bill_per_day: boolean; plan: string;
 };
@@ -25,6 +28,8 @@ const MESSAGES: Record<string, string> = {
   NOT_SIGNED_IN: "Please sign in again.",
   NOT_A_MEMBER: "You are not staff at this shop.",
   OWNER_ONLY: "Only the shop owner can do this.",
+  CONFIRM_NAME: "Type the shop name exactly as shown to confirm.",
+  BAD_LOGO: "That picture could not be saved. Try another one.",
   BAD_MOBILE: "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",
   BILL_NO_REQUIRED: "Enter the bill number. Each bill earns points once.",
   BAD_AMOUNT: "Enter the bill amount.",

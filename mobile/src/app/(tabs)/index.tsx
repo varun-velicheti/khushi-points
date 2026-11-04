@@ -98,7 +98,7 @@ export default function Home() {
           renderItem={({ item: w }) => (
             <Pressable onPress={() => router.push(`/shop/${w.shop_id}`)} accessibilityRole="button" accessibilityLabel={`${w.name}, ${w.points} points`}
               style={{ width: 76, alignItems: "center", gap: 6 }}>
-              <ShopAvatar cat={w.category} size={64} />
+              <ShopAvatar cat={w.category} logo={w.logo_path} size={64} />
               <K w="semibold" s={12} numberOfLines={1} style={{ textAlign: "center" }}>{w.name}</K>
               <K w="bold" s={12} c={c.brand}>{w.points} pts</K>
             </Pressable>
@@ -131,7 +131,7 @@ export default function Home() {
         {list.map((w) => (
           <Card key={w.shop_id} onPress={() => router.push(`/shop/${w.shop_id}`)} accessibilityLabel={`${w.name}, ${w.points} points`}>
             <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-              <ShopAvatar cat={w.category} />
+              <ShopAvatar cat={w.category} logo={w.logo_path} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <K w="bold" s={16} numberOfLines={1}>{w.name}</K>
                 <K s={12.5} c={c.muted} numberOfLines={1}>

@@ -3,21 +3,21 @@ import { supabase } from "./supabase";
 export type WalletShop = {
   shop_id: string; name: string; category: string | null; area: string | null; city: string | null;
   points: number; value: number; expiring_30d: number; last_visit: string | null; following: boolean;
-  latest_offer: string | null; latest_offer_at: string | null;
+  latest_offer: string | null; latest_offer_at: string | null; logo_path: string | null;
 };
 export type Me = { name: string | null; phone: string | null; member_code: string; email: string | null; reminders: boolean };
-export type Activity = { shop_id: string; shop_name: string; kind: "earn" | "redeem"; points: number; amount: number; at: string };
+export type Activity = { shop_id: string; shop_name: string; kind: "earn" | "redeem"; points: number; amount: number; at: string; logo_path?: string | null };
 export type HistoryItem = { kind: "earn" | "redeem" | "expired"; points: number; amount: number | null; bill_no: string | null; note: string | null; at: string; undone: boolean };
 export type Offer = { id: number; title: string; body: string; valid_until: string | null; created_at: string };
 export type ShopDetail = {
   shop: { id: string; name: string; category: string | null; about: string | null; address: string | null; area: string | null;
     city: string | null; contact_phone: string | null; hours: string | null; lat: number | null; lng: number | null;
-    earn_pct: number; point_value: number; min_redeem: number; max_redeem_pct: number; expiry_days: number };
+    earn_pct: number; point_value: number; min_redeem: number; max_redeem_pct: number; expiry_days: number; logo_path?: string | null };
   following: boolean; points: number; value: number;
   expiring: { points: number; expires_at: string }[]; history: HistoryItem[]; offers: Offer[];
 };
-export type FeedOffer = { offer_id: number; shop_id: string; shop_name: string; title: string; body: string; valid_until: string | null; created_at: string };
-export type Pending = { request_id: string; shop_id: string; shop_name: string; points: number; discount: number; bill_amount: number; expires_at: string };
+export type FeedOffer = { offer_id: number; shop_id: string; shop_name: string; title: string; body: string; valid_until: string | null; created_at: string; logo_path?: string | null };
+export type Pending = { request_id: string; shop_id: string; shop_name: string; points: number; discount: number; bill_amount: number; expires_at: string; logo_path?: string | null };
 
 const MESSAGES: Record<string, string> = {
   BAD_MOBILE: "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",
@@ -54,6 +54,9 @@ export async function callFn<T>(name: string, body: Record<string, unknown>): Pr
   if (data?.error && data?.ok === undefined) throw new Error(errorText(data.error));
   return data as T;
 }
+
+// Public web address of a shop's logo picture (set by the owner on the shop website).
+export const logoUrl = (path?: string | null) => (path ? supabase.storage.from("shop-logos").getPublicUrl(path).data.publicUrl : null);
 
 export const inr = (n: number | string) => "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 export const shortDate = (t: string) => new Date(t).toLocaleDateString("en-IN", { day: "numeric", month: "short" });

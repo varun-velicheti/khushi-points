@@ -64,7 +64,7 @@ export default function ApprovalSheet() {
         <View style={{ backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22, paddingBottom: 36, gap: 14 }}>
           {req && !done && <>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <ShopAvatar size={48} />
+              <ShopAvatar logo={req.logo_path} size={48} />
               <View style={{ flex: 1 }}>
                 <K s={14} c={c.muted}>{req.shop_name} wants to use your points</K>
                 <K w="heavy" s={24} accessibilityRole="header">Approve {inr(req.discount)} off?</K>

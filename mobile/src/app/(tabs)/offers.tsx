@@ -5,7 +5,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { errorText, rpc, shortDate, when, type FeedOffer } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useColors } from "../../lib/theme";
-import { Card, GradientHeader, K, Loading, Note, Page } from "../../components/ui";
+import { Card, GradientHeader, K, Loading, Note, Page, ShopAvatar } from "../../components/ui";
 
 export default function Offers() {
   const c = useColors();
@@ -36,10 +36,12 @@ export default function Offers() {
       )}
       {list?.map((o) => (
         <Card key={o.offer_id} onPress={() => router.push(`/shop/${o.shop_id}`)} accessibilityLabel={`${o.shop_name}: ${o.title}`} style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
-          {/* ticket-style badge */}
-          <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="gift" size={30} color={c.brand} />
-          </View>
+          {/* shop logo, or a ticket-style badge */}
+          {o.logo_path ? <ShopAvatar logo={o.logo_path} size={64} /> : (
+            <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+              <Ionicons name="gift" size={30} color={c.brand} />
+            </View>
+          )}
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
             <K w="bold" s={12.5} c={c.brand} numberOfLines={1}>{o.shop_name}</K>
             <K w="heavy" s={16} numberOfLines={2}>{o.title}</K>
