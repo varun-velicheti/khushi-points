@@ -61,7 +61,7 @@ function Gate() {
 
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }} />
       {session ? <ApprovalSheet /> : null}
     </>

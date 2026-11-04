@@ -8,15 +8,6 @@
   --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141012; --surface: #1F181A; --sunk: #2A2124; --ink: #F6EDEF; --muted: #B6A4A8; --line: #3A2E31;
-    --brand: #FF6B7A; --brand-ink: #2A0A10; --brand-soft: #3B1E25; --accent: #F7B648; --accent-ink: #3A2600;
-    --grad-top: #E8505E; --grad-bottom: #B92741;
-    --good: #5FD38F; --good-bg: #163322; --bad: #FF8A8F; --bad-bg: #3D1A1E; --warn: #F7B648; --warn-bg: #35290C;
-    color-scheme: dark;
-  }
-}
 
 * { box-sizing: border-box }
 html, body { margin: 0 }
