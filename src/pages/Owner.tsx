@@ -109,7 +109,9 @@ function Profile({ shop }: { shop: Shop }) {
   );
 }
 
-type Offer = { id: number; title: string; body: string; valid_until: string | null; created_at: string; recipients: number };
+type Offer = { id: number; title: string; body: string; valid_until: string | null; created_at: string; recipients: number;
+  edited_at: string | null; removed_at: string | null };
+const shortDate = (d: string) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
 function Offers({ shop }: { shop: Shop }) {
   const [list, setList] = useState<Offer[]>([]);
@@ -144,14 +146,76 @@ function Offers({ shop }: { shop: Shop }) {
         {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
       </form>
       {list.length > 0 && (
-        <div className="tbl-wrap"><table>
-          <thead><tr><th>Sent</th><th>Offer</th><th>Valid until</th><th className="num">Followers</th></tr></thead>
-          <tbody>{list.map((o) => (
-            <tr key={o.id}><td>{when(o.created_at)}</td><td>{o.title}{o.body && <div className="hint">{o.body}</div>}</td>
-              <td>{o.valid_until ? new Date(o.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "–"}</td>
-              <td className="num">{o.recipients}</td></tr>))}</tbody>
-        </table></div>
+        <div className="stack">
+          <span className="label">Your offers</span>
+          {list.map((o) => <OfferRow key={o.id} shop={shop} offer={o} onChange={load} />)}
+          <p className="hint">Editing changes the offer in customers' apps without a new notification. A removed offer disappears from their apps but still counts toward this week's 2.</p>
+        </div>
       )}
+    </div>
+  );
+}
+
+function OfferRow({ shop, offer: o, onChange }: { shop: Shop; offer: Offer; onChange: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(o.title);
+  const [body, setBody] = useState(o.body);
+  const [until, setUntil] = useState(o.valid_until ?? "");
+  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const expired = !!o.valid_until && o.valid_until < new Date().toISOString().slice(0, 10);
+
+  async function save(e: FormEvent) {
+    e.preventDefault(); setErr(""); setBusy(true);
+    try {
+      await rpc("update_offer", { p_shop: shop.id, p_offer: o.id, p_title: title, p_body: body, p_valid_until: until || null });
+      setEditing(false); onChange();
+    } catch (x) { setErr(errorText(x)); } finally { setBusy(false); }
+  }
+  async function remove() {
+    if (!armed) return setArmed(true);
+    setBusy(true);
+    try { await rpc("remove_offer", { p_shop: shop.id, p_offer: o.id }); onChange(); }
+    catch (x) { setErr(errorText(x)); setArmed(false); } finally { setBusy(false); }
+  }
+
+  if (editing) {
+    return (
+      <form className="offer-card stack" onSubmit={save} autoComplete="off">
+        <div><label htmlFor={`oe-t-${o.id}`}>Offer</label><input id={`oe-t-${o.id}`} required minLength={3} maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+        <div><label htmlFor={`oe-b-${o.id}`}>Details</label><textarea id={`oe-b-${o.id}`} rows={2} maxLength={300} value={body} onChange={(e) => setBody(e.target.value)} /></div>
+        <div className="row"><div><label htmlFor={`oe-u-${o.id}`}>Valid until</label><input id={`oe-u-${o.id}`} type="date" value={until} onChange={(e) => setUntil(e.target.value)} /></div></div>
+        <div className="actions">
+          <button className="btn small" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button>
+          <button type="button" className="btn alt small" onClick={() => { setEditing(false); setTitle(o.title); setBody(o.body); setUntil(o.valid_until ?? ""); setErr(""); }}>Cancel</button>
+        </div>
+        {err && <div className="msg err">{err}</div>}
+      </form>
+    );
+  }
+  return (
+    <div className={`offer-card${o.removed_at ? " removed" : ""}`}>
+      <div className="offer-top">
+        <div style={{ minWidth: 0 }}>
+          <div className="offer-title">{o.title}</div>
+          {o.body && <div className="hint">{o.body}</div>}
+          <div className="hint">
+            Sent {when(o.created_at)} to {o.recipients} follower{o.recipients === 1 ? "" : "s"}
+            {o.valid_until ? ` · valid until ${shortDate(o.valid_until)}` : ""}
+            {o.edited_at && !o.removed_at ? " · edited" : ""}
+          </div>
+        </div>
+        {o.removed_at ? <span className="chip">Removed</span> : expired ? <span className="chip">Ended</span> : <span className="chip app">Live</span>}
+      </div>
+      {!o.removed_at && (
+        <div className="actions">
+          <button className="btn alt small" onClick={() => setEditing(true)}>Edit</button>
+          <button className={`btn small ${armed ? "danger" : "alt"}`} onClick={remove} disabled={busy}>{armed ? "Tap again to remove" : "Remove"}</button>
+          {armed && <button className="btn link small" onClick={() => setArmed(false)}>Keep</button>}
+        </div>
+      )}
+      {err && <div className="msg err">{err}</div>}
     </div>
   );
 }

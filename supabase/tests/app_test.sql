@@ -171,4 +171,12 @@ select public.add_bill(:'bir', null, null, 800, null, false, :'priya_code');
 select t.check((public.shop_dashboard(:'bir'))->>'repeat_30d' = '1', 'priya is a repeat customer');
 select t.check((public.shop_dashboard(:'bir'))->>'followers' = '2', 'followers count');
 reset role;
+-- a new shop types the number of an existing app user: no consent tick needed
+insert into auth.users values ('44444444-4444-4444-4444-444444444444', 'owner@bakery.in');
+select t.as_user('44444444-4444-4444-4444-444444444444');
+set role authenticated;
+select (public.create_shop('Karachi Bakery')).id as bak \gset
+select t.check((public.add_bill(:'bak', '7353862216', null, 1000))->>'has_app' = 'true', 'app user by number, no consent tick');
+select t.expect_error($$ select public.add_bill('$$ || :'bak' || $$', '9000000001', null, 1000) $$, 'CONSENT_REQUIRED');
+reset role;
 select 'ALL TESTS PASSED' as result;

@@ -37,6 +37,7 @@ const MESSAGES: Record<string, string> = {
   BAD_MEMBER_CODE: "That QR or member code is not a Khushi Points member. Ask the customer to show the QR in their app again.",
   OFFER_LIMIT: "You can send 2 offers a week, so customers do not get too many. Try again in a few days.",
   BAD_DATE: "The end date cannot be in the past.",
+  NO_OFFER: "That offer was already removed or does not exist.",
   NO_REQUEST: "That redemption request was not found.",
   PHONE_IN_USE: "This mobile number is already used by another Khushi Points account.",
   ALREADY_UNDONE: "This was already undone.",

@@ -195,3 +195,10 @@ tr.undone td { color: var(--muted) }
 @media (prefers-reduced-motion: no-preference) { .pulse { animation: pulse 1.2s ease-in-out infinite } @keyframes pulse { 50% { transform: scale(1.6); opacity: .4 } } }
 details.extra summary { cursor: pointer; color: var(--brand); font-weight: 600; font-size: 14px }
 textarea { width: 100%; font: 500 15px var(--f-body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); resize: vertical }
+
+/* offers list on the owner page */
+.offer-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--bg); display: flex; flex-direction: column; gap: 8px }
+.offer-card.removed { opacity: .6 }
+.offer-card.removed .offer-title { text-decoration: line-through }
+.offer-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start }
+.offer-title { font-weight: 700; font-size: 15.5px }
