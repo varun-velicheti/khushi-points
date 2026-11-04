@@ -1,8 +1,8 @@
 /* Khushi Points: warm coral, white rounded cards, matches the customer app. */
 :root {
-  --bg: #F7F3F4; --surface: #FFFFFF; --sunk: #F4ECEE; --ink: #1F1416; --muted: #6E5E62; --line: #EBDDE0;
-  --brand: #D42A45; --brand-ink: #FFFFFF; --brand-soft: #FFE9EC; --accent: #F5A524; --accent-ink: #3A2600;
-  --grad-top: #FF6B6B; --grad-bottom: #E9354F;
+  --bg: #F6F7FA; --surface: #FFFFFF; --sunk: #F1F2F6; --ink: #16181D; --muted: #5F6472; --line: #E6E8EE;
+  --brand: #E0304B; --brand-deep: #C8213C; --brand-ink: #FFFFFF; --brand-soft: #FFECEF; --accent: #F5A524; --accent-ink: #3A2600;
+  --grad-top: #FF5C6C; --grad-bottom: #D9223F; --brand-grad: linear-gradient(135deg, #F23D58, #D11E3B);
   --good: #14804A; --good-bg: #E3F6EA; --bad: #C42536; --bad-bg: #FDE8EA; --warn: #8F5500; --warn-bg: #FFF3DC;
   --f-display: "Plus Jakarta Sans", system-ui, sans-serif; --f-body: "Plus Jakarta Sans", system-ui, sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
@@ -27,13 +27,15 @@ h1 { font-family: var(--f-display); font-weight: 800; letter-spacing: -.01em; fo
 .top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
 .top-actions select { width: auto; padding: 7px 10px; font-size: 14px }
 
-nav.tabs { display: flex; gap: 4px; background: var(--sunk); padding: 4px; border-radius: 16px; margin-top: 16px }
+nav.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); padding: 5px; border-radius: 16px; margin-top: 16px; box-shadow: 0 4px 14px rgb(22 24 29 / .04) }
 nav.tabs a { flex: 1; text-align: center; padding: 9px 6px; border-radius: 12px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px }
-nav.tabs a.active { background: var(--surface); color: var(--brand); box-shadow: 0 1px 2px rgb(0 0 0 / .08) }
+nav.tabs a { transition: background .15s, color .15s }
+nav.tabs a:hover:not(.active) { background: var(--brand-soft); color: var(--brand-deep) }
+nav.tabs a.active { background: var(--brand-grad); color: var(--brand-ink); box-shadow: 0 6px 14px rgb(224 48 75 / .28) }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px }
 
 .page { margin-top: 20px; display: flex; flex-direction: column; gap: 20px }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 6px 18px rgb(176 52 72 / .07); padding: 18px; min-width: 0 }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 8px 24px rgb(22 24 29 / .05); padding: 18px; min-width: 0 }
 h2 { font-family: var(--f-display); font-weight: 700; font-size: 19px; margin: 0 0 4px; text-wrap: balance }
 .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 14px }
 .stack { display: flex; flex-direction: column; gap: 14px }
@@ -41,10 +43,12 @@ h2 { font-family: var(--f-display); font-weight: 700; font-size: 19px; margin: 0
 .seg { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px }
 .seg button { flex: 1; min-width: 96px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 10px;
   border-radius: 10px; font: 600 14px var(--f-body); cursor: pointer }
-.seg button[aria-pressed="true"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand) }
+.seg button:hover:not([aria-pressed="true"]) { border-color: var(--brand); color: var(--brand-deep) }
+.seg button[aria-pressed="true"] { background: var(--brand-grad); color: var(--brand-ink); border-color: transparent; box-shadow: 0 6px 14px rgb(224 48 75 / .25) }
 
 label, .label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px }
-input, select { width: 100%; font: 500 16px var(--f-body); padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink) }
+input, select { width: 100%; font: 500 16px var(--f-body); padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink) }
+input:focus, select:focus, textarea:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px rgb(224 48 75 / .14) }
 input.mono { font-family: var(--f-mono); letter-spacing: .04em }
 input.code { font-family: var(--f-mono); font-size: 24px; letter-spacing: .4em; text-align: center }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); font-weight: 500 }
@@ -53,16 +57,16 @@ input.code { font-family: var(--f-mono); font-size: 24px; letter-spacing: .4em; 
 .hint { font-size: 13px; color: var(--muted) }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 14px; padding: 12px 16px;
-  font: 700 15px var(--f-body); cursor: pointer; background: var(--brand); color: var(--brand-ink); text-decoration: none }
-.btn.alt { background: var(--sunk); color: var(--ink) }
-.btn.gold { background: var(--accent); color: var(--accent-ink) }
+  font: 700 15px var(--f-body); cursor: pointer; background: var(--brand-grad); color: var(--brand-ink); text-decoration: none; box-shadow: 0 6px 14px rgb(224 48 75 / .25) }
+.btn.alt { background: var(--brand-soft); color: var(--brand-deep); box-shadow: none }
+.btn.gold { background: var(--brand-grad); color: var(--brand-ink) }
 .btn.small { padding: 7px 12px; font-size: 13.5px }
-.btn.link { background: none; color: var(--brand); padding: 6px 0; font-weight: 600 }
-.btn.danger { background: var(--bad-bg); color: var(--bad) }
+.btn.link { background: none; color: var(--brand); padding: 6px 0; font-weight: 600; box-shadow: none }
+.btn.danger { background: var(--bad-bg); color: var(--bad); box-shadow: none }
 .btn:disabled { opacity: .5; cursor: not-allowed }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center }
 
-.preview { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--sunk); border-radius: 10px; padding: 10px 14px; font-size: 14px }
+.preview { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--brand-soft); color: var(--brand-deep); border-radius: 10px; padding: 10px 14px; font-size: 14px }
 .preview b { font-family: var(--f-display); font-size: 20px; font-stretch: 90% }
 .msg { border-radius: 10px; padding: 12px 14px; font-size: 14.5px }
 .msg.ok { background: var(--good-bg); color: var(--good) }
@@ -84,11 +88,11 @@ input.code { font-family: var(--f-mono); font-size: 24px; letter-spacing: .4em; 
 
 .tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px }
 table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 520px }
-th { text-align: left; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--sunk); padding: 9px 12px }
+th { text-align: left; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 700; background: var(--sunk); padding: 9px 12px }
 td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums }
 tr.click { cursor: pointer }
-tr.click:hover td { background: var(--bg) }
+tr.click:hover td { background: var(--brand-soft) }
 .mono { font-family: var(--f-mono); font-size: 13px }
 .chip { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--sunk); color: var(--muted) }
 .chip.earn { background: var(--good-bg); color: var(--good) }
@@ -96,9 +100,9 @@ tr.click:hover td { background: var(--bg) }
 .chip.pin { color: var(--brand) }
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px }
-.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; box-shadow: 0 8px 24px rgb(22 24 29 / .05); border-top: 4px solid var(--brand) }
 .kpi .k { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
-.kpi .v { font-family: var(--f-display); font-weight: 800; letter-spacing: -.01em; font-size: 28px; line-height: 1.15; font-variant-numeric: tabular-nums }
+.kpi .v { font-family: var(--f-display); font-weight: 800; letter-spacing: -.01em; font-size: 28px; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--brand-deep) }
 .kpi .n { font-size: 12.5px; color: var(--muted) }
 .codebox { font-family: var(--f-mono); font-size: 22px; letter-spacing: .15em; background: var(--sunk); padding: 6px 12px; border-radius: 8px; display: inline-block }
 .center { text-align: center }
@@ -122,7 +126,7 @@ tr.undone td { color: var(--muted) }
 .how h4 { font-family: var(--f-display); font-size: 17px; margin: 6px 0 4px }
 .how p { margin: 0 }
 .how .panel p:not(.hint):not(.label):not(.price) { color: var(--muted); font-size: 14.5px }
-.step-n { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: var(--brand-ink); font-family: var(--f-display); font-weight: 800; font-size: 14px }
+.step-n { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-grad); color: var(--brand-ink); font-family: var(--f-display); font-weight: 800; font-size: 14px }
 .price { font-family: var(--f-display); font-weight: 800; font-size: 30px; margin: 4px 0 }
 .price span { font-family: var(--f-body); font-weight: 500; font-size: 14px; color: var(--muted) }
 .panel.accent { border: 2px solid var(--accent) }
@@ -186,7 +190,7 @@ tr.undone td { color: var(--muted) }
 .pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--accent) }
 @media (prefers-reduced-motion: no-preference) { .pulse { animation: pulse 1.2s ease-in-out infinite } @keyframes pulse { 50% { transform: scale(1.6); opacity: .4 } } }
 details.extra summary { cursor: pointer; color: var(--brand); font-weight: 600; font-size: 14px }
-textarea { width: 100%; font: 500 15px var(--f-body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); resize: vertical }
+textarea { width: 100%; font: 500 15px var(--f-body); padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); resize: vertical }
 
 /* offers list on the owner page */
 .offer-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--bg); display: flex; flex-direction: column; gap: 8px }
