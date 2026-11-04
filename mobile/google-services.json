@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "950442573939",
+    "project_id": "khushi-points",
+    "storage_bucket": "khushi-points.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950442573939:android:b03347e86aef3f7264aa06",
+        "android_client_info": {
+          "package_name": "app.khushipoints"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2KaRm1kTTQn0m3r-hUwm_Rte6gwAR__Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
