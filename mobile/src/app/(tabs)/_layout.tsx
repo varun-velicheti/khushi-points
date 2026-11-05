@@ -1,12 +1,26 @@
-import type { ColorValue } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { AppState, type ColorValue } from "react-native";
 import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { rpc, type FeedOffer } from "../../lib/api";
+import { useAuth } from "../../lib/auth";
 import { F, useColors } from "../../lib/theme";
 
 export default function TabsLayout() {
   const c = useColors();
   const insets = useSafeAreaInsets();   // room for the phone's own buttons / gesture bar
+  const { version } = useAuth();
+
+  // Number of live offers from shops I follow, shown on the Offers tab.
+  const [offers, setOffers] = useState(0);
+  const count = useCallback(() => { rpc<FeedOffer[]>("app_offers").then((o) => setOffers(o.length)).catch(() => {}); }, []);
+  useEffect(() => { count(); }, [count, version]);
+  useEffect(() => {
+    const t = setInterval(count, 60000);
+    const sub = AppState.addEventListener("change", (s) => { if (s === "active") count(); });
+    return () => { clearInterval(t); sub.remove(); };
+  }, [count]);
   const icon = (on: keyof typeof Ionicons.glyphMap, off: keyof typeof Ionicons.glyphMap) =>
     ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) =>
       <Ionicons name={focused ? on : off} size={size} color={color} />;
@@ -20,7 +34,9 @@ export default function TabsLayout() {
     }}>
       <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: icon("home", "home-outline") }} />
       <Tabs.Screen name="qr" options={{ title: "My QR", tabBarIcon: icon("qr-code", "qr-code-outline") }} />
-      <Tabs.Screen name="offers" options={{ title: "Offers", tabBarIcon: icon("pricetags", "pricetags-outline") }} />
+      <Tabs.Screen name="offers" options={{ title: "Offers", tabBarIcon: icon("pricetags", "pricetags-outline"),
+        tabBarBadge: offers > 0 ? (offers > 9 ? "9+" : offers) : undefined,
+        tabBarBadgeStyle: { backgroundColor: c.brand, color: "#FFFFFF", fontFamily: F.bold, fontSize: 11 } }} />
       <Tabs.Screen name="me" options={{ title: "Profile", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );
