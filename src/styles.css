@@ -222,5 +222,17 @@ textarea { width: 100%; font: 500 16px var(--f-body); line-height: 1.5; padding:
 .reward-row { display: flex; align-items: center; gap: 12px }
 .reward-icon { font-size: 24px; line-height: 1 }
 
+/* owner page tabs: pill row, scrolls sideways on small screens */
+.pills { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 4px; margin: -2px -2px 0 }
+.pills::-webkit-scrollbar { display: none }
+.pills button { flex: none; border: 0; background: var(--surface); color: var(--ink); padding: 11px 22px; border-radius: 99px;
+  font: 600 15px var(--f-body); cursor: pointer; box-shadow: 0 2px 8px rgb(22 24 29 / .06); white-space: nowrap }
+.pills button:hover:not([aria-pressed="true"]) { color: var(--brand-deep) }
+.pills button[aria-pressed="true"] { background: var(--ink); color: var(--surface) }
+.kpis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.kpi-link { text-align: left; font: inherit; color: inherit; cursor: pointer; transition: transform .12s, box-shadow .12s }
+.kpi-link:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgb(22 24 29 / .09) }
+.kpi-link .n { color: var(--brand-deep); font-weight: 600 }
+
 /* phones: a little less padding */
 @media (max-width: 600px) { .panel { padding: 20px } .kpi { padding: 16px } nav.tabs a { font-size: 14px } .seg button { padding: 11px 6px; font-size: 14px } .row { grid-template-columns: 1fr }.shop-cards { grid-template-columns: 1fr } }

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { cleanMobile, errorText, inr, logoUrl, maskMobile, rpc, supabase, validMobile, when, type Shop } from "../lib";
 import { useShop } from "../shop";
@@ -14,44 +14,78 @@ type Dash = {
 type Staff = { user_id: string; email: string; role: string; joined_at: string };
 type Activity = { id: number; undone: boolean; created_at: string; kind: string; name: string; mobile: string; bill_no: string | null; amount: number; points: number; method: string | null };
 
+// The Owner page is split into four tabs by what the owner is doing. The tab (and an optional
+// section to scroll to) live in the address, e.g. /owner?tab=grow#winback, so links and reloads keep the place.
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "grow", label: "Grow" },
+  { id: "shop", label: "Shop" },
+  { id: "team", label: "Team & tools" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
 export default function Owner() {
   const { current } = useShop();
   const shop = current!.shop;
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = (TABS.find((x) => x.id === params.get("tab"))?.id ?? "overview");
+  const go = (t: Tab, section?: string) => {
+    setParams({ tab: t }, { replace: false });
+    window.scrollTo({ top: 0 });
+    if (section) setTimeout(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
+
   return (
     <div className="page">
-      <Dashboard shop={shop} />
-      <Offers shop={shop} />
-      <Rewards shop={shop} />
-      <WinBack shop={shop} />
-      <Profile shop={shop} />
-      <Settings shop={shop} />
-      <CustomerPage shop={shop} />
-      <StaffPanel shop={shop} />
-      <PosConnect shop={shop} />
-      <ActivityPanel shop={shop} />
-      <DeleteCustomer shop={shop} />
-      <div className="actions"><Link className="btn link" to="/add-shop">Add or join another shop</Link></div>
-      <DeleteShop shop={shop} />
+      <nav className="pills" aria-label="Owner sections">
+        {TABS.map((x) => (
+          <button key={x.id} type="button" aria-pressed={tab === x.id} onClick={() => go(x.id)}>{x.label}</button>
+        ))}
+      </nav>
+      {tab === "overview" && <>
+        <Dashboard shop={shop} go={go} />
+        <ActivityPanel shop={shop} />
+      </>}
+      {tab === "grow" && <>
+        <div id="offers"><Offers shop={shop} /></div>
+        <div id="rewards"><Rewards shop={shop} /></div>
+        <div id="winback"><WinBack shop={shop} /></div>
+      </>}
+      {tab === "shop" && <>
+        <Profile shop={shop} />
+        <Settings shop={shop} />
+        <CustomerPage shop={shop} />
+      </>}
+      {tab === "team" && <>
+        <StaffPanel shop={shop} />
+        <PosConnect shop={shop} />
+        <DeleteCustomer shop={shop} />
+        <div className="actions"><Link className="btn link" to="/add-shop">Add or join another shop</Link></div>
+        <DeleteShop shop={shop} />
+      </>}
     </div>
   );
 }
 
-function Dashboard({ shop }: { shop: Shop }) {
+function Dashboard({ shop, go }: { shop: Shop; go: (t: Tab, section?: string) => void }) {
   const [d, setD] = useState<Dash | null>(null);
   useEffect(() => { rpc<Dash>("shop_dashboard", { p_shop: shop.id }).then(setD).catch(() => {}); }, [shop.id]);
   if (!d) return <div className="kpis"><div className="kpi"><div className="k">Loading…</div></div></div>;
   const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) + "%" : "–");
-  const tiles: [string, string | number, string][] = [
+  // [label, value, note, where tapping goes]
+  const tiles: [string, string | number, string, (() => void)?][] = [
     ["Repeat customers, 30 days", d.repeat_30d, `${pct(d.repeat_30d, d.active_30d)} of ${d.active_30d} customers came back`],
     ["Sales with points, 30 days", inr(d.sales_30d), `${d.bills_30d} bills`],
-    ["Regulars", d.regulars, `${d.regular_visits}+ visits in 90 days`],
+    ["Regulars", d.regulars, `${d.regular_visits}+ visits in 90 days · Rewards →`, () => go("grow", "rewards")],
     ["Customers", d.customers, `${d.customers_app} use the app · ${d.followers} follow you`],
-    ["Not back in 30 days", d.lapsed, "Send them an offer"],
+    ["Not back in 30 days", d.lapsed, "Bring them back →", () => go("grow", "winback")],
     ["Points still owed", inr(d.points_owed * d.point_value), `${d.points_redeemed} redeemed · ${d.points_expired} expired`],
   ];
   return (
-    <div className="kpis">
-      {tiles.map(([k, v, n]) => <div className="kpi" key={k}><div className="k">{k}</div><div className="v">{v}</div><div className="n">{n}</div></div>)}
+    <div className="kpis kpis-3">
+      {tiles.map(([k, v, n, onClick]) => onClick
+        ? <button type="button" className="kpi kpi-link" key={k} onClick={onClick}><div className="k">{k}</div><div className="v">{v}</div><div className="n">{n}</div></button>
+        : <div className="kpi" key={k}><div className="k">{k}</div><div className="v">{v}</div><div className="n">{n}</div></div>)}
     </div>
   );
 }
