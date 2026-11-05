@@ -36,14 +36,14 @@ export default function Counter() {
 
   return (
     <div className="page">
+      <nav className="pills" role="group" aria-label="Counter action">
+        {(["earn", "redeem", "balance"] as Mode[]).map((m) => (
+          <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>
+            {m === "earn" ? "Add bill" : m === "redeem" ? "Redeem" : "Check balance"}
+          </button>
+        ))}
+      </nav>
       <div className="panel">
-        <div className="seg" role="group" aria-label="Counter action">
-          {(["earn", "redeem", "balance"] as Mode[]).map((m) => (
-            <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>
-              {m === "earn" ? "Add bill" : m === "redeem" ? "Redeem" : "Check balance"}
-            </button>
-          ))}
-        </div>
         {mode === "earn" && <Earn shop={shop} />}
         {mode === "redeem" && <Redeem shop={shop} />}
         {mode === "balance" && <BalanceCheck shop={shop} initial={initial} />}
