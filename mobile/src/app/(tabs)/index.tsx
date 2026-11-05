@@ -89,51 +89,16 @@ export default function Home() {
         </Card>
       )}
 
-      {/* your shops, as round avatars */}
+      {/* your shops: points, rewards and Regular status at each */}
       {list && list.length > 0 && <>
         <SectionTitle title="Your shops" />
-        <FlatList horizontal data={list} keyExtractor={(w) => w.shop_id} showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 14, paddingRight: 8 }}
-          renderItem={({ item: w }) => (
-            <Pressable onPress={() => router.push(`/shop/${w.shop_id}`)} accessibilityRole="button" accessibilityLabel={`${w.name}, ${w.points} points`}
-              style={{ width: 76, alignItems: "center", gap: 6 }}>
-              <View>
-                <ShopAvatar cat={w.category} logo={w.logo_path} size={64} />
-                {w.visits_90d >= w.regular_visits ? <View style={{ position: "absolute", right: -2, bottom: -2 }}><RegularBadge compact /></View> : null}
-              </View>
-              <K w="semibold" s={12} numberOfLines={1} style={{ textAlign: "center" }}>{w.name}</K>
-              <K w="bold" s={12} c={c.brand}>{w.points} pts</K>
-            </Pressable>
-          )} />
-      </>}
-
-      {/* offers carousel */}
-      {offers.length > 0 && <>
-        <SectionTitle title="Offers for you" action="View all" onAction={() => router.navigate("/offers")} />
-        <FlatList horizontal data={offers.slice(0, 6)} keyExtractor={(o) => String(o.offer_id)} showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 12, paddingRight: 8 }}
-          renderItem={({ item: o }) => (
-            <Pressable onPress={() => router.push(`/shop/${o.shop_id}`)} accessibilityRole="button" accessibilityLabel={`${o.shop_name}: ${o.title}`}>
-              <LinearGradient colors={[c.gradTop, c.gradBottom]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={{ width: 250, minHeight: 128, borderRadius: 20, padding: 16, gap: 6, justifyContent: "space-between" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Ionicons name="pricetag" size={14} color="#FFFFFF" />
-                  <K w="bold" s={12} c="rgba(255,255,255,0.9)" numberOfLines={1} style={{ flex: 1 }}>{o.shop_name}</K>
-                </View>
-                <K w="heavy" s={17} c="#FFFFFF" numberOfLines={2}>{o.title}</K>
-                <K w="semibold" s={12} c="rgba(255,255,255,0.85)">{o.valid_until ? `Valid until ${new Date(o.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "Tap to see the shop"}</K>
-              </LinearGradient>
-            </Pressable>
-          )} />
-      </>}
-
-      {/* points by shop */}
-      {list && list.length > 0 && <>
-        <SectionTitle title="Points by shop" />
         {list.map((w) => (
           <Card key={w.shop_id} onPress={() => router.push(`/shop/${w.shop_id}`)} accessibilityLabel={`${w.name}, ${w.points} points`}>
             <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-              <ShopAvatar cat={w.category} logo={w.logo_path} />
+              <View>
+                <ShopAvatar cat={w.category} logo={w.logo_path} />
+                {w.visits_90d >= w.regular_visits ? <View style={{ position: "absolute", right: -4, bottom: -4 }}><RegularBadge compact /></View> : null}
+              </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <K w="bold" s={16} numberOfLines={1}>{w.name}</K>
                 <K s={12.5} c={c.muted} numberOfLines={1}>
@@ -156,6 +121,26 @@ export default function Home() {
             {w.expiring_30d > 0 ? <K w="semibold" s={12.5} c={c.warn}>{w.expiring_30d} points expire within 30 days</K> : null}
           </Card>
         ))}
+      </>}
+
+      {/* offers carousel */}
+      {offers.length > 0 && <>
+        <SectionTitle title="Offers for you" action="View all" onAction={() => router.navigate("/offers")} />
+        <FlatList horizontal data={offers.slice(0, 6)} keyExtractor={(o) => String(o.offer_id)} showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 12, paddingRight: 8 }}
+          renderItem={({ item: o }) => (
+            <Pressable onPress={() => router.push(`/shop/${o.shop_id}`)} accessibilityRole="button" accessibilityLabel={`${o.shop_name}: ${o.title}`}>
+              <LinearGradient colors={[c.gradTop, c.gradBottom]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={{ width: 250, minHeight: 128, borderRadius: 20, padding: 16, gap: 6, justifyContent: "space-between" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Ionicons name="pricetag" size={14} color="#FFFFFF" />
+                  <K w="bold" s={12} c="rgba(255,255,255,0.9)" numberOfLines={1} style={{ flex: 1 }}>{o.shop_name}</K>
+                </View>
+                <K w="heavy" s={17} c="#FFFFFF" numberOfLines={2}>{o.title}</K>
+                <K w="semibold" s={12} c="rgba(255,255,255,0.85)">{o.valid_until ? `Valid until ${new Date(o.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "Tap to see the shop"}</K>
+              </LinearGradient>
+            </Pressable>
+          )} />
       </>}
 
       {/* recent activity */}
