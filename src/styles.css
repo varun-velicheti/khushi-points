@@ -235,4 +235,4 @@ textarea { width: 100%; font: 500 16px var(--f-body); line-height: 1.5; padding:
 .kpi-link .n { color: var(--brand-deep); font-weight: 600 }
 
 /* phones: a little less padding */
-@media (max-width: 600px) { .panel { padding: 20px } .kpi { padding: 16px } nav.tabs a { font-size: 14px } .seg button { padding: 11px 6px; font-size: 14px } .row { grid-template-columns: 1fr }.shop-cards { grid-template-columns: 1fr } }
+@media (max-width: 600px) { .panel { padding: 20px } .kpi { padding: 16px } nav.tabs a { font-size: 14px } .seg button { padding: 11px 6px; font-size: 14px } .row { grid-template-columns: 1fr }.shop-cards { grid-template-columns: 1fr } .kpis-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
