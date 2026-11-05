@@ -133,6 +133,23 @@ export function ShopAvatar({ cat, logo, size = 48, onBrand = false }: { cat?: st
   );
 }
 
+// Small "Regular" badge (star + word), or a star-only dot for tight spots.
+export function RegularBadge({ compact = false }: { compact?: boolean }) {
+  const c = useColors();
+  if (compact) return (
+    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: c.accent, borderWidth: 2, borderColor: "#FFFFFF",
+      alignItems: "center", justifyContent: "center" }} accessibilityLabel="Regular">
+      <Ionicons name="star" size={12} color="#FFFFFF" />
+    </View>
+  );
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: c.warnBg, borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, alignSelf: "flex-start" }}>
+      <Ionicons name="star" size={12} color={c.warn} />
+      <K w="bold" s={12} c={c.warn}>Regular</K>
+    </View>
+  );
+}
+
 export function SectionTitle({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   const c = useColors();
   return (

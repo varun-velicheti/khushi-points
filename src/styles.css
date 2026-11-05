@@ -192,6 +192,8 @@ tr.undone td { color: var(--muted) }
 .picker input { flex: 1; min-width: 0 }
 .who { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 15px; background: var(--sunk); padding: 12px 16px; border-radius: 12px }
 .chip.app { background: var(--good-bg); color: var(--good) }
+.chip.regular { background: var(--brand-soft); color: var(--brand-deep) }
+.chip.regular::before { content: "★ " }
 .waiting { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 10px 0 }
 .waiting .big { font-size: 56px }
 .pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--accent) }

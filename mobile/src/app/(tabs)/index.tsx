@@ -7,7 +7,7 @@ import { errorText, inr, rpc, when, type Activity, type FeedOffer, type WalletSh
 import { useAuth } from "../../lib/auth";
 import { category, useColors } from "../../lib/theme";
 import ActivityRow from "../../components/ActivityRow";
-import { Btn, Card, GradientHeader, HeaderButton, IconTile, K, Loading, LogoMark, Note, Page, SectionTitle, ShopAvatar } from "../../components/ui";
+import { Btn, Card, GradientHeader, HeaderButton, IconTile, K, Loading, LogoMark, Note, Page, RegularBadge, SectionTitle, ShopAvatar } from "../../components/ui";
 
 export default function Home() {
   const c = useColors();
@@ -98,7 +98,10 @@ export default function Home() {
           renderItem={({ item: w }) => (
             <Pressable onPress={() => router.push(`/shop/${w.shop_id}`)} accessibilityRole="button" accessibilityLabel={`${w.name}, ${w.points} points`}
               style={{ width: 76, alignItems: "center", gap: 6 }}>
-              <ShopAvatar cat={w.category} logo={w.logo_path} size={64} />
+              <View>
+                <ShopAvatar cat={w.category} logo={w.logo_path} size={64} />
+                {w.visits_90d >= w.regular_visits ? <View style={{ position: "absolute", right: -2, bottom: -2 }}><RegularBadge compact /></View> : null}
+              </View>
               <K w="semibold" s={12} numberOfLines={1} style={{ textAlign: "center" }}>{w.name}</K>
               <K w="bold" s={12} c={c.brand}>{w.points} pts</K>
             </Pressable>
@@ -143,6 +146,8 @@ export default function Home() {
                 <K s={11.5} c={c.muted}>pts · {inr(w.value)}</K>
               </View>
             </View>
+            {w.visits_90d >= w.regular_visits ? <RegularBadge />
+              : <K s={12.5} c={c.muted}>{w.visits_90d} of {w.regular_visits} visits to become a Regular</K>}
             {w.expiring_30d > 0 ? <K w="semibold" s={12.5} c={c.warn}>{w.expiring_30d} points expire within 30 days</K> : null}
           </Card>
         ))}

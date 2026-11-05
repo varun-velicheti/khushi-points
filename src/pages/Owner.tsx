@@ -7,7 +7,7 @@ import UndoButton from "../Undo";
 
 type Dash = {
   customers: number; customers_app: number; followers: number; bills_30d: number; sales_30d: number;
-  active_30d: number; repeat_30d: number; lapsed: number;
+  active_30d: number; repeat_30d: number; lapsed: number; regulars: number; regular_visits: number;
   points_given: number; points_redeemed: number; points_expired: number; redeems_app: number;
   points_owed: number; point_value: number; offers_7d: number;
 };
@@ -42,6 +42,7 @@ function Dashboard({ shop }: { shop: Shop }) {
   const tiles: [string, string | number, string][] = [
     ["Repeat customers, 30 days", d.repeat_30d, `${pct(d.repeat_30d, d.active_30d)} of ${d.active_30d} customers came back`],
     ["Sales with points, 30 days", inr(d.sales_30d), `${d.bills_30d} bills`],
+    ["Regulars", d.regulars, `${d.regular_visits}+ visits in 90 days`],
     ["Customers", d.customers, `${d.customers_app} use the app · ${d.followers} follow you`],
     ["Not back in 30 days", d.lapsed, "Send them an offer"],
     ["Points still owed", inr(d.points_owed * d.point_value), `${d.points_redeemed} redeemed · ${d.points_expired} expired`],
@@ -252,7 +253,7 @@ function Settings({ shop }: { shop: Shop }) {
   const [f, setF] = useState({
     earn_pct: String(shop.earn_pct), point_value: String(shop.point_value), min_bill: String(shop.min_bill),
     min_redeem: String(shop.min_redeem), max_redeem_pct: String(shop.max_redeem_pct), expiry_days: String(shop.expiry_days),
-    one_bill_per_day: shop.one_bill_per_day, reminder_days: shop.reminder_days ?? [7, 1],
+    one_bill_per_day: shop.one_bill_per_day, reminder_days: shop.reminder_days ?? [7, 1], regular_visits: String(shop.regular_visits ?? 5),
   });
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -264,6 +265,8 @@ function Settings({ shop }: { shop: Shop }) {
 
   async function save(e: FormEvent) {
     e.preventDefault(); setMsg(null);
+    const rv = Number(f.regular_visits);
+    if (!Number.isInteger(rv) || rv < 2 || rv > 30) return setMsg({ kind: "err", text: "Visits to become a Regular must be between 2 and 30." });
     try {
       const s = await rpc<Shop>("update_shop_settings", { p_shop: shop.id, p: f });
       updateShop(s);
@@ -290,7 +293,9 @@ function Settings({ shop }: { shop: Shop }) {
           <select id="s-day" value={f.one_bill_per_day ? "1" : "0"} onChange={(e) => setF({ ...f, one_bill_per_day: e.target.value === "1" })}>
             <option value="1">Only the highest bill earns</option><option value="0">Every bill earns</option>
           </select></div>
+        <div><label htmlFor="s-reg">Visits to become a Regular</label><input id="s-reg" inputMode="numeric" value={f.regular_visits} onChange={set("regular_visits")} /></div>
       </div>
+      <p className="hint" style={{ margin: 0 }}>A customer becomes a Regular after that many visits in the last 90 days (a visit is a day with a bill). They see a badge in the app and get a note when they make it.</p>
       <div>
         <span className="label">Remind customers before points expire</span>
         <div className="actions">

@@ -76,6 +76,27 @@ export default function ShopPage() {
         <K s={12.5} c={c.muted}>Use up to {s.max_redeem_pct}% of a bill. Points work only at {s.name}.</K>
       </Card>
 
+      {/* Regular status: progress over the last 90 days */}
+      <Card>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+          <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: d.is_regular ? c.accent : c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name={d.is_regular ? "star" : "star-outline"} size={22} color={d.is_regular ? "#FFFFFF" : c.brand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <K w="bold" s={16}>{d.is_regular ? `You're a Regular here` : `${Math.max(0, s.regular_visits - d.visits_90d)} more visit${s.regular_visits - d.visits_90d === 1 ? "" : "s"} to become a Regular`}</K>
+            <K s={13} c={c.muted}>{d.is_regular
+              ? `Visit ${s.regular_visits} times every 90 days to keep it.`
+              : `${s.regular_visits} visits in 90 days makes you a Regular at ${s.name}.`}</K>
+          </View>
+        </View>
+        <View style={{ flexDirection: "row", gap: 5, marginTop: 6 }} accessibilityLabel={`${Math.min(d.visits_90d, s.regular_visits)} of ${s.regular_visits} visits in the last 90 days`}>
+          {Array.from({ length: s.regular_visits }, (_, i) => (
+            <View key={i} style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: i < d.visits_90d ? (d.is_regular ? c.accent : c.brand) : c.sunk }} />
+          ))}
+        </View>
+        <K s={12} c={c.muted}>{d.visits_90d} visit{d.visits_90d === 1 ? "" : "s"} in the last 90 days · {d.visits} in total</K>
+      </Card>
+
       {d.expiring.length > 0 && (
         <Note title="Use them soon">{d.expiring.map((x) => `${x.points} points expire on ${shortDate(x.expires_at)}`).join("\n")}</Note>
       )}

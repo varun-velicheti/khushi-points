@@ -17,7 +17,7 @@ export type Shop = {
   id: string; name: string; slug: string; join_code: string;
   category?: string | null; about?: string | null; address?: string | null; area?: string | null; city?: string | null;
   contact_phone?: string | null; hours?: string | null; lat?: number | null; lng?: number | null;
-  reminder_days?: number[]; logo_path?: string | null;
+  reminder_days?: number[]; logo_path?: string | null; regular_visits?: number;
   earn_pct: number; point_value: number; min_bill: number; min_redeem: number;
   max_redeem_pct: number; expiry_days: number; one_bill_per_day: boolean; plan: string;
 };
