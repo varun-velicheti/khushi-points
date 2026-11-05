@@ -97,6 +97,42 @@ export default function ShopPage() {
         <K s={12} c={c.muted}>{d.visits_90d} visit{d.visits_90d === 1 ? "" : "s"} in the last 90 days · {d.visits} in total</K>
       </Card>
 
+      {/* rewards unlocked: show at the counter */}
+      {(d.rewards ?? []).map((r) => (
+        <Card key={`g${r.id}`} style={{ backgroundColor: c.goodBg, flexDirection: "row", alignItems: "center", gap: 14 }}>
+          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="gift" size={26} color={c.good} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <K w="bold" s={12} c={c.good}>REWARD UNLOCKED</K>
+            <K w="heavy" s={17}>{r.title}</K>
+            {r.details ? <K s={13} c={c.muted}>{r.details}</K> : null}
+            <K s={12.5} c={c.good}>Show this at the counter · valid until {shortDate(r.expires_at)}</K>
+          </View>
+        </Card>
+      ))}
+
+      {/* what this shop gives, and how close I am */}
+      {(d.programs ?? []).length > 0 && <>
+        <SectionTitle title="Rewards here" />
+        <Card style={{ gap: 0, paddingVertical: 6 }}>
+          {(d.programs ?? []).map((p, i) => (
+            <View key={p.id} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line }}>
+              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name={p.trigger === "regular" ? "star" : "gift-outline"} size={18} color={c.brand} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <K w="semibold" s={15}>{p.title}</K>
+                <K s={12.5} c={c.muted}>{p.trigger === "visits" ? `Every ${p.every_visits} visits` : "For Regulars"}{p.details ? ` · ${p.details}` : ""}</K>
+              </View>
+              <K w="bold" s={12.5} c={c.brand} style={{ textAlign: "right" }}>
+                {p.trigger === "regular" && d.is_regular ? "Unlocked" : `${p.visits_left} more visit${p.visits_left === 1 ? "" : "s"}`}
+              </K>
+            </View>
+          ))}
+        </Card>
+      </>}
+
       {d.expiring.length > 0 && (
         <Note title="Use them soon">{d.expiring.map((x) => `${x.points} points expire on ${shortDate(x.expires_at)}`).join("\n")}</Note>
       )}

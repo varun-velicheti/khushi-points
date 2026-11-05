@@ -217,5 +217,10 @@ textarea { width: 100%; font: 500 16px var(--f-body); line-height: 1.5; padding:
 .danger-zone { border-color: #F4C5CB }
 .danger-zone h2 { color: var(--bad) }
 
+/* rewards waiting at the counter */
+.reward-box { background: var(--warn-bg); border: 1px solid #F6D9A0; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px }
+.reward-row { display: flex; align-items: center; gap: 12px }
+.reward-icon { font-size: 24px; line-height: 1 }
+
 /* phones: a little less padding */
 @media (max-width: 600px) { .panel { padding: 20px } .kpi { padding: 16px } nav.tabs a { font-size: 14px } .seg button { padding: 11px 6px; font-size: 14px } .row { grid-template-columns: 1fr }.shop-cards { grid-template-columns: 1fr } }

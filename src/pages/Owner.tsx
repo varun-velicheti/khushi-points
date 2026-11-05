@@ -21,6 +21,7 @@ export default function Owner() {
     <div className="page">
       <Dashboard shop={shop} />
       <Offers shop={shop} />
+      <Rewards shop={shop} />
       <Profile shop={shop} />
       <Settings shop={shop} />
       <CustomerPage shop={shop} />
@@ -551,5 +552,85 @@ function DeleteShop({ shop }: { shop: Shop }) {
       <div className="actions"><button className="btn danger" disabled={!matches || busy}>{busy ? "Deleting…" : "Delete shop for good"}</button></div>
       {err && <div className="msg err" role="status">{err}</div>}
     </form>
+  );
+}
+
+const ordinal = (n: number) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th");
+
+// Rewards that are not discounts: unlocked by visits, handed over at the counter.
+type RewardRow = { id: number; title: string; details: string; trigger: "visits" | "regular"; every_visits: number | null;
+  active: boolean; unlocked_30d: number; given_30d: number; waiting: number };
+
+function Rewards({ shop }: { shop: Shop }) {
+  const [list, setList] = useState<RewardRow[]>([]);
+  const [title, setTitle] = useState("");
+  const [details, setDetails] = useState("");
+  const [trigger, setTrigger] = useState<"visits" | "regular">("visits");
+  const [every, setEvery] = useState("5");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const load = () => rpc<RewardRow[]>("shop_rewards", { p_shop: shop.id }).then(setList).catch(() => {});
+  useEffect(() => { load(); }, [shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function add(e: FormEvent) {
+    e.preventDefault(); setMsg(null);
+    const n = Number(every);
+    if (trigger === "visits" && (!Number.isInteger(n) || n < 2 || n > 50)) return setMsg({ kind: "err", text: "Choose a number of visits from 2 to 50." });
+    setBusy(true);
+    try {
+      await rpc("add_reward", { p_shop: shop.id, p_title: title, p_details: details, p_trigger: trigger, p_every: trigger === "visits" ? n : null });
+      setMsg({ kind: "ok", text: "Reward added. Customers see it in the app and unlock it from their next visit." });
+      setTitle(""); setDetails(""); load();
+    } catch (err) { setMsg({ kind: "err", text: errorText(err) }); } finally { setBusy(false); }
+  }
+  async function toggle(r: RewardRow) {
+    try { await rpc("update_reward", { p_shop: shop.id, p_reward: r.id, p_title: r.title, p_details: r.details, p_active: !r.active }); load(); }
+    catch (err) { setMsg({ kind: "err", text: errorText(err) }); }
+  }
+  async function remove(r: RewardRow) {
+    if (!window.confirm(`Remove "${r.title}"? Customers who already unlocked it can still collect it.`)) return;
+    try { await rpc("remove_reward", { p_shop: shop.id, p_reward: r.id }); load(); }
+    catch (err) { setMsg({ kind: "err", text: errorText(err) }); }
+  }
+  const when_ = (r: RewardRow) => r.trigger === "visits" ? `Every ${ordinal(r.every_visits ?? 0)} visit` : `When a customer becomes a Regular (${shop.regular_visits ?? 5} visits in 90 days)`;
+
+  return (
+    <div className="panel stack">
+      <div><h2>Rewards</h2><p className="sub">Thank-yous that bring customers back without giving away money: a free chai, a sample, a small gift. Customers unlock them by visiting; your cashier hands them over at the counter.</p></div>
+      {list.length > 0 && (
+        <div className="stack" style={{ gap: 10 }}>
+          {list.map((r) => (
+            <div className={`offer-card${r.active ? "" : " removed"}`} key={r.id}>
+              <div className="offer-top">
+                <div style={{ minWidth: 0 }}><div className="offer-title">{r.title}</div><div className="hint">{when_(r)}{r.details ? ` · ${r.details}` : ""}</div></div>
+                <span className={`chip${r.active ? " earn" : ""}`}>{r.active ? "On" : "Paused"}</span>
+              </div>
+              <div className="hint">Last 30 days: {r.unlocked_30d} unlocked · {r.given_30d} given · {r.waiting} waiting to be collected</div>
+              <div className="actions">
+                <button type="button" className="btn alt small" onClick={() => toggle(r)}>{r.active ? "Pause" : "Turn on"}</button>
+                <button type="button" className="btn link small" style={{ color: "var(--bad)" }} onClick={() => remove(r)}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {list.length < 5 && (
+        <form className="stack" onSubmit={add} autoComplete="off">
+          <span className="label">{list.length ? "Add another reward" : "Add your first reward"}</span>
+          <div><label htmlFor="r-title">Reward</label><input id="r-title" required minLength={2} maxLength={60} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Free masala chai" /></div>
+          <div className="row">
+            <div><label htmlFor="r-when">Customers get it</label>
+              <select id="r-when" value={trigger} onChange={(e) => setTrigger(e.target.value as "visits" | "regular")}>
+                <option value="visits">Every few visits</option><option value="regular">When they become a Regular</option>
+              </select></div>
+            {trigger === "visits" && <div><label htmlFor="r-every">Every how many visits</label><input id="r-every" inputMode="numeric" value={every} onChange={(e) => setEvery(e.target.value)} /></div>}
+          </div>
+          <div><label htmlFor="r-details">Details (optional)</label><input id="r-details" maxLength={200} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Any size. Dine-in or takeaway." /></div>
+          <div className="actions"><button className="btn" disabled={busy}>{busy ? "Adding…" : "Add reward"}</button></div>
+        </form>
+      )}
+      {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
+      <p className="hint" style={{ margin: 0 }}>A visit is a day with a bill. Unlocked rewards stay valid for 60 days. Undoing a bill takes back a reward it unlocked, if not yet given.</p>
+    </div>
   );
 }

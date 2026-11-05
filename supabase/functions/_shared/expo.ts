@@ -33,12 +33,19 @@ export async function sendExpo(admin: SupabaseClient, msgs: PushMsg[]): Promise<
 
 type EarnRow = {
   token: string; shop_id: string; shop_name: string; points: number; balance: number;
-  visits_90d: number; regular_visits: number; new_visit: boolean;
+  visits_90d: number; regular_visits: number; new_visit: boolean; rewards?: string | null;
 };
-// Points earned. On the visit that makes them a Regular, say so; one visit before, give a nudge.
+// Points earned. A reward this bill unlocked comes first; then becoming a Regular; one visit before, a nudge.
 export function earnedMessage(r: EarnRow): { title: string; body: string } {
   const balance = `You now have ${r.balance} points there.`;
-  if (r.new_visit && r.visits_90d === r.regular_visits) {
+  const becameRegular = r.new_visit && r.visits_90d === r.regular_visits;
+  if (r.rewards) {
+    return {
+      title: `You unlocked ${r.rewards} at ${r.shop_name}`,
+      body: `${becameRegular ? "You're now a Regular! " : ""}Show it at the counter to collect it. You earned ${r.points} points.`,
+    };
+  }
+  if (becameRegular) {
     return { title: `You're a Regular at ${r.shop_name}!`, body: `You earned ${r.points} points. ${balance}` };
   }
   const left = r.regular_visits - r.visits_90d;

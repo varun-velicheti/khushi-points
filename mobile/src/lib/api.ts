@@ -4,7 +4,7 @@ export type WalletShop = {
   shop_id: string; name: string; category: string | null; area: string | null; city: string | null;
   points: number; value: number; expiring_30d: number; last_visit: string | null; following: boolean;
   latest_offer: string | null; latest_offer_at: string | null; logo_path: string | null;
-  visits_90d: number; regular_visits: number;
+  visits_90d: number; regular_visits: number; rewards_ready: number;
 };
 export type Me = { name: string | null; phone: string | null; member_code: string; email: string | null; reminders: boolean };
 export type Activity = { shop_id: string; shop_name: string; kind: "earn" | "redeem"; points: number; amount: number; at: string; logo_path?: string | null };
@@ -16,6 +16,8 @@ export type ShopDetail = {
     earn_pct: number; point_value: number; min_redeem: number; max_redeem_pct: number; expiry_days: number; logo_path?: string | null;
     regular_visits: number };
   following: boolean; points: number; value: number; visits: number; visits_90d: number; is_regular: boolean;
+  rewards: { id: number; title: string; details: string; earned_at: string; expires_at: string }[];
+  programs: { id: number; title: string; details: string; trigger: "visits" | "regular"; every_visits: number | null; visits_left: number }[];
   expiring: { points: number; expires_at: string }[]; history: HistoryItem[]; offers: Offer[];
 };
 export type FeedOffer = { offer_id: number; shop_id: string; shop_name: string; title: string; body: string; valid_until: string | null; created_at: string; logo_path?: string | null };

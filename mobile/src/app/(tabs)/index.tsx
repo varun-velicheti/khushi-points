@@ -33,6 +33,7 @@ export default function Home() {
   const total = (list ?? []).reduce((a, w) => a + w.points, 0);
   const value = (list ?? []).reduce((a, w) => a + Number(w.value), 0);
   const expiring = (list ?? []).reduce((a, w) => a + w.expiring_30d, 0);
+  const ready = (list ?? []).reduce((a, w) => a + (w.rewards_ready ?? 0), 0);
   const first = me?.name?.split(" ")[0];
 
   return (
@@ -59,6 +60,12 @@ export default function Home() {
           </View>
           <Ionicons name="chevron-forward" size={22} color={c.muted} />
         </View>
+        {ready > 0 ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: c.goodBg, borderRadius: 10, padding: 8, marginTop: 4 }}>
+            <Ionicons name="gift" size={16} color={c.good} />
+            <K w="semibold" s={13} c={c.good}>{ready} reward{ready === 1 ? "" : "s"} to collect · open the shop to see</K>
+          </View>
+        ) : null}
         {expiring > 0 ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: c.warnBg, borderRadius: 10, padding: 8, marginTop: 4 }}>
             <Ionicons name="time-outline" size={16} color={c.warn} />
@@ -146,6 +153,12 @@ export default function Home() {
                 <K s={11.5} c={c.muted}>pts · {inr(w.value)}</K>
               </View>
             </View>
+            {w.rewards_ready > 0 ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                <Ionicons name="gift" size={14} color={c.good} />
+                <K w="bold" s={12.5} c={c.good}>{w.rewards_ready} reward{w.rewards_ready === 1 ? "" : "s"} ready to collect</K>
+              </View>
+            ) : null}
             {w.visits_90d >= w.regular_visits ? <RegularBadge />
               : <K s={12.5} c={c.muted}>{w.visits_90d} of {w.regular_visits} visits to become a Regular</K>}
             {w.expiring_30d > 0 ? <K w="semibold" s={12.5} c={c.warn}>{w.expiring_30d} points expire within 30 days</K> : null}

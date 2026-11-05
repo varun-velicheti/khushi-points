@@ -89,6 +89,48 @@ function CustomerPicker({ id, value, onChange, shop, onLookup }: {
 const pointsFor = (shop: Shop, amount: number) =>
   amount >= Number(shop.min_bill) ? Math.floor((amount * Number(shop.earn_pct)) / 100 / Number(shop.point_value)) : 0;
 
+/* ------------------------------------------------------------------ rewards waiting at the counter */
+
+type RewardWaiting = { grant_id: number; title: string; details: string; earned_at: string; expires_at: string; txn_id: number | null };
+
+// Shows the customer's unlocked rewards with a "Give now" button. Reloads when `version` changes.
+function RewardsDue({ shop, who, version = 0, newTxn }: { shop: Shop; who: Who; version?: number; newTxn?: number }) {
+  const [list, setList] = useState<RewardWaiting[] | null>(null);
+  const [given, setGiven] = useState<string[]>([]);
+  const [err, setErr] = useState("");
+  const key = who.member ?? who.mobile;
+  useEffect(() => {
+    let stale = false;
+    setList(null); setGiven([]); setErr("");
+    rpc<RewardWaiting[]>("customer_rewards", { p_shop: shop.id, ...whoArgs(who) })
+      .then((r) => { if (!stale) setList(r); }).catch(() => { if (!stale) setList([]); });
+    return () => { stale = true; };
+  }, [key, shop.id, version]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function give(g: RewardWaiting) {
+    setErr("");
+    try { await rpc("use_reward", { p_shop: shop.id, p_grant: g.grant_id }); setGiven((x) => [...x, g.title]); setList((l) => l?.filter((y) => y.grant_id !== g.grant_id) ?? null); }
+    catch (e) { setErr(errorText(e)); }
+  }
+  if (!list || (list.length === 0 && given.length === 0)) return null;
+  return (
+    <div className="reward-box" role="status">
+      {list.map((g) => (
+        <div className="reward-row" key={g.grant_id}>
+          <span className="reward-icon" aria-hidden="true">🎁</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <b>{g.txn_id && g.txn_id === newTxn ? "Just unlocked: " : "Reward to give: "}{g.title}</b>
+            <div className="hint">{g.details ? `${g.details} · ` : ""}valid until {new Date(g.expires_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div>
+          </div>
+          <button type="button" className="btn small" onClick={() => give(g)}>Give now</button>
+        </div>
+      ))}
+      {given.map((t, i) => <div className="hint" key={i}>✓ {t} given</div>)}
+      {err && <div className="msg err">{err}</div>}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ earn */
 
 function Earn({ shop }: { shop: Shop }) {
@@ -102,6 +144,7 @@ function Earn({ shop }: { shop: Shop }) {
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ kind: "ok" | "err" | "info"; title: string; body?: string; txnId?: number } | null>(null);
+  const [lastWho, setLastWho] = useState<Who | null>(null);   // customer of the bill just added, to show rewards it unlocked
 
   const amt = parseFloat(amount) || 0;
   const pts = pointsFor(shop, amt);
@@ -125,6 +168,7 @@ function Earn({ shop }: { shop: Shop }) {
             body: `This ${inr(amt)} bill earns ${r.bill_points} points. ${r.earlier_today} were already given today for the ${inr(r.earlier_bill)} bill, so ${r.points} more were added. Balance ${r.balance} points.${appLine}` }
         : { kind: "ok", txnId: r.txn_id, title: `${r.points} points added${r.is_new ? " · new customer" : ""}`,
             body: `${r.name} now has ${r.balance} points, worth ${inr(r.value)}.${appLine}` });
+      setLastWho(who);
       setRaw(""); setBillNo(""); setAmount(""); setNote(""); setName(""); setConsent(false);
     } catch (err) {
       setResult({ kind: "err", title: "Points not added", body: (err as Error).message });
@@ -143,6 +187,7 @@ function Earn({ shop }: { shop: Shop }) {
           {info.has_app ? <span className="chip app">Has app</span> : <span className="chip">No app yet</span>}
         </div>
       )}
+      {who && info?.exists && <RewardsDue shop={shop} who={who} />}
       {isNewByNumber && <>
         <div><label htmlFor="e-name">Name (optional)</label><input id="e-name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} /></div>
         <label className="check" htmlFor="e-consent">
@@ -164,6 +209,7 @@ function Earn({ shop }: { shop: Shop }) {
       </div>
       <div className="actions"><button className="btn" disabled={busy || (isNewByNumber && !consent)}>{busy ? "Adding…" : "Add points"}</button></div>
       {result && <div className={`msg ${result.kind}`} role="status"><strong>{result.title}</strong>{result.body}</div>}
+      {result?.kind === "ok" && result.txnId && lastWho && <RewardsDue shop={shop} who={lastWho} newTxn={result.txnId} version={result.txnId} />}
       {result?.txnId && (
         <div className="actions"><span className="hint">Typed something wrong?</span>
           <UndoButton shopId={shop.id} txnId={result.txnId} label="Undo this bill"
@@ -328,6 +374,7 @@ function BalanceCheck({ shop, initial }: { shop: Shop; initial: string }) {
       <div><h2>Check balance</h2><p className="sub">Scan the customer's app QR or type their number.</p></div>
       <CustomerPicker id="b-who" value={raw} onChange={setRaw} shop={shop} onLookup={onLookup} />
       {who && b && !b.exists && <div className="msg info"><strong>No points yet</strong>This customer has not earned points here. Add a bill to start.</div>}
+      {who && b?.exists && <RewardsDue shop={shop} who={who} />}
       {who && b?.exists && (
         <div className="receipt">
           <div className="r"><span>{b.name}</span><span>{b.mobile ? fmtMobile(b.mobile) : "App member"}</span></div>
