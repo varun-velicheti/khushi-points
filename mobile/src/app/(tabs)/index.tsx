@@ -7,7 +7,7 @@ import { errorText, inr, rpc, when, type Activity, type FeedOffer, type WalletSh
 import { useAuth } from "../../lib/auth";
 import { category, useColors } from "../../lib/theme";
 import ActivityRow from "../../components/ActivityRow";
-import { Btn, Card, GradientHeader, HeaderButton, IconTile, K, Loading, LogoMark, Note, Page, RegularBadge, SectionTitle, ShopAvatar } from "../../components/ui";
+import { Btn, Card, GradientHeader, HeaderButton, K, Loading, LogoMark, Note, Page, RegularBadge, SectionTitle, ShopAvatar } from "../../components/ui";
 
 export default function Home() {
   const c = useColors();
@@ -72,14 +72,6 @@ export default function Home() {
             <K w="semibold" s={13} c={c.warn}>{expiring} points expire within 30 days</K>
           </View>
         ) : null}
-      </Card>
-
-      {/* quick actions */}
-      <Card style={{ flexDirection: "row", paddingVertical: 18 }}>
-        <IconTile icon="qr-code" label="My QR" onPress={() => router.navigate("/qr")} />
-        <IconTile icon="pricetags" label="Offers" onPress={() => router.navigate("/offers")} />
-        <IconTile icon="receipt" label="Activity" onPress={() => router.push("/activity")} />
-        <IconTile icon="person" label="Profile" onPress={() => router.navigate("/me")} />
       </Card>
 
       {err ? <Note kind="err">{err}</Note> : null}
