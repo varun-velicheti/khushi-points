@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { Switch, TextInput, View } from "react-native";
-import { router } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { AppState, Linking, Platform, Switch, TextInput, View } from "react-native";
+import * as Notifications from "expo-notifications";
+import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { callFn, errorText, rpc } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -24,6 +25,18 @@ export default function Profile() {
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   useEffect(() => { setName(me?.name ?? ""); }, [me?.name]);
+
+  // Are notifications allowed on this phone? Checked when the page opens and when coming back from Settings.
+  const [push, setPush] = useState<"on" | "off" | "unknown">("unknown");
+  const checkPush = useCallback(() => {
+    if (Platform.OS === "web") return setPush("off");
+    Notifications.getPermissionsAsync().then((p) => setPush(p.granted ? "on" : "off")).catch(() => {});
+  }, []);
+  useFocusEffect(useCallback(() => { checkPush(); }, [checkPush]));
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (s) => { if (s === "active") checkPush(); });
+    return () => sub.remove();
+  }, [checkPush]);
 
   const input = [s.input, { borderColor: c.line, backgroundColor: c.bg, color: c.ink }];
   const digits = phone.replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "");
@@ -51,11 +64,14 @@ export default function Profile() {
       setMsg({ kind: "ok", text: r.linked_shops ? `Number added. Points from ${r.linked_shops} shop${r.linked_shops === 1 ? "" : "s"} are now in your wallet.` : "Number added." });
     } catch (e) { setMsg({ kind: "err", text: errorText(e) }); } finally { setBusy(null); }
   }
+  // Off: ask the phone to allow them (or open Settings if it was refused before).
+  // On: open the phone's settings for this app, where each kind (points, offers, approvals) can be switched.
   async function notifications() {
+    if (push === "on") return Linking.openSettings();
     const r = await registerForPush();
-    setMsg(r === "on" ? { kind: "ok", text: "Notifications are on." }
-      : r === "off" ? { kind: "info", text: "Notifications are off. Turn them on in your phone's Settings for Khushi Points." }
-      : { kind: "info", text: "Notifications are not available on this device yet." });
+    if (r === "off") return Linking.openSettings();
+    checkPush();
+    if (r === "unavailable") setMsg({ kind: "info", text: "Notifications are not available on this device." });
   }
   async function deleteAccount() {
     if (!confirmDelete) return setConfirmDelete(true);
@@ -123,7 +139,10 @@ export default function Profile() {
         <ListRow icon="time" label="Expiry reminders" detail="A note before points expire, at 10:30 AM"
           right={<Switch value={me?.reminders ?? true} trackColor={{ true: c.brand, false: c.line }} thumbColor="#FFFFFF" accessibilityLabel="Expiry reminders"
             onValueChange={async (v) => { await rpc("app_set_reminders", { p_on: v }).catch(() => {}); refreshMe(); }} />} />
-        <ListRow icon="notifications" label="Notifications" detail="Points earned, offers, approvals" onPress={notifications} />
+        <ListRow icon={push === "off" ? "notifications-off" : "notifications"} label="Notifications" onPress={notifications}
+          detail={push === "on" ? "On · points earned, offers, approvals. Tap to change in phone settings."
+            : push === "off" ? "Off · tap to turn on. You'll miss approvals and offers." : "Points earned, offers, approvals"}
+          right={<K w="bold" s={13} c={push === "on" ? c.good : push === "off" ? c.bad : c.muted}>{push === "on" ? "On" : push === "off" ? "Off" : ""}</K>} />
         <ListRow icon="receipt" label="Activity" detail="Points earned and used" onPress={() => router.push("/activity")} />
       </Card>
 
