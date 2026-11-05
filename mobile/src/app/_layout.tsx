@@ -50,11 +50,11 @@ function Gate() {
     if (Platform.OS === "web") return;
     const got = Notifications.addNotificationReceivedListener((n) => {
       const t = (n.request.content.data as { type?: string })?.type;
-      if (t === "earn" || t === "expiry" || t === "offer") bump();
+      if (t === "earn" || t === "expiry" || t === "offer" || t === "winback") bump();
     });
     const tap = Notifications.addNotificationResponseReceivedListener((r) => {
       const d = r.notification.request.content.data as { type?: string; shop_id?: string };
-      if (d?.shop_id && (d.type === "offer" || d.type === "earn" || d.type === "expiry")) { bump(); router.push(`/shop/${d.shop_id}`); }
+      if (d?.shop_id && (d.type === "offer" || d.type === "earn" || d.type === "expiry" || d.type === "winback")) { bump(); router.push(`/shop/${d.shop_id}`); }
     });
     return () => { got.remove(); tap.remove(); };
   }, [bump]);

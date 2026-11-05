@@ -2,6 +2,7 @@
 //   { action: "offer",  shop_id, offer_id }     owner sends a new offer to the shop's followers
 //   { action: "redeem", shop_id, request_id }   cashier asks the customer to approve a redemption
 //   { action: "earn",   shop_id, txn_id }       "You earned N points" after a bill at the counter
+//   { action: "winback", shop_id, winback_id }  owner's note to customers who have not been back
 // Never sends SMS or WhatsApp.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -17,7 +18,7 @@ Deno.serve(async (req) => {
   const asUser = createClient(env("SUPABASE_URL"), env("SUPABASE_ANON_KEY"), {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
   });
-  const ownerOnly = b.action === "offer";
+  const ownerOnly = b.action === "offer" || b.action === "winback";
   const { data: ok } = await asUser.rpc("is_member", { p_shop: b.shop_id, p_owner_only: ownerOnly });
   if (ok !== true) return json({ error: ownerOnly ? "OWNER_ONLY" : "NOT_A_MEMBER" }, 403);
   const admin = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
@@ -29,6 +30,17 @@ Deno.serve(async (req) => {
       to: r.token, title: `${r.shop_name}: ${r.title}`, body: r.body || "Tap to see the offer",
       data: { type: "offer", shop_id: b.shop_id, offer_id: b.offer_id }, channelId: "offers",
     }));
+    return json({ sent: msgs.length ? await sendExpo(admin, msgs) : 0, devices: msgs.length });
+  }
+
+  if (b.action === "winback") {
+    const { data: rows, error } = await admin.rpc("push_targets_for_winback", { p_winback: b.winback_id });
+    if (error) return json({ error: "PUSH_FAILED" });
+    const msgs: Msg[] = (rows ?? []).filter((r: { shop_id: string }) => r.shop_id === b.shop_id)
+      .map((r: { token: string; shop_name: string; message: string; gift_title: string | null }) => ({
+        to: r.token, title: r.gift_title ? `${r.shop_name} has a gift for you: ${r.gift_title}` : `A note from ${r.shop_name}`,
+        body: r.message, data: { type: "winback", shop_id: b.shop_id }, channelId: "offers",
+      }));
     return json({ sent: msgs.length ? await sendExpo(admin, msgs) : 0, devices: msgs.length });
   }
 

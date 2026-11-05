@@ -22,6 +22,7 @@ export default function Owner() {
       <Dashboard shop={shop} />
       <Offers shop={shop} />
       <Rewards shop={shop} />
+      <WinBack shop={shop} />
       <Profile shop={shop} />
       <Settings shop={shop} />
       <CustomerPage shop={shop} />
@@ -631,6 +632,86 @@ function Rewards({ shop }: { shop: Shop }) {
       )}
       {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
       <p className="hint" style={{ margin: 0 }}>A visit is a day with a bill. Unlocked rewards stay valid for 60 days. Undoing a bill takes back a reward it unlocked, if not yet given.</p>
+    </div>
+  );
+}
+
+// Win-back: one note to customers who have not been back in 30-120 days, optionally with a gift.
+type WinPreview = { lapsed: number; reachable: number; not_reachable: number; next_allowed: string | null;
+  people: { name: string; mobile: string | null; last_visit: string; visits: number }[] };
+type WinPast = { id: number; message: string; gift_title: string | null; created_at: string; recipients: number; came_back: number };
+
+function WinBack({ shop }: { shop: Shop }) {
+  const [p, setP] = useState<WinPreview | null>(null);
+  const [past, setPast] = useState<WinPast[]>([]);
+  const [rewards, setRewards] = useState<{ id: number; title: string }[]>([]);
+  const [message, setMessage] = useState(`We miss you at ${shop.name}! Drop by this week, we'd love to see you again.`);
+  const [gift, setGift] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const load = () => {
+    rpc<WinPreview>("winback_preview", { p_shop: shop.id }).then(setP).catch(() => {});
+    rpc<WinPast[]>("shop_winbacks", { p_shop: shop.id }).then(setPast).catch(() => {});
+    rpc<{ id: number; title: string }[]>("shop_rewards", { p_shop: shop.id }).then(setRewards).catch(() => {});
+  };
+  useEffect(() => { load(); }, [shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function send(e: FormEvent) {
+    e.preventDefault(); setMsg(null); setBusy(true);
+    try {
+      const r = await rpc<{ winback_id: number; recipients: number }>("send_winback", { p_shop: shop.id, p_message: message, p_reward: gift ? Number(gift) : null });
+      const { data } = await supabase.functions.invoke("push", { body: { action: "winback", shop_id: shop.id, winback_id: r.winback_id } });
+      setMsg({ kind: "ok", text: `Note sent to ${r.recipients} customer${r.recipients === 1 ? "" : "s"}${data?.devices ? ` (${data.devices} phone${data.devices === 1 ? "" : "s"})` : ""}.` });
+      load();
+    } catch (err) { setMsg({ kind: "err", text: errorText(err) }); } finally { setBusy(false); }
+  }
+  const waitUntil = p?.next_allowed ? new Date(p.next_allowed) : null;
+
+  return (
+    <div className="panel stack">
+      <div><h2>Bring customers back</h2>
+        <p className="sub">Send one personal note to customers who have not visited in 30 days. It arrives in their Khushi Points app. Each customer gets at most one note every 60 days, and you can send once a week.</p></div>
+      {p && (
+        <div className="kpis">
+          <div className="kpi"><div className="k">Not back in 30 days</div><div className="v">{p.lapsed}</div><div className="n">Last visit 30 to 120 days ago</div></div>
+          <div className="kpi"><div className="k">A note reaches</div><div className="v">{p.reachable}</div><div className="n">{p.not_reachable} don't use the app or had a note recently</div></div>
+        </div>
+      )}
+      {p && p.people.length > 0 && (
+        <details className="extra">
+          <summary>See who ({p.people.length}{p.reachable > p.people.length ? ` of ${p.reachable}` : ""})</summary>
+          <div className="tbl-wrap"><table><thead><tr><th>Customer</th><th>Mobile</th><th className="num">Visits</th><th>Last visit</th></tr></thead>
+            <tbody>{p.people.map((x, i) => <tr key={i}><td>{x.name}</td><td className="mono">{maskMobile(x.mobile)}</td><td className="num">{x.visits}</td><td className="hint">{when(x.last_visit)}</td></tr>)}</tbody></table></div>
+        </details>
+      )}
+      <form className="stack" onSubmit={send} autoComplete="off">
+        <div><label htmlFor="w-msg">Your note</label><textarea id="w-msg" rows={2} minLength={5} maxLength={200} required value={message} onChange={(e) => setMessage(e.target.value)} />
+          <p className="hint" style={{ margin: "6px 0 0" }}>{message.length}/200. Keep it warm and personal. No discounts needed.</p></div>
+        <div><label htmlFor="w-gift">Welcome-back gift (optional)</label>
+          <select id="w-gift" value={gift} onChange={(e) => setGift(e.target.value)}>
+            <option value="">No gift, just the note</option>
+            {rewards.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
+          </select>
+          <p className="hint" style={{ margin: "6px 0 0" }}>{rewards.length ? "They can collect it at the counter within 60 days." : "Add a reward in the Rewards section to offer it as a gift."}</p></div>
+        <div className="actions">
+          <button className="btn" disabled={busy || !p?.reachable || !!waitUntil}>{busy ? "Sending…" : `Send note${p?.reachable ? ` to ${p.reachable}` : ""}`}</button>
+          {waitUntil && <span className="hint">Next note possible {waitUntil.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>}
+          {p && !p.reachable && !waitUntil && <span className="hint">Nobody to send to right now.</span>}
+        </div>
+      </form>
+      {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
+      {past.length > 0 && (
+        <div className="stack" style={{ gap: 10 }}>
+          <span className="label">Notes sent</span>
+          {past.map((w) => (
+            <div className="offer-card" key={w.id}>
+              <div className="offer-top"><div className="offer-title" style={{ fontWeight: 600 }}>{w.message}</div>
+                <span className="chip earn">{w.came_back} of {w.recipients} came back</span></div>
+              <div className="hint">{when(w.created_at)}{w.gift_title ? ` · gift: ${w.gift_title}` : ""}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

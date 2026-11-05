@@ -33,6 +33,8 @@ const MESSAGES: Record<string, string> = {
   NO_REWARD: "That reward no longer exists.",
   REWARD_USED: "This reward was already given.",
   REWARD_EXPIRED: "This reward has expired.",
+  WINBACK_LIMIT: "You can send one note a week. Try again in a few days.",
+  NO_ONE_TO_WIN_BACK: "Nobody to send to right now. Customers get at most one note every 60 days.",
   CONFIRM_NAME: "Type the shop name exactly as shown to confirm.",
   BAD_LOGO: "That picture could not be saved. Try another one.",
   BAD_MOBILE: "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",

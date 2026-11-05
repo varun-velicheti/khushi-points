@@ -12,11 +12,13 @@ export default function ShopPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { version } = useAuth();
   const [d, setD] = useState<ShopDetail | null>(null);
+  const [note, setNote] = useState<{ message: string; gift_title: string | null; created_at: string } | null>(null);
   const [err, setErr] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try { setD(await rpc<ShopDetail>("app_shop", { p_shop: id })); setErr(""); } catch (e) { setErr(errorText(e)); }
+    rpc<typeof note>("app_shop_note", { p_shop: id }).then(setNote).catch(() => {});
   }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
   useEffect(() => { load(); }, [version, load]);
@@ -54,6 +56,18 @@ export default function ShopPage() {
           </View>
         </GradientHeader>
       }>
+      {/* a personal note from the shop (win-back) */}
+      {note ? (
+        <Card style={{ backgroundColor: c.brandSoft, gap: 6 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="mail-open" size={18} color={c.brand} />
+            <K w="bold" s={13} c={c.brand}>A note from {s.name} · {when(note.created_at)}</K>
+          </View>
+          <K w="semibold" s={16}>{note.message}</K>
+          {note.gift_title ? <K s={13} c={c.muted}>Your welcome-back gift, {note.gift_title}, is waiting below. Show it at the counter.</K> : null}
+        </Card>
+      ) : null}
+
       {/* points here */}
       <Card>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
