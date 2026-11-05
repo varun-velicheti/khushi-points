@@ -559,6 +559,7 @@ function DeleteShop({ shop }: { shop: Shop }) {
 const ordinal = (n: number) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th");
 
 // Rewards that are not discounts: unlocked by visits, handed over at the counter.
+type RewardLog = { given_at: string; title: string; customer_name: string; mobile: string | null; given_by: string; earned_at: string };
 type RewardRow = { id: number; title: string; details: string; trigger: "visits" | "regular"; every_visits: number | null;
   active: boolean; unlocked_30d: number; given_30d: number; waiting: number };
 
@@ -570,8 +571,10 @@ function Rewards({ shop }: { shop: Shop }) {
   const [every, setEvery] = useState("5");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [log, setLog] = useState<RewardLog[] | null>(null);
   const load = () => rpc<RewardRow[]>("shop_rewards", { p_shop: shop.id }).then(setList).catch(() => {});
   useEffect(() => { load(); }, [shop.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadLog = () => rpc<RewardLog[]>("shop_reward_log", { p_shop: shop.id, p_limit: 50 }).then(setLog).catch(() => setLog([]));
 
   async function add(e: FormEvent) {
     e.preventDefault(); setMsg(null);
@@ -631,6 +634,22 @@ function Rewards({ shop }: { shop: Shop }) {
         </form>
       )}
       {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
+      <details className="extra" onToggle={(e) => { if ((e.target as HTMLDetailsElement).open && !log) loadLog(); }}>
+        <summary>Rewards given (last 50)</summary>
+        {log === null ? <p className="hint">Loading…</p> : log.length === 0 ? <p className="hint">No rewards given yet.</p> : (
+          <div className="tbl-wrap"><table>
+            <thead><tr><th>Given</th><th>Reward</th><th>Customer</th><th>Given by</th></tr></thead>
+            <tbody>{log.map((g, i) => (
+              <tr key={i}>
+                <td className="hint">{when(g.given_at)}</td>
+                <td>{g.title}<div className="hint">unlocked {when(g.earned_at)}</div></td>
+                <td>{g.customer_name}<div className="hint mono">{maskMobile(g.mobile)}</div></td>
+                <td className="hint">{g.given_by}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        )}
+      </details>
       <p className="hint" style={{ margin: 0 }}>A visit is a day with a bill. Unlocked rewards stay valid for 60 days. Undoing a bill takes back a reward it unlocked, if not yet given.</p>
     </div>
   );

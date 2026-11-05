@@ -100,6 +100,14 @@ select t.expect_error($$ select public.use_reward('$$ || :'bir' || $$', $$ || :'
 select t.check((select count(*) from public.customer_rewards(:'bir', '7353862216')) = 1, 'one left');
 select t.check((select given_30d from public.shop_rewards(:'bir') where title = 'Free masala chai') = 1, 'owner sees it given');
 reset role;
+select t.as_user('11111111-1111-1111-1111-111111111111');
+set role authenticated;
+select t.check((select given_by from public.shop_reward_log(:'bir')) = 'cashier@biryani.in', 'log shows who gave it');
+reset role;
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select t.expect_error($$ select public.shop_reward_log('$$ || :'bir' || $$') $$, 'OWNER_ONLY');
+reset role;
 
 -- undoing the bill takes back the unused dessert
 select t.as_user('11111111-1111-1111-1111-111111111111');
