@@ -7,21 +7,21 @@ import Scanner from "../Scanner";
 
 type Mode = "earn" | "redeem" | "balance";
 
-type Balance = {
+export type Balance = {
   exists: boolean; has_app?: boolean; name?: string; mobile?: string | null; balance?: number; value?: number; expiring_30d?: number;
   recent?: { kind: string; bill_no: string | null; amount: number; points: number; method: string | null; created_at: string; undone?: boolean; note?: string | null }[];
 };
 
 // Who the customer is: a mobile number they say, or the member QR from their app.
-type Who = { mobile?: string; member?: string };
+export type Who = { mobile?: string; member?: string };
 const MEMBER_RE = /^(KP:)?K[A-Z0-9]{7}$/i;
-function parseWho(raw: string): Who | null {
+export function parseWho(raw: string): Who | null {
   const t = raw.trim();
   if (MEMBER_RE.test(t.replace(/\s/g, ""))) return { member: t.replace(/\s/g, "").toUpperCase() };
   const m = cleanMobile(t);
   return validMobile(m) ? { mobile: m } : null;
 }
-const whoArgs = (w: Who) => ({ p_mobile: w.mobile ?? null, p_member: w.member ?? null });
+export const whoArgs = (w: Who) => ({ p_mobile: w.mobile ?? null, p_member: w.member ?? null });
 const whoLabel = (w: Who, b?: Balance | null) =>
   `${b?.name && b.name !== "Customer" ? b.name + " · " : ""}${w.member ? "App member " + w.member.replace(/^KP:/, "") : maskMobile(w.mobile!)}`;
 
@@ -54,7 +54,7 @@ export default function Counter() {
 
 /* ------------------------------------------------------------------ customer picker */
 
-function CustomerPicker({ id, value, onChange, shop, onLookup }: {
+export function CustomerPicker({ id, value, onChange, shop, onLookup }: {
   id: string; value: string; onChange: (v: string) => void; shop: Shop; onLookup: (w: Who | null, b: Balance | null) => void;
 }) {
   const [scan, setScan] = useState(false);
@@ -94,7 +94,7 @@ const pointsFor = (shop: Shop, amount: number) =>
 type RewardWaiting = { grant_id: number; title: string; details: string; earned_at: string; expires_at: string; txn_id: number | null };
 
 // Shows the customer's unlocked rewards with a "Give now" button. Reloads when `version` changes.
-function RewardsDue({ shop, who, version = 0, newTxn }: { shop: Shop; who: Who; version?: number; newTxn?: number }) {
+export function RewardsDue({ shop, who, version = 0, newTxn }: { shop: Shop; who: Who; version?: number; newTxn?: number }) {
   const [list, setList] = useState<RewardWaiting[] | null>(null);
   const [given, setGiven] = useState<string[]>([]);
   const [err, setErr] = useState("");

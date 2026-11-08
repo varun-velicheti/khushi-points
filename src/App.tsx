@@ -11,6 +11,7 @@ import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import { Privacy, Terms } from "./pages/Legal";
 import Admin from "./pages/Admin";
+import BizApp from "./biz/BizApp";
 
 export default function App() {
   if (!configured) return <NotConfigured />;
@@ -40,6 +41,7 @@ function StaffApp() {
     </Routes>
   );
   if (memberships.length === 0) return <ShopSetup />;
+  if (location.pathname.startsWith("/biz")) return <Routes><Route path="biz/*" element={<BizApp />} /></Routes>;
   return (
     <Routes>
       <Route element={<Layout />}>
@@ -79,6 +81,7 @@ function Layout() {
               {memberships.map((m) => <option key={m.shop.id} value={m.shop.id}>{m.shop.name}</option>)}
             </select>
           )}
+          <Link className="btn alt small" to="/biz">Khushi Biz</Link>
           {isAdmin && <Link className="btn alt small" to="/admin">Admin</Link>}
           <button className="btn alt small" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
