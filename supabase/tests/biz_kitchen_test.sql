@@ -22,6 +22,9 @@ select t.as_user('11111111-1111-1111-1111-111111111111');
 set role authenticated;
 select (public.create_shop('Chai Adda')).id as shop \gset
 select public.biz_save_table(:'shop', null, 'T1', 1) as t1 \gset
+select t.check(((public.biz_menu(:'shop'))->'shop'->>'kitchen')::boolean = false, 'kitchen off by default');
+select public.biz_save_settings(:'shop', '{"kitchen":true}');
+select t.check(((public.biz_menu(:'shop'))->'shop'->>'kitchen')::boolean, 'kitchen switched on');
 -- order: 2 chai, 1 samosa (no spice)
 select public.biz_save_order(:'shop', jsonb_build_object('id','bbbbbbbb-0000-0000-0000-000000000001','table_id',:'t1','lines',
   '[{"item_id":"11111111-aaaa-0000-0000-000000000001","name":"Masala chai","price":30,"qty":2,"gst_rate":5},

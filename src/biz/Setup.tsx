@@ -165,7 +165,7 @@ function BillingSetup() {
   const { menu } = useBiz();
   const { call, err } = useCall();
   const s = menu.shop;
-  const [f, setF] = useState({ legal_name: s.legal_name ?? "", gstin: s.gstin ?? "", upi_id: s.upi_id ?? "", gst_inclusive: s.gst_inclusive });
+  const [f, setF] = useState({ legal_name: s.legal_name ?? "", gstin: s.gstin ?? "", upi_id: s.upi_id ?? "", gst_inclusive: s.gst_inclusive, kitchen: s.kitchen });
   const [ok, setOk] = useState(false);
   async function save(e: FormEvent) {
     e.preventDefault(); setOk(false);
@@ -182,6 +182,10 @@ function BillingSetup() {
         <button type="button" aria-pressed={f.gst_inclusive} onClick={() => setF({ ...f, gst_inclusive: true })}>Prices include GST</button>
         <button type="button" aria-pressed={!f.gst_inclusive} onClick={() => setF({ ...f, gst_inclusive: false })}>GST added on top</button>
       </div>
+      <label className="switch" htmlFor="bs-kitchen">
+        <span>Kitchen screen</span>
+        <input id="bs-kitchen" type="checkbox" role="switch" checked={f.kitchen} onChange={(e) => setF({ ...f, kitchen: e.target.checked })} />
+      </label>
       <div className="actions"><button className="btn">Save</button>{ok && <span className="hint">Saved</span>}</div>
       {err && <div className="msg err">{err}</div>}
     </form>

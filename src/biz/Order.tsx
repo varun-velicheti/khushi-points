@@ -126,7 +126,7 @@ export default function OrderScreen() {
         <header><b>{tableName ?? "Takeaway"}</b><button className="btn link small" onClick={clear}>{saved ? "Cancel order" : "Close"}</button></header>
         <div className="cart-lines">
           {order.lines.map((l, k) => (
-            <div className={`cart-line${(sent[lineKey(l)] ?? 0) >= l.qty ? " sent" : ""}`} key={k}>
+            <div className={`cart-line${!menu.shop.kitchen || (sent[lineKey(l)] ?? 0) >= l.qty ? " sent" : ""}`} key={k}>
               <button className="cart-name" onClick={() => noteFor(k)}>{l.name}{l.note && <small>{l.note}</small>}</button>
               <span className="stepper">
                 <button onClick={() => step(k, -1)} aria-label={`One less ${l.name}`}>−</button>
@@ -140,10 +140,12 @@ export default function OrderScreen() {
         {err && <div className="msg err">{err}</div>}
         <footer>
           <div className="cart-total"><span>{order.lines.reduce((a, l) => a + l.qty, 0)} items</span><b>{rupees(t.total)}</b></div>
-          <div className="cart-actions">
-            <button className="btn alt" disabled={changes === 0} onClick={send}>{changes ? `Send to kitchen · ${changes}` : sentNo ? `Sent · #${sentNo}` : "Sent"}</button>
-            <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>
-          </div>
+          {menu.shop.kitchen ? (
+            <div className="cart-actions">
+              <button className="btn alt" disabled={changes === 0} onClick={send}>{changes ? `Send to kitchen · ${changes}` : sentNo ? `Sent · #${sentNo}` : "Sent"}</button>
+              <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>
+            </div>
+          ) : <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>}
         </footer>
       </section>
     </div>

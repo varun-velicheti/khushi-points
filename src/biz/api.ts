@@ -4,7 +4,7 @@ import type { Line, Totals } from "./money";
 
 export type BizShop = { id: string; name: string; legal_name: string | null; gstin: string | null; address: string | null;
   contact_phone: string | null; gst_inclusive: boolean; upi_id: string | null; point_value: number; min_redeem: number;
-  max_redeem_pct: number; logo_path: string | null };
+  max_redeem_pct: number; logo_path: string | null; kitchen: boolean };
 export type Category = { id: string; name: string; sort: number };
 export type Item = { id: string; category_id: string | null; name: string; price: number; gst_rate: number; hsn: string | null;
   veg: boolean; available: boolean; sort: number };

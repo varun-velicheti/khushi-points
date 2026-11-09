@@ -22,7 +22,7 @@ Setup: menu, tables, billing (owner only)
 
 Tests: `supabase/tests/biz_test.sql`.
 
-## Kitchen (supabase/migrations/20261109010000_biz_kitchen.sql)
+## Kitchen (optional: Setup → Billing → Kitchen screen, off by default)
 - `biz_send_to_kitchen(shop, order)`: what changed since the last send becomes a numbered ticket (`biz_tickets`).
   Added items are positive quantities, reduced or removed ones negative ("Cancel 1 × …"). Nothing changed: no ticket.
 - `biz_kitchen(shop)`: tickets not done yet. `biz_ticket_status(shop, ticket, status)`: new → cooking → ready → done.

@@ -33,7 +33,7 @@ export default function BizApp() {
         <Link to="/biz" className="biz-brand"><img src="/icon.svg" alt="" /><b>Khushi Biz</b><span>{current!.shop.name}</span></Link>
         <nav>
           <NavLink to="/biz" className={() => (/^\/biz\/(setup|kitchen)/.test(location.pathname) ? "" : "active")}>Floor</NavLink>
-          <NavLink to="/biz/kitchen">Kitchen</NavLink>
+          {menu?.shop.kitchen && <NavLink to="/biz/kitchen">Kitchen</NavLink>}
           {owner && <NavLink to="/biz/setup">Setup</NavLink>}
           <Link to="/">Khushi Points</Link>
         </nav>
@@ -45,7 +45,7 @@ export default function BizApp() {
             <Route index element={<Floor />} />
             <Route path="o/:id" element={<OrderScreen />} />
             <Route path="b/:id" element={<BillScreen />} />
-            <Route path="kitchen" element={<Kitchen />} />
+            {menu.shop.kitchen && <Route path="kitchen" element={<Kitchen />} />}
             <Route path="setup/*" element={owner ? <Setup /> : <Navigate to="/biz" replace />} />
             <Route path="*" element={<Navigate to="/biz" replace />} />
           </Routes>
