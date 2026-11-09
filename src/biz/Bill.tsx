@@ -35,14 +35,14 @@ export default function BillScreen() {
   const refresh = useCallback(async () => {
     const o = await getOrder(shop.id, id!);
     setOrder(o);
-    setTot(o.status === "paid" ? o.totals : await preview(shop.id, id!));
+    setTot(o.status === "paid" ? o.totals : await preview(shop.id, id!, menu));
     return o;
-  }, [shop.id, id]);
+  }, [shop.id, id, menu]);
   useEffect(() => {
     refresh().then(async (o) => {
       setRaw(o.customer_member ?? o.customer_mobile ?? "");
       // a points request still waiting (e.g. the page was reloaded): keep waiting for it
-      if (o.status === "open" && o.redeem_request_id && (await preview(shop.id, o.id)).discount === 0) setWaiting(o.redeem_request_id);
+      if (o.status === "open" && o.redeem_request_id && (await preview(shop.id, o.id, menu)).discount === 0) setWaiting(o.redeem_request_id);
     }).catch((e) => setErr(errorText(e)));
   }, [refresh, shop.id]);
 
@@ -95,8 +95,7 @@ export default function BillScreen() {
   async function pay() {
     setBusy(true); setErr("");
     try {
-      const o = await payOrder(shop.id, order!.id, mode, consent);
-      if (o.txn_id) supabase.functions.invoke("push", { body: { action: "earn", shop_id: shop.id, txn_id: o.txn_id } }).catch(() => {});
+      const o = await payOrder(shop.id, menu, order!.id, mode, consent);
       setOrder(o); setTot(o.totals);
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }

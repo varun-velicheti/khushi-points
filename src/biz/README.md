@@ -27,3 +27,11 @@ Tests: `supabase/tests/biz_test.sql`.
   Added items are positive quantities, reduced or removed ones negative ("Cancel 1 × …"). Nothing changed: no ticket.
 - `biz_kitchen(shop)`: tickets not done yet. `biz_ticket_status(shop, ticket, status)`: new → cooking → ready → done.
 - Orders carry `sent` (quantity the kitchen has per dish) and `kitchen` (most urgent ticket state) for the screens.
+
+## Offline (src/biz/offline.ts, supabase/migrations/20261109030000_biz_offline.sql)
+- The device keeps the menu, open orders and an outbox (localStorage). Every change is stored first, then sent in order.
+- Each device claims an invoice series once (`biz_claim_series`: A, B, …) and numbers its own invoices;
+  `biz_pay_order(..., p_seq, p_paid_at)` accepts the device's number and paid time. A clash (`INVOICE_TAKEN`) takes the next number.
+- A table taken by another device while offline: the bill is kept without the table.
+- Needs the internet: using points (customer approves in the app) and the Kitchen screen.
+- `public/sw.js` keeps a copy of the app so it opens without internet; server data is never cached there.

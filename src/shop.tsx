@@ -16,6 +16,17 @@ type Ctx = {
 };
 
 const ShopContext = createContext<Ctx | null>(null);
+
+function readJson<T>(k: string): T | null {
+  try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T) : null; } catch { return null; }
+}
+// The sign-in Supabase keeps on this device (used only when offline).
+function savedSession(): Session | null {
+  try {
+    const k = Object.keys(localStorage).find((x) => /^sb-.*-auth-token$/.test(x));
+    return k ? (readJson<Session>(k)) : null;
+  } catch { return null; }
+}
 const LAST = "kp-last-shop";
 
 export function ShopProvider({ children }: { children: ReactNode }) {
@@ -29,16 +40,21 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   });
 
   const reload = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    let { data: { session } } = await supabase.auth.getSession();
+    // offline with an expired sign-in: keep working with the saved one (it refreshes when back online)
+    if (!session && !navigator.onLine) session = savedSession();
     setSession(session);
     if (!session) { setMemberships([]); setIsAdmin(false); setLoading(false); return; }
     const { data: admin } = await supabase.rpc("is_platform_admin");
     setIsAdmin(admin === true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("shop_members")
       .select("role, shop:shops(*)")
       .eq("user_id", session.user.id);
-    setMemberships((data ?? []) as unknown as Membership[]);
+    // offline: use the shops saved last time
+    const saved = `kp-memberships:${session.user.id}`;
+    if (error || !data) setMemberships(readJson<Membership[]>(saved) ?? []);
+    else { setMemberships(data as unknown as Membership[]); try { localStorage.setItem(saved, JSON.stringify(data)); } catch { /* blocked */ } }
     setLoading(false);
   }, []);
 

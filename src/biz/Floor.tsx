@@ -15,7 +15,7 @@ export default function Floor() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [err, setErr] = useState("");
-  const load = useCallback(() => openOrders(current!.shop.id).then((o) => { setOrders(o); setErr(""); }).catch((e) => setErr(errorText(e))), [current]);
+  const load = useCallback(() => openOrders(current!.shop.id, menu).then((o) => { setOrders(o); setErr(""); }).catch((e) => setErr(errorText(e))), [current, menu]);
   useEffect(() => { load(); const t = setInterval(load, 10000); return () => clearInterval(t); }, [load]);
 
   const byTable = new Map((orders ?? []).filter((o) => o.table_id).map((o) => [o.table_id!, o]));
