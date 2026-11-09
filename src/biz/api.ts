@@ -14,11 +14,12 @@ export type Table = { id: string; name: string; sort: number };
 export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[] };
 
 export type Order = {
-  id: string; kind: "dine_in" | "takeaway"; table_id: string | null; status: "open" | "paid" | "cancelled"; lines: Line[];
+  id: string; kind: "dine_in" | "takeaway"; table_id: string | null; status: "open" | "paid" | "cancelled" | "void"; lines: Line[];
   customer_mobile: string | null; customer_member: string | null; customer_name: string | null; redeem_request_id: string | null;
   opened_at: string; updated_at: string; paid_at: string | null; invoice_no: string | null; totals: Totals | null;
   payments: { mode: string; amount: number }[] | null; points_earned: number | null; points_error: string | null;
   total?: number; table?: string | null; txn_id?: number | null;
+  void_reason?: string | null; voided_at?: string | null;
   sent?: Record<string, number>; kitchen?: "new" | "cooking" | "ready" | null;
 };
 

@@ -199,7 +199,7 @@ function BillingSetup() {
 /* ---------------------------------------------------------------- stock */
 
 type StockItem = { id: string; name: string; track_stock: boolean; stock: number; low_stock: number };
-type Move = { name: string; change: number; reason: "sale" | "add" | "count"; at: string; by: string | null };
+type Move = { name: string; change: number; reason: "sale" | "add" | "count" | "void"; at: string; by: string | null };
 const qtyText = (n: number) => Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
 function StockSetup() {
@@ -207,6 +207,7 @@ function StockSetup() {
   const { reload } = useBiz();
   const shopId = current!.shop.id;
   const [data, setData] = useState<{ items: StockItem[]; moves: Move[] } | null>(null);
+  const [add, setAdd] = useState<Record<string, string>>({});
   const [err, setErr] = useState("");
   const load = useCallback(() => rpc<{ items: StockItem[]; moves: Move[] }>("biz_stock", { p_shop: shopId }).then(setData).catch((e) => setErr(errorText(e))), [shopId]);
   useEffect(() => { load(); }, [load]);
@@ -228,11 +229,12 @@ function StockSetup() {
               onClick={() => { const n = window.prompt(`${i.name}: how many on the shelf now?`, qtyText(i.stock)); if (n !== null && n.trim() !== "") run("biz_stock_count", { p_item: i.id, p_count: Number(n) }); }}>
               {qtyText(i.stock)}
             </button>
-            <span className="stock-btns">
-              <button className="btn alt small" aria-label={`One more ${i.name}`} onClick={() => run("biz_stock_add", { p_item: i.id, p_qty: 1 })}>+1</button>
-              <button className="btn alt small" onClick={() => { const n = window.prompt(`${i.name}: how many came in?`, ""); const q = Number(n); if (n && q) run("biz_stock_add", { p_item: i.id, p_qty: q }); }}>Add…</button>
-              <button className="btn link small low-at" onClick={() => { const n = window.prompt(`${i.name}: show as low at or below`, qtyText(i.low_stock)); if (n !== null && n.trim() !== "" && Number(n) >= 0) run("biz_stock_low", { p_item: i.id, p_low: Number(n) }); }}>Low ≤ {qtyText(i.low_stock)}</button>
-            </span>
+            <form className="stock-add" onSubmit={(e) => { e.preventDefault(); const q = Number(add[i.id]); if (q) { run("biz_stock_add", { p_item: i.id, p_qty: q }); setAdd({ ...add, [i.id]: "" }); } }}>
+              <input aria-label={`Quantity of ${i.name} to add`} inputMode="decimal" placeholder="Qty" value={add[i.id] ?? ""}
+                onChange={(e) => setAdd({ ...add, [i.id]: e.target.value.replace(/[^\d.-]/g, "") })} />
+              <button className="btn small" disabled={!Number(add[i.id])}>Add</button>
+            </form>
+            <button className="btn link small low-at" onClick={() => { const n = window.prompt(`${i.name}: show as low at or below`, qtyText(i.low_stock)); if (n !== null && n.trim() !== "" && Number(n) >= 0) run("biz_stock_low", { p_item: i.id, p_low: Number(n) }); }}>Low ≤ {qtyText(i.low_stock)}</button>
             <button className="btn link small" onClick={() => run("biz_stock_track", { p_item: i.id, p_on: false })}>Stop</button>
           </div>
         ))}
@@ -252,7 +254,7 @@ function StockSetup() {
             {data.moves.map((m, k) => (
               <tr key={k}><td className="hint">{when(m.at)}</td><td>{m.name}</td>
                 <td className="num" style={{ color: m.change < 0 ? "var(--bad)" : "var(--good)" }}>{m.change > 0 ? "+" : ""}{qtyText(m.change)}</td>
-                <td className="hint">{m.reason === "sale" ? "Sold" : m.reason === "add" ? "Added" : "Counted"}{m.by ? ` · ${m.by}` : ""}</td></tr>
+                <td className="hint">{m.reason === "sale" ? "Sold" : m.reason === "add" ? "Added" : m.reason === "void" ? "Bill voided" : "Counted"}{m.by ? ` · ${m.by}` : ""}</td></tr>
             ))}
           </tbody></table></div>
         </section>

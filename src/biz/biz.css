@@ -171,11 +171,12 @@
 
 .item-price small { display: block; font-size: 12px; color: var(--muted) }
 .item-price small.low { color: var(--bad); font-weight: 700 }
-.stock-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 12px; align-items: center; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px }
+.stock-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 12px; align-items: center; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px }
 .stock-row.low { border-color: #F4C5CB; background: var(--bad-bg) }
 .stock-row.low .stock-count { color: var(--bad) }
 .stock-count { border: 0; background: none; font: 800 20px var(--f-display); cursor: pointer; color: var(--ink); min-width: 56px; text-align: right; font-variant-numeric: tabular-nums }
-.stock-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end }
+.stock-add { display: flex; gap: 6px }
+.stock-add input { width: 80px; padding: 8px 10px; text-align: center }
 .low-at { color: var(--muted) !important; font-size: 13px !important }
 .stock-row.low .low-at { color: var(--bad) !important }
 .pill-badge { display: inline-block; margin-left: 6px; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--bad); color: #fff; font: 800 12px/20px var(--f-body); text-align: center }
@@ -193,7 +194,18 @@
 .day i { display: block; width: 100%; max-width: 28px; background: var(--brand); border-radius: 4px 4px 0 0; min-height: 2px }
 .day span { font-size: 11px; color: var(--muted) }
 
+.bills { max-width: 980px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 14px }
+.bills-head { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between }
+.bills-head input { max-width: 260px }
+.bill-row { display: grid; grid-template-columns: 130px 80px 1fr 70px 100px; gap: 12px; align-items: center; padding: 12px 16px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 14px; font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100% }
+.bill-row .mono { font-weight: 600 }
+.bill-row b { text-align: right; font-variant-numeric: tabular-nums }
+.bill-row.void { opacity: .55 } .bill-row.void b { text-decoration: line-through }
+.void-banner { background: var(--bad-bg); color: var(--bad); border-radius: 12px; padding: 10px 14px; font-weight: 700; text-align: center }
+
 @media (max-width: 900px) {
+  .bill-row { grid-template-columns: 1fr auto; } .bill-row .hide-sm { display: none }
   .stock-row { grid-template-columns: 1fr auto; }
   .kitchen { grid-template-columns: 1fr }
   .order { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; height: auto; min-height: calc(100dvh - 57px) }

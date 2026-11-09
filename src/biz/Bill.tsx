@@ -74,7 +74,7 @@ export default function BillScreen() {
   if (!order || !tot) return <div className="biz-pad">{err ? <div className="msg err">{err}</div> : <span className="hint">Loading…</span>}</div>;
   const table = menu.tables.find((x) => x.id === order.table_id)?.name ?? null;
 
-  if (order.status === "paid") return <Paid order={order} tot={tot} shop={menu.shop} table={table} />;
+  if (order.status === "paid" || order.status === "void") return <Paid order={order} tot={tot} shop={menu.shop} table={table} onChange={setOrder} />;
 
   const pv = Number(menu.shop.point_value);
   const cap = Math.floor((tot.total * menu.shop.max_redeem_pct) / 100 / pv);
@@ -158,19 +158,32 @@ function UpiQr({ shop, amount, note }: { shop: BizShop; amount: number; note: st
   return src ? <figure className="upi"><img src={src} alt={`UPI QR for ${rupees(amount)}`} /><figcaption>{shop.upi_id}</figcaption></figure> : null;
 }
 
-function Paid({ order, tot, shop, table }: { order: Order; tot: Totals; shop: BizShop; table: string | null }) {
+function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals; shop: BizShop; table: string | null; onChange: (o: Order) => void }) {
   const navigate = useNavigate();
+  const { owner } = useBiz();
+  const { current } = useShop();
+  const [err, setErr] = useState("");
+  const isVoid = order.status === "void";
+  async function voidBill() {
+    const reason = window.prompt(`Void ${order.invoice_no}? Points from this bill are taken back and stock is returned.\n\nReason`, "");
+    if (reason === null) return;
+    try { onChange(await rpc<Order>("biz_void_order", { p_shop: current!.shop.id, p_order: order.id, p_reason: reason })); }
+    catch (e) { setErr(errorText(e)); }
+  }
   return (
     <div className="bill">
       <Invoice order={order} tot={tot} shop={shop} table={table} />
       <section className="bill-side done">
-        <div className="done-mark">✓</div>
-        <h2>{rupees(tot.total)} paid</h2>
+        {isVoid ? <div className="void-banner">Void{order.void_reason ? ` · ${order.void_reason}` : ""}</div> : <div className="done-mark">✓</div>}
+        <h2>{rupees(tot.total)} {isVoid ? "voided" : "paid"}</h2>
         <p className="mono">{order.invoice_no}</p>
-        {order.points_earned ? <div className="msg ok">+{order.points_earned} points</div> : null}
+        {!isVoid && order.points_earned ? <div className="msg ok">+{order.points_earned} points</div> : null}
         {order.points_error ? <div className="msg info">{errorText(order.points_error)}</div> : null}
+        {err && <div className="msg err">{err}</div>}
         <button className="btn" onClick={() => navigate("/biz")}>Next order</button>
         <button className="btn alt" onClick={() => window.print()}>Print</button>
+        <button className="btn link small" onClick={() => navigate("/biz/bills")}>All bills</button>
+        {owner && !isVoid && <button className="btn link small del" onClick={voidBill}>Void bill</button>}
       </section>
     </div>
   );
@@ -178,7 +191,7 @@ function Paid({ order, tot, shop, table }: { order: Order; tot: Totals; shop: Bi
 
 // The GST invoice, as shown on screen and printed.
 export function Invoice({ order, tot, shop, table }: { order: Order; tot: Totals; shop: BizShop; table: string | null }) {
-  const paid = order.status === "paid";
+  const paid = order.status === "paid" || order.status === "void";
   const date = new Date(order.paid_at ?? order.opened_at);
   return (
     <article className="invoice">
@@ -188,7 +201,7 @@ export function Invoice({ order, tot, shop, table }: { order: Order; tot: Totals
         {shop.gstin && <span>GSTIN {shop.gstin}</span>}
       </header>
       <div className="inv-meta">
-        <span>{paid ? `Tax invoice ${order.invoice_no}` : "Bill"}</span>
+        <span>{order.status === "void" ? `VOID ${order.invoice_no}` : paid ? `Tax invoice ${order.invoice_no}` : "Bill"}</span>
         <span>{date.toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
         <span>{table ?? "Takeaway"}</span>
       </div>

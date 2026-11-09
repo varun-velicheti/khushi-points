@@ -10,6 +10,7 @@ import BillScreen from "./Bill";
 import Setup from "./Setup";
 import Kitchen from "./Kitchen";
 import Reports from "./Reports";
+import Bills from "./Bills";
 import "./biz.css";
 
 // Khushi Biz: restaurant & café POS. Floor -> Order -> Bill. Setup is for the owner.
@@ -45,8 +46,9 @@ export default function BizApp() {
           </button>
         )}
         <nav>
-          <NavLink to="/biz" className={() => (/^\/biz\/(setup|kitchen|reports)/.test(location.pathname) ? "" : "active")}>Floor</NavLink>
+          <NavLink to="/biz" className={() => (/^\/biz\/(setup|kitchen|reports|bills)/.test(location.pathname) ? "" : "active")}>Floor</NavLink>
           {menu?.shop.kitchen && <NavLink to="/biz/kitchen">Kitchen</NavLink>}
+          <NavLink to="/biz/bills">Bills</NavLink>
           {owner && <NavLink to="/biz/reports">Reports</NavLink>}
           {owner && <NavLink to="/biz/setup">Setup</NavLink>}
           <Link to="/">Khushi Points</Link>
@@ -60,6 +62,7 @@ export default function BizApp() {
             <Route path="o/:id" element={<OrderScreen />} />
             <Route path="b/:id" element={<BillScreen />} />
             {menu.shop.kitchen && <Route path="kitchen" element={<Kitchen />} />}
+            <Route path="bills" element={<Bills />} />
             <Route path="reports" element={owner ? <Reports /> : <Navigate to="/biz" replace />} />
             <Route path="setup/*" element={owner ? <Setup /> : <Navigate to="/biz" replace />} />
             <Route path="*" element={<Navigate to="/biz" replace />} />

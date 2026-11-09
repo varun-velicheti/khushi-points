@@ -41,3 +41,8 @@ Tests: `supabase/tests/biz_test.sql`.
   (also offline bills, when they arrive); paying twice does not count twice. Every change is in `biz_stock_moves`.
 - `biz_stock_add` (staff: deliveries), `biz_stock_count` (owner: stocktake), `biz_stock` (page data).
 - `biz_report(shop, from, to)` (owner): totals, payment split, GST by rate, sales by day, items, invoice list (CSV).
+
+## Bills and void (supabase/migrations/20261109060000_biz_bills_void.sql)
+- `biz_bills(shop, from, to, search)`: paid and void bills (Bills tab). Tap one to see, reprint or void it.
+- `biz_void_order(shop, order, reason)` (owner): keeps the invoice number, leaves it out of reports, takes back the points it gave,
+  returns points used on it, puts counted stock back. Unpaid orders are cancelled from the order screen instead.
