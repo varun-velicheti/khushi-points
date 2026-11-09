@@ -70,4 +70,20 @@ select t.check((select count(*) from public.admin_shops() where shop_id = :'s1')
 reset role;
 select t.check(not exists (select 1 from public.customers where shop_id = :'s1'), 'customers gone');
 select t.check(exists (select 1 from public.deleted_shops where shop_id = :'s1'), 'deletion recorded');
+-- Khushi Biz switch: admin only; the shop cannot open Khushi Biz until it is on
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select (public.create_shop('Biz Cafe')).id as bizshop \gset
+select t.expect_error($$ select public.biz_menu('$$ || :'bizshop' || $$') $$, 'BIZ_NOT_ENABLED');
+select t.expect_error($$ select public.admin_set_biz('$$ || :'bizshop' || $$', true) $$, 'ADMIN_ONLY');
+reset role;
+select t.as_user('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+set role authenticated;
+select public.admin_set_biz(:'bizshop', true);
+select t.check((select biz_enabled from public.admin_shops() where shop_id = :'bizshop'), 'admin sees it on');
+reset role;
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select t.check((public.biz_menu(:'bizshop'))->'shop'->>'name' = 'Biz Cafe', 'opens once switched on');
+reset role;
 select 'ALL TESTS PASSED' as result;

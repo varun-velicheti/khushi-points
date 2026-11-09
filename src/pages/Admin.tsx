@@ -15,7 +15,7 @@ type ShopRow = {
   shop_id: string; name: string; plan: string; created_at: string; owner_email: string | null; staff: number;
   customers: number; customers_pin: number; bills_7d: number; bills_30d: number; sales_30d: number;
   redeems_30d: number; redeems_pin_30d: number; sms_30d: number; sms_failed_7d: number;
-  last_activity: string | null; bills_by_day: number[];
+  last_activity: string | null; bills_by_day: number[]; biz_enabled: boolean;
 };
 
 const DAY = 864e5;
@@ -57,7 +57,7 @@ function DayBars({ values, height = 120, labels = false }: { values: number[]; h
 }
 
 export default function Admin() {
-  const { memberships, session } = useShop();
+  const { memberships, session, reload: reloadShops } = useShop();
   const [o, setO] = useState<Overview | null>(null);
   const [shops, setShops] = useState<ShopRow[] | null>(null);
   const [q, setQ] = useState("");
@@ -158,6 +158,11 @@ export default function Admin() {
                       <div><dt>Staff</dt><dd>{r.staff}</dd></div>
                       <div><dt>Plan</dt><dd className="cap">{r.plan}</dd></div>
                     </dl>
+                    <label className="switch admin-biz" htmlFor={`biz-${r.shop_id}`}>
+                      <span>Khushi Biz</span>
+                      <input id={`biz-${r.shop_id}`} type="checkbox" role="switch" checked={r.biz_enabled}
+                        onChange={(e) => rpc("admin_set_biz", { p_shop: r.shop_id, p_on: e.target.checked }).then(() => { load(); reloadShops(); }).catch((err) => alert(errorText(err)))} />
+                    </label>
                     <AdminDeleteShop id={r.shop_id} name={r.name} customers={r.customers} onDone={load} />
                   </article>
                 );

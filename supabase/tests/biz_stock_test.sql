@@ -20,6 +20,9 @@ insert into auth.users values
 select t.as_user('11111111-1111-1111-1111-111111111111');
 set role authenticated;
 select (public.create_shop('Chai Adda')).id as shop \gset
+reset role;
+update public.shops set biz_enabled = true where id = :'shop';
+set role authenticated;
 select join_code as code from public.shops where id = :'shop' \gset
 select public.biz_save_item(:'shop', '{"name":"Coke","price":40,"gst_rate":18}') as coke \gset
 select public.biz_save_item(:'shop', '{"name":"Chai","price":30,"gst_rate":5}') as chai \gset

@@ -17,7 +17,7 @@ export type Shop = {
   id: string; name: string; slug: string; join_code: string;
   category?: string | null; about?: string | null; address?: string | null; area?: string | null; city?: string | null;
   contact_phone?: string | null; hours?: string | null; lat?: number | null; lng?: number | null;
-  reminder_days?: number[]; logo_path?: string | null; regular_visits?: number;
+  reminder_days?: number[]; logo_path?: string | null; regular_visits?: number; biz_enabled?: boolean;
   earn_pct: number; point_value: number; min_bill: number; min_redeem: number;
   max_redeem_pct: number; expiry_days: number; one_bill_per_day: boolean; plan: string;
 };
@@ -37,6 +37,7 @@ const MESSAGES: Record<string, string> = {
   NO_ONE_TO_WIN_BACK: "Nobody to send to right now. Customers get at most one note every 60 days.",
   REDEEM_PENDING: "Waiting for the customer to approve points in their app.",
   REDEEM_NOT_APPROVED: "The customer has not approved these points.",
+  BIZ_NOT_ENABLED: "Khushi Biz is not switched on for this shop yet.",
   CONFIRM_NAME: "Type the shop name exactly as shown to confirm.",
   BAD_LOGO: "That picture could not be saved. Try another one.",
   BAD_MOBILE: "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",

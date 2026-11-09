@@ -31,7 +31,7 @@ export default function BizApp() {
     try { const m = await loadMenu(shopId); cacheMenu(shopId, m); setMenu(m); setErr(""); claimDevice(shopId).then(() => flush()).catch(() => {}); }
     catch (e) { if (!isNetworkError(e) || !cachedMenu(shopId)) setErr(errorText(e)); }
   }, [shopId]);
-  useEffect(() => { setMenu(cachedMenu(shopId)); reload(); }, [shopId, reload]);
+  useEffect(() => { setMenu(current!.shop.biz_enabled === false ? null : cachedMenu(shopId)); reload(); }, [shopId, reload]); // eslint-disable-line react-hooks/exhaustive-deps
   // refresh every minute so stock counts include other devices' sales
   useEffect(() => { const i = setInterval(() => { if (navigator.onLine) reload(); }, 60000); return () => clearInterval(i); }, [reload]);
   useEffect(() => onSync(setSync), []);
@@ -54,8 +54,9 @@ export default function BizApp() {
           <Link to="/">Khushi Points</Link>
         </nav>
       </header>
-      {err && <div className="msg err biz-pad">{err}</div>}
-      {!menu ? <div className="biz-pad hint">Loading…</div> : (
+      {err && !menu ? (
+        <div className="biz-empty"><h2>{err}</h2><Link className="btn alt" to="/">Back to Khushi Points</Link></div>
+      ) : !menu ? <div className="biz-pad hint">Loading…</div> : (
         <BizContext.Provider value={{ menu, reload, owner }}>
           <Routes>
             <Route index element={<Floor />} />

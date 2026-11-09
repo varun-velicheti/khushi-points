@@ -38,6 +38,9 @@ select t.check((public._biz_totals('[]', true))->>'total' = '0', 'empty');
 select t.as_user('11111111-1111-1111-1111-111111111111');
 set role authenticated;
 select (public.create_shop('Chai Adda')).id as shop \gset
+reset role;
+update public.shops set biz_enabled = true where id = :'shop';
+set role authenticated;
 select join_code as code from public.shops where id = :'shop' \gset
 select public.biz_save_settings(:'shop', '{"gstin":"36abcde1234f1z5","legal_name":"Chai Adda LLP","upi_id":"chaiadda@okhdfc"}');
 select t.check((public.biz_menu(:'shop'))->'shop'->>'gstin' = '36ABCDE1234F1Z5', 'gstin saved uppercase');

@@ -18,6 +18,9 @@ insert into auth.users values ('11111111-1111-1111-1111-111111111111', 'owner@ca
 select t.as_user('11111111-1111-1111-1111-111111111111');
 set role authenticated;
 select (public.create_shop('Chai Adda')).id as shop \gset
+reset role;
+update public.shops set biz_enabled = true where id = :'shop';
+set role authenticated;
 -- an online bill before any device claimed a series (old way, series A)
 select public.biz_save_order(:'shop', '{"id":"cccccccc-0000-0000-0000-000000000001","kind":"takeaway","lines":[{"name":"Chai","price":30,"qty":1,"gst_rate":5}]}');
 select public.biz_pay_order(:'shop', 'cccccccc-0000-0000-0000-000000000001', 'cash');

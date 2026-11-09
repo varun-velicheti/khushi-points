@@ -81,7 +81,7 @@ function Layout() {
               {memberships.map((m) => <option key={m.shop.id} value={m.shop.id}>{m.shop.name}</option>)}
             </select>
           )}
-          <Link className="btn alt small" to="/biz">Khushi Biz</Link>
+          {current.shop.biz_enabled && <Link className="btn alt small" to="/biz">Khushi Biz</Link>}
           {isAdmin && <Link className="btn alt small" to="/admin">Admin</Link>}
           <button className="btn alt small" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>

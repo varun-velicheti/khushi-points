@@ -21,6 +21,9 @@ insert into auth.users values
 select t.as_user('11111111-1111-1111-1111-111111111111');
 set role authenticated;
 select (public.create_shop('Chai Adda')).id as shop \gset
+reset role;
+update public.shops set biz_enabled = true where id = :'shop';
+set role authenticated;
 select public.biz_save_table(:'shop', null, 'T1', 1) as t1 \gset
 select t.check(((public.biz_menu(:'shop'))->'shop'->>'kitchen')::boolean = false, 'kitchen off by default');
 select public.biz_save_settings(:'shop', '{"kitchen":true}');
