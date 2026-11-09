@@ -35,3 +35,9 @@ Tests: `supabase/tests/biz_test.sql`.
 - A table taken by another device while offline: the bill is kept without the table.
 - Needs the internet: using points (customer approves in the app) and the Kitchen screen.
 - `public/sw.js` keeps a copy of the app so it opens without internet; server data is never cached there.
+
+## Stock and reports (supabase/migrations/20261109040000_biz_stock_reports.sql)
+- Stock is counted only for items switched on (`biz_stock_track`). A trigger takes paid orders' items out of stock
+  (also offline bills, when they arrive); paying twice does not count twice. Every change is in `biz_stock_moves`.
+- `biz_stock_add` (staff: deliveries), `biz_stock_count` (owner: stocktake), `biz_stock` (page data).
+- `biz_report(shop, from, to)` (owner): totals, payment split, GST by rate, sales by day, items, invoice list (CSV).

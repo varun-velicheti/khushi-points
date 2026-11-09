@@ -17,7 +17,7 @@ export default function BillScreen() {
   const { id } = useParams<{ id: string }>();
   const { current } = useShop();
   const shop = current!.shop;
-  const { menu } = useBiz();
+  const { menu, reload } = useBiz();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [tot, setTot] = useState<Totals | null>(null);
@@ -96,6 +96,7 @@ export default function BillScreen() {
     setBusy(true); setErr("");
     try {
       const o = await payOrder(shop.id, menu, order!.id, mode, consent);
+      reload().catch(() => {});   // fresh stock counts
       setOrder(o); setTot(o.totals);
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }

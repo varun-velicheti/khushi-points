@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-import { errorText, rpc } from "../lib";
+import { errorText, rpc, when } from "../lib";
 import { useShop } from "../shop";
 import { useBiz } from "./BizApp";
 import type { Item } from "./api";
@@ -15,11 +15,13 @@ export default function Setup() {
       <nav className="pills">
         <NavLink to="/biz/setup/menu">{({ isActive }) => <button aria-pressed={isActive}>Menu</button>}</NavLink>
         <NavLink to="/biz/setup/tables">{({ isActive }) => <button aria-pressed={isActive}>Tables</button>}</NavLink>
+        <NavLink to="/biz/setup/stock">{({ isActive }) => <button aria-pressed={isActive}>Stock</button>}</NavLink>
         <NavLink to="/biz/setup/billing">{({ isActive }) => <button aria-pressed={isActive}>Billing</button>}</NavLink>
       </nav>
       <Routes>
         <Route path="menu" element={<MenuSetup />} />
         <Route path="tables" element={<TablesSetup />} />
+        <Route path="stock" element={<StockSetup />} />
         <Route path="billing" element={<BillingSetup />} />
         <Route path="*" element={<Navigate to="menu" replace />} />
       </Routes>
@@ -189,5 +191,70 @@ function BillingSetup() {
       <div className="actions"><button className="btn">Save</button>{ok && <span className="hint">Saved</span>}</div>
       {err && <div className="msg err">{err}</div>}
     </form>
+  );
+}
+
+/* ---------------------------------------------------------------- stock */
+
+type StockItem = { id: string; name: string; track_stock: boolean; stock: number; low_stock: number };
+type Move = { name: string; change: number; reason: "sale" | "add" | "count"; at: string; by: string | null };
+const qtyText = (n: number) => Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+function StockSetup() {
+  const { current } = useShop();
+  const { reload } = useBiz();
+  const shopId = current!.shop.id;
+  const [data, setData] = useState<{ items: StockItem[]; moves: Move[] } | null>(null);
+  const [add, setAdd] = useState<Record<string, string>>({});
+  const [err, setErr] = useState("");
+  const load = useCallback(() => rpc<{ items: StockItem[]; moves: Move[] }>("biz_stock", { p_shop: shopId }).then(setData).catch((e) => setErr(errorText(e))), [shopId]);
+  useEffect(() => { load(); }, [load]);
+  const run = async (fn: string, args: Record<string, unknown>) => {
+    setErr("");
+    try { await rpc(fn, { p_shop: shopId, ...args }); await load(); reload(); } catch (e) { setErr(errorText(e)); }
+  };
+  if (!data) return <p className="hint">Loading…</p>;
+  const tracked = data.items.filter((i) => i.track_stock), others = data.items.filter((i) => !i.track_stock);
+
+  return (
+    <div className="stack">
+      {err && <div className="msg err">{err}</div>}
+      <section className="menu-group">
+        {tracked.map((i) => (
+          <div key={i.id} className={`stock-row${Number(i.stock) <= Number(i.low_stock) ? " low" : ""}`}>
+            <span className="menu-name">{i.name}</span>
+            <button className="stock-count" title="Set the counted number"
+              onClick={() => { const n = window.prompt(`${i.name}: how many on the shelf?`, qtyText(i.stock)); if (n !== null && n.trim() !== "") run("biz_stock_count", { p_item: i.id, p_count: Number(n) }); }}>
+              {qtyText(i.stock)}
+            </button>
+            <form className="stock-add" onSubmit={(e) => { e.preventDefault(); const q = Number(add[i.id]); if (q) { run("biz_stock_add", { p_item: i.id, p_qty: q }); setAdd({ ...add, [i.id]: "" }); } }}>
+              <input aria-label={`Add ${i.name}`} inputMode="decimal" placeholder="+" value={add[i.id] ?? ""} onChange={(e) => setAdd({ ...add, [i.id]: e.target.value.replace(/[^\d.-]/g, "") })} />
+              <button className="btn small" disabled={!Number(add[i.id])}>Add</button>
+            </form>
+            <button className="btn link small" onClick={() => run("biz_stock_track", { p_item: i.id, p_on: false })}>Stop</button>
+          </div>
+        ))}
+      </section>
+      {others.length > 0 && (
+        <details className="extra" open={tracked.length === 0}>
+          <summary>Count stock for more items</summary>
+          <div className="chips" style={{ marginTop: 10 }}>
+            {others.map((i) => <button key={i.id} className="chip-pick" onClick={() => run("biz_stock_track", { p_item: i.id, p_on: true })}>+ {i.name}</button>)}
+          </div>
+        </details>
+      )}
+      {data.moves.length > 0 && (
+        <section className="menu-group">
+          <h3>Recent changes</h3>
+          <div className="tbl-wrap"><table><tbody>
+            {data.moves.map((m, k) => (
+              <tr key={k}><td className="hint">{when(m.at)}</td><td>{m.name}</td>
+                <td className="num" style={{ color: m.change < 0 ? "var(--bad)" : "var(--good)" }}>{m.change > 0 ? "+" : ""}{qtyText(m.change)}</td>
+                <td className="hint">{m.reason === "sale" ? "Sold" : m.reason === "add" ? "Added" : "Counted"}{m.by ? ` · ${m.by}` : ""}</td></tr>
+            ))}
+          </tbody></table></div>
+        </section>
+      )}
+    </div>
   );
 }

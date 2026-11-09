@@ -9,7 +9,7 @@ export type BizShop = { id: string; name: string; legal_name: string | null; gst
   max_redeem_pct: number; logo_path: string | null; kitchen: boolean; timezone: string };
 export type Category = { id: string; name: string; sort: number };
 export type Item = { id: string; category_id: string | null; name: string; price: number; gst_rate: number; hsn: string | null;
-  veg: boolean; available: boolean; sort: number };
+  veg: boolean; available: boolean; sort: number; track_stock?: boolean; stock?: number; low_stock?: number };
 export type Table = { id: string; name: string; sort: number };
 export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[] };
 

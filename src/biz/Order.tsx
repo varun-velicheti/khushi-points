@@ -111,11 +111,14 @@ export default function OrderScreen() {
       <section className={`items${soldOutMode ? " editing" : ""}`}>
         {items.map((i) => {
           const qty = order.lines.filter((l) => l.item_id === i.id).reduce((a, l) => a + l.qty, 0);
+          const left = i.track_stock ? Number(i.stock ?? 0) - qty : null;
+          const out = !i.available || (left !== null && left <= 0 && qty === 0);
           return (
-            <button key={i.id} className={`item${i.available ? "" : " out"}`} onClick={() => tapItem(i)}>
+            <button key={i.id} className={`item${out ? " out" : ""}`} onClick={() => (out && !soldOutMode ? undefined : tapItem(i))}>
               <span className={`dot ${i.veg ? "veg" : "nonveg"}`} aria-label={i.veg ? "Veg" : "Non-veg"} />
               <span className="item-name">{i.name}</span>
-              <span className="item-price">{i.available ? rupees(i.price) : "Sold out"}</span>
+              <span className="item-price">{!i.available ? "Sold out" : left !== null && left <= 0 && qty === 0 ? "Out of stock" : rupees(i.price)}
+                {left !== null && left > 0 && <small className={left <= Number(i.low_stock ?? 5) ? "low" : ""}>{left} left</small>}</span>
               {qty > 0 && <span className="item-qty">{qty}</span>}
             </button>
           );
