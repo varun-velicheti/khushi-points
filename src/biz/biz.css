@@ -175,8 +175,11 @@
 .stock-row.low { border-color: #F4C5CB; background: var(--bad-bg) }
 .stock-row.low .stock-count { color: var(--bad) }
 .stock-count { border: 0; background: none; font: 800 20px var(--f-display); cursor: pointer; color: var(--ink); min-width: 56px; text-align: right; font-variant-numeric: tabular-nums }
-.stock-add { display: flex; gap: 6px }
-.stock-add input { width: 72px; padding: 8px 10px; text-align: center }
+.stock-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end }
+.low-at { color: var(--muted) !important; font-size: 13px !important }
+.stock-row.low .low-at { color: var(--bad) !important }
+.pill-badge { display: inline-block; margin-left: 6px; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--bad); color: #fff; font: 800 12px/20px var(--f-body); text-align: center }
+.stepper button:disabled { opacity: .35; cursor: not-allowed }
 .chip-pick { border: 1px dashed var(--line); background: var(--surface); border-radius: 99px; padding: 8px 14px; font: 600 14px var(--f-body); cursor: pointer; color: var(--ink) }
 .reports { max-width: 980px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 18px }
 .reports-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap }

@@ -70,11 +70,19 @@ export default function OrderScreen() {
       return reload();
     }
     if (!i.available) return;
+    const r = room(i.id);
+    if (r !== null && r <= 0) return;
     const at = order!.lines.findIndex((l) => l.item_id === i.id && !l.note);
     if (at >= 0) change(order!.lines.map((l, k) => (k === at ? { ...l, qty: l.qty + 1 } : l)));
     else change([...order!.lines, { item_id: i.id, name: i.name, price: Number(i.price), qty: 1, gst_rate: Number(i.gst_rate), hsn: i.hsn }]);
   }
   const step = (k: number, d: number) => change(order.lines.flatMap((l, j) => (j !== k ? [l] : l.qty + d > 0 ? [{ ...l, qty: l.qty + d }] : [])));
+  // how many more of this item can still be added (null: stock not counted)
+  const room = (itemId?: string | null) => {
+    const it = menu.items.find((x) => x.id === itemId);
+    if (!it?.track_stock) return null;
+    return Number(it.stock ?? 0) - order.lines.filter((l) => l.item_id === itemId).reduce((a, l) => a + l.qty, 0);
+  };
 
   async function send() {
     try {
@@ -112,12 +120,12 @@ export default function OrderScreen() {
         {items.map((i) => {
           const qty = order.lines.filter((l) => l.item_id === i.id).reduce((a, l) => a + l.qty, 0);
           const left = i.track_stock ? Number(i.stock ?? 0) - qty : null;
-          const out = !i.available || (left !== null && left <= 0 && qty === 0);
+          const out = !i.available || (left !== null && left <= 0);     // nothing more can be added
           return (
             <button key={i.id} className={`item${out ? " out" : ""}`} onClick={() => (out && !soldOutMode ? undefined : tapItem(i))}>
               <span className={`dot ${i.veg ? "veg" : "nonveg"}`} aria-label={i.veg ? "Veg" : "Non-veg"} />
               <span className="item-name">{i.name}</span>
-              <span className="item-price">{!i.available ? "Sold out" : left !== null && left <= 0 && qty === 0 ? "Out of stock" : rupees(i.price)}
+              <span className="item-price">{!i.available ? "Sold out" : left !== null && left <= 0 ? (qty ? "No more in stock" : "Out of stock") : rupees(i.price)}
                 {left !== null && left > 0 && <small className={left <= Number(i.low_stock ?? 5) ? "low" : ""}>{left} left</small>}</span>
               {qty > 0 && <span className="item-qty">{qty}</span>}
             </button>
@@ -134,7 +142,7 @@ export default function OrderScreen() {
               <span className="stepper">
                 <button onClick={() => step(k, -1)} aria-label={`One less ${l.name}`}>−</button>
                 <b>{l.qty}</b>
-                <button onClick={() => step(k, 1)} aria-label={`One more ${l.name}`}>+</button>
+                <button onClick={() => step(k, 1)} disabled={(room(l.item_id) ?? 1) <= 0} aria-label={`One more ${l.name}`}>+</button>
               </span>
               <span className="cart-amt">{rupees(l.price * l.qty)}</span>
             </div>

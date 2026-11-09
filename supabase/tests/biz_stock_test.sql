@@ -27,6 +27,8 @@ select public.biz_save_item(:'shop', '{"name":"Chai","price":30,"gst_rate":5}') 
 select public.biz_stock_track(:'shop', :'coke', true);
 select public.biz_stock_count(:'shop', :'coke', 24);
 select t.check(((select i from jsonb_array_elements((public.biz_menu(:'shop'))->'items') i where i->>'name' = 'Coke')->>'stock')::numeric = 24, 'menu shows 24');
+select public.biz_stock_low(:'shop', :'coke', 30);
+select t.check(((select i from jsonb_array_elements((public.biz_stock(:'shop'))->'items') i where i->>'name' = 'Coke')->>'low_stock')::numeric = 30, 'low level set');
 reset role;
 
 -- cashier adds a delivery; cannot change tracking or stocktake

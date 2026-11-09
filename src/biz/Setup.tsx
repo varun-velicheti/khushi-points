@@ -8,14 +8,16 @@ import { rupees } from "./money";
 
 const RATES = [0, 5, 12, 18, 28];
 
-// Owner setup: menu, tables, billing details.
+// Owner setup: menu, tables, stock, billing details.
 export default function Setup() {
+  const { menu } = useBiz();
+  const low = menu.items.filter((i) => i.track_stock && Number(i.stock) <= Number(i.low_stock ?? 5)).length;
   return (
     <div className="biz-pad setup">
       <nav className="pills">
         <NavLink to="/biz/setup/menu">{({ isActive }) => <button aria-pressed={isActive}>Menu</button>}</NavLink>
         <NavLink to="/biz/setup/tables">{({ isActive }) => <button aria-pressed={isActive}>Tables</button>}</NavLink>
-        <NavLink to="/biz/setup/stock">{({ isActive }) => <button aria-pressed={isActive}>Stock</button>}</NavLink>
+        <NavLink to="/biz/setup/stock">{({ isActive }) => <button aria-pressed={isActive}>Stock{low > 0 && <span className="pill-badge">{low}</span>}</button>}</NavLink>
         <NavLink to="/biz/setup/billing">{({ isActive }) => <button aria-pressed={isActive}>Billing</button>}</NavLink>
       </nav>
       <Routes>
@@ -205,7 +207,6 @@ function StockSetup() {
   const { reload } = useBiz();
   const shopId = current!.shop.id;
   const [data, setData] = useState<{ items: StockItem[]; moves: Move[] } | null>(null);
-  const [add, setAdd] = useState<Record<string, string>>({});
   const [err, setErr] = useState("");
   const load = useCallback(() => rpc<{ items: StockItem[]; moves: Move[] }>("biz_stock", { p_shop: shopId }).then(setData).catch((e) => setErr(errorText(e))), [shopId]);
   useEffect(() => { load(); }, [load]);
@@ -223,14 +224,15 @@ function StockSetup() {
         {tracked.map((i) => (
           <div key={i.id} className={`stock-row${Number(i.stock) <= Number(i.low_stock) ? " low" : ""}`}>
             <span className="menu-name">{i.name}</span>
-            <button className="stock-count" title="Set the counted number"
-              onClick={() => { const n = window.prompt(`${i.name}: how many on the shelf?`, qtyText(i.stock)); if (n !== null && n.trim() !== "") run("biz_stock_count", { p_item: i.id, p_count: Number(n) }); }}>
+            <button className="stock-count"
+              onClick={() => { const n = window.prompt(`${i.name}: how many on the shelf now?`, qtyText(i.stock)); if (n !== null && n.trim() !== "") run("biz_stock_count", { p_item: i.id, p_count: Number(n) }); }}>
               {qtyText(i.stock)}
             </button>
-            <form className="stock-add" onSubmit={(e) => { e.preventDefault(); const q = Number(add[i.id]); if (q) { run("biz_stock_add", { p_item: i.id, p_qty: q }); setAdd({ ...add, [i.id]: "" }); } }}>
-              <input aria-label={`Add ${i.name}`} inputMode="decimal" placeholder="+" value={add[i.id] ?? ""} onChange={(e) => setAdd({ ...add, [i.id]: e.target.value.replace(/[^\d.-]/g, "") })} />
-              <button className="btn small" disabled={!Number(add[i.id])}>Add</button>
-            </form>
+            <span className="stock-btns">
+              <button className="btn alt small" aria-label={`One more ${i.name}`} onClick={() => run("biz_stock_add", { p_item: i.id, p_qty: 1 })}>+1</button>
+              <button className="btn alt small" onClick={() => { const n = window.prompt(`${i.name}: how many came in?`, ""); const q = Number(n); if (n && q) run("biz_stock_add", { p_item: i.id, p_qty: q }); }}>Add…</button>
+              <button className="btn link small low-at" onClick={() => { const n = window.prompt(`${i.name}: show as low at or below`, qtyText(i.low_stock)); if (n !== null && n.trim() !== "" && Number(n) >= 0) run("biz_stock_low", { p_item: i.id, p_low: Number(n) }); }}>Low ≤ {qtyText(i.low_stock)}</button>
+            </span>
             <button className="btn link small" onClick={() => run("biz_stock_track", { p_item: i.id, p_on: false })}>Stop</button>
           </div>
         ))}

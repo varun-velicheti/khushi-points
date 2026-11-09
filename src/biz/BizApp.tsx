@@ -31,6 +31,8 @@ export default function BizApp() {
     catch (e) { if (!isNetworkError(e) || !cachedMenu(shopId)) setErr(errorText(e)); }
   }, [shopId]);
   useEffect(() => { setMenu(cachedMenu(shopId)); reload(); }, [shopId, reload]);
+  // refresh every minute so stock counts include other devices' sales
+  useEffect(() => { const i = setInterval(() => { if (navigator.onLine) reload(); }, 60000); return () => clearInterval(i); }, [reload]);
   useEffect(() => onSync(setSync), []);
 
   return (
