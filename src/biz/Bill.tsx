@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { errorText, rpc, supabase } from "../lib";
 import { useShop } from "../shop";
-import { CustomerPicker, RewardsDue, whoArgs, type Balance, type Who } from "../pages/Counter";
-import { applyRedemption, getOrder, payOrder, preview, saveOrder, type BizShop, type Order } from "./api";
+import { CustomerPicker, RewardsDue, type Balance, type Who } from "../pages/Counter";
+import { applyRedemption, getOrder, payOrder, preview, saveOrder, startRedemption, type BizShop, type Order } from "./api";
 import { useBiz } from "./BizApp";
 import { paise, rupees, type Totals } from "./money";
 
@@ -29,6 +29,8 @@ export default function BillScreen() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [waiting, setWaiting] = useState<string | null>(null);   // redemption request waiting for the customer's approval
+  const [pts, setPts] = useState("");                            // points to use
+  const [note, setNote] = useState("");
 
   const refresh = useCallback(async () => {
     const o = await getOrder(shop.id, id!);
@@ -37,8 +39,12 @@ export default function BillScreen() {
     return o;
   }, [shop.id, id]);
   useEffect(() => {
-    refresh().then((o) => setRaw(o.customer_member ?? o.customer_mobile ?? "")).catch((e) => setErr(errorText(e)));
-  }, [refresh]);
+    refresh().then(async (o) => {
+      setRaw(o.customer_member ?? o.customer_mobile ?? "");
+      // a points request still waiting (e.g. the page was reloaded): keep waiting for it
+      if (o.status === "open" && o.redeem_request_id && (await preview(shop.id, o.id)).discount === 0) setWaiting(o.redeem_request_id);
+    }).catch((e) => setErr(errorText(e)));
+  }, [refresh, shop.id]);
 
   // keep the customer on the order
   const onLookup = useCallback((w: Who | null, b: Balance | null) => { setWho(w); setInfo(b); }, []);
@@ -56,8 +62,11 @@ export default function BillScreen() {
       const st = await rpc<{ status: string; error?: string }>("redemption_status", { p_shop: shop.id, p_request: waiting }).catch(() => null);
       if (!st || st.status === "pending") return;
       setWaiting(null);
-      if (st.status === "done") { await applyRedemption(shop.id, id!, waiting).catch((e) => setErr(errorText(e))); refresh(); }
-      else setErr(st.status === "declined" ? "The customer declined." : errorText(st.error ?? st.status));
+      if (st.status !== "done") {
+        await applyRedemption(shop.id, id!, null).catch(() => {});
+        setErr(st.status === "declined" ? "The customer declined." : st.status === "expired" ? "No answer from the customer." : errorText(st.error ?? st.status));
+      }
+      refresh();
     }, 2000);
     return () => clearInterval(t);
   }, [waiting, shop.id, id, refresh]);
@@ -71,12 +80,14 @@ export default function BillScreen() {
   const cap = Math.floor((tot.total * menu.shop.max_redeem_pct) / 100 / pv);
   const usable = Math.min(info?.balance ?? 0, cap);
   const canRedeem = !!who && !!info?.exists && !!info.has_app && usable >= menu.shop.min_redeem && !order.redeem_request_id && !waiting;
+  const n = Math.floor(Number(pts || usable));
+  const nOk = n >= menu.shop.min_redeem && n <= usable;
   const needsConsent = !!who?.mobile && info?.exists === false && !info?.has_app;
 
   async function usePoints() {
-    setErr("");
+    setErr(""); setNote("");
     try {
-      const r = await rpc<{ request_id: string }>("start_redemption", { p_shop: shop.id, ...whoArgs(who!), p_bill_amount: tot!.total, p_points: usable });
+      const r = await startRedemption(shop.id, order!.id, n);
       supabase.functions.invoke("push", { body: { action: "redeem", shop_id: shop.id, request_id: r.request_id } }).catch(() => {});
       setWaiting(r.request_id);
     } catch (e) { setErr(errorText(e)); }
@@ -103,9 +114,22 @@ export default function BillScreen() {
           </label>
         )}
         {who && info?.exists && <RewardsDue shop={shop} who={who} />}
-        {canRedeem && <button className="btn alt" onClick={usePoints}>Use {usable} points · −{rupees(usable * pv)}</button>}
-        {waiting && <div className="msg info"><strong>Waiting for approval in the app</strong><button className="btn link small" onClick={() => { rpc("cancel_redemption", { p_shop: shop.id, p_request: waiting }).catch(() => {}); setWaiting(null); }}>Cancel</button></div>}
-        {order.redeem_request_id && <button className="btn link small" onClick={async () => { await applyRedemption(shop.id, order.id, null); refresh(); }}>Remove points discount</button>}
+        {canRedeem && (
+          <div className="redeem">
+            <input aria-label="Points to use" inputMode="numeric" value={pts} placeholder={String(usable)}
+              onChange={(e) => setPts(e.target.value.replace(/\D/g, ""))} />
+            <button className="btn alt" disabled={!nOk} onClick={usePoints}>Use points (−{rupees((nOk ? n : 0) * pv)})</button>
+          </div>
+        )}
+        {waiting && <div className="msg info"><strong>Waiting for approval in the app</strong>
+          <button className="btn link small" onClick={async () => { setWaiting(null); await applyRedemption(shop.id, order.id, null).catch(() => {}); refresh(); }}>Cancel</button></div>}
+        {order.redeem_request_id && !waiting && tot.discount > 0 && (
+          <button className="btn link small" onClick={async () => {
+            await applyRedemption(shop.id, order.id, null).catch((e) => setErr(errorText(e)));
+            setNote(`${Math.round(tot.discount / pv)} points returned to the customer`); setPts(""); refresh();
+          }}>Remove points discount</button>
+        )}
+        {note && <div className="msg ok">{note}</div>}
 
         <div className="pay-modes" role="group" aria-label="Payment">
           {(["upi", "cash", "card"] as Mode[]).map((m) => (

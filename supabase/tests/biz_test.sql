@@ -98,6 +98,54 @@ select public.biz_save_order(:'shop', '{"id":"aaaaaaaa-0000-0000-0000-0000000000
 select t.check(((public.biz_pay_order(:'shop', 'aaaaaaaa-0000-0000-0000-000000000006', 'cash', 'A', true))->>'points_earned')::int = 6, 'with consent: points');
 reset role;
 
+-- points on a bill: approve, remove (points come back), approve again and pay, cancel gives back
+select public.add_bill(:'shop', '7353862216', null, 5000, null, true);
+select (public.customer_balance(:'shop', '7353862216'))->>'balance' as bal0 \gset
+select public.biz_save_order(:'shop', '{"id":"aaaaaaaa-0000-0000-0000-000000000007","kind":"takeaway","customer_mobile":"7353862216","lines":[{"name":"Veg biryani","price":200,"qty":1,"gst_rate":5}]}');
+select (public.biz_start_redemption(:'shop', 'aaaaaaaa-0000-0000-0000-000000000007', 60))->>'request_id' as rq1 \gset
+select t.expect_error($$ select public.biz_pay_order('$$ || :'shop' || $$', 'aaaaaaaa-0000-0000-0000-000000000007', 'cash') $$, 'REDEEM_PENDING');
+reset role;
+select t.as_user('cccccccc-cccc-cccc-cccc-cccccccccccc');
+set role authenticated;
+select public.app_decide(:'rq1', true);
+reset role;
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select t.check(((public.customer_balance(:'shop', '7353862216'))->>'balance')::int = :bal0 - 60, 'approved: 60 taken');
+select t.check((public.biz_preview(:'shop', 'aaaaaaaa-0000-0000-0000-000000000007'))->>'total' = '140', 'discount on bill');
+select public.biz_use_redemption(:'shop', 'aaaaaaaa-0000-0000-0000-000000000007', null);
+select t.check(((public.customer_balance(:'shop', '7353862216'))->>'balance')::int = :bal0, 'removed: points back');
+select t.check((public.biz_preview(:'shop', 'aaaaaaaa-0000-0000-0000-000000000007'))->>'total' = '200', 'discount gone');
+-- approve again, then pay with the discount
+select (public.biz_start_redemption(:'shop', 'aaaaaaaa-0000-0000-0000-000000000007', 50))->>'request_id' as rq2 \gset
+reset role;
+select t.as_user('cccccccc-cccc-cccc-cccc-cccccccccccc');
+set role authenticated;
+select public.app_decide(:'rq2', true);
+reset role;
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select t.check((public.biz_pay_order(:'shop', 'aaaaaaaa-0000-0000-0000-000000000007', 'upi'))->'totals'->>'total' = '150', 'paid with points');
+-- cancelling an order gives approved points back
+select public.biz_save_order(:'shop', '{"id":"aaaaaaaa-0000-0000-0000-000000000008","kind":"takeaway","customer_mobile":"7353862216","lines":[{"name":"Veg biryani","price":200,"qty":1,"gst_rate":5}]}');
+select (public.customer_balance(:'shop', '7353862216'))->>'balance' as bal1 \gset
+select (public.biz_start_redemption(:'shop', 'aaaaaaaa-0000-0000-0000-000000000008', 50))->>'request_id' as rq3 \gset
+reset role;
+select t.as_user('cccccccc-cccc-cccc-cccc-cccccccccccc');
+set role authenticated;
+select public.app_decide(:'rq3', true);
+reset role;
+select t.as_user('22222222-2222-2222-2222-222222222222');
+set role authenticated;
+select public.biz_cancel_order(:'shop', 'aaaaaaaa-0000-0000-0000-000000000008');
+select t.check(((public.customer_balance(:'shop', '7353862216'))->>'balance')::int = :bal1, 'cancel: points back');
+-- changing the customer drops a waiting request
+select public.biz_save_order(:'shop', '{"id":"aaaaaaaa-0000-0000-0000-000000000009","kind":"takeaway","customer_mobile":"7353862216","lines":[{"name":"Veg biryani","price":200,"qty":1,"gst_rate":5}]}');
+select (public.biz_start_redemption(:'shop', 'aaaaaaaa-0000-0000-0000-000000000009', 50))->>'request_id' as rq4 \gset
+select public.biz_save_order(:'shop', '{"id":"aaaaaaaa-0000-0000-0000-000000000009","kind":"takeaway","customer_mobile":"9000000010","lines":[{"name":"Veg biryani","price":200,"qty":1,"gst_rate":5}]}');
+select t.check((public.biz_invoice(:'shop', 'aaaaaaaa-0000-0000-0000-000000000009'))->>'redeem_request_id' is null, 'new customer: request dropped');
+reset role;
+
 -- other shops see nothing
 select t.as_user('33333333-3333-3333-3333-333333333333');
 set role authenticated;

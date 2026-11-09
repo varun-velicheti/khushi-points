@@ -71,6 +71,8 @@
 .bill-side { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px;
   position: sticky; top: 76px }
 .who { display: flex; justify-content: space-between; align-items: center; background: var(--sunk); border-radius: 12px; padding: 10px 14px }
+.redeem { display: grid; grid-template-columns: 96px 1fr; gap: 8px }
+.redeem input { text-align: center; font-weight: 700 }
 .pay-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px }
 .pay-modes button { border: 1.5px solid var(--line); background: var(--surface); padding: 13px 8px; border-radius: 14px; font: 700 15px var(--f-body); cursor: pointer; color: var(--ink) }
 .pay-modes button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }

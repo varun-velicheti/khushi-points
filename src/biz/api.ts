@@ -28,5 +28,7 @@ export const preview = (shop: string, id: string) => rpc<Totals>("biz_preview", 
 export const payOrder = (shop: string, id: string, mode: "cash" | "upi" | "card", consent: boolean) =>
   rpc<Order>("biz_pay_order", { p_shop: shop, p_order: id, p_mode: mode, p_series: "A", p_consent: consent });
 export const cancelOrder = (shop: string, id: string) => rpc("biz_cancel_order", { p_shop: shop, p_order: id });
+export const startRedemption = (shop: string, id: string, points: number) =>
+  rpc<{ request_id: string; points: number; discount: number }>("biz_start_redemption", { p_shop: shop, p_order: id, p_points: points });
 export const applyRedemption = (shop: string, id: string, request: string | null) =>
   rpc<Order>("biz_use_redemption", { p_shop: shop, p_order: id, p_request: request });
