@@ -17,7 +17,14 @@ export type Order = {
   opened_at: string; updated_at: string; paid_at: string | null; invoice_no: string | null; totals: Totals | null;
   payments: { mode: string; amount: number }[] | null; points_earned: number | null; points_error: string | null;
   total?: number; table?: string | null; txn_id?: number | null;
+  sent?: Record<string, number>; kitchen?: "new" | "cooking" | "ready" | null;
 };
+
+export type Ticket = { id: string; no: number; status: "new" | "cooking" | "ready" | "done"; created_at: string; updated_at: string;
+  order_id: string; kind: string; table: string | null; cancelled: boolean; lines: { key: string; name: string; qty: number; note: string | null }[] };
+
+// Same as _biz_line_key: one dish = same item with the same note.
+export const lineKey = (l: { item_id?: string | null; name: string; note?: string | null }) => `${l.item_id ?? l.name}|${l.note ?? ""}`;
 
 export const loadMenu = (shop: string) => rpc<Menu>("biz_menu", { p_shop: shop });
 export const openOrders = (shop: string) => rpc<Order[]>("biz_open_orders", { p_shop: shop });
@@ -28,6 +35,9 @@ export const preview = (shop: string, id: string) => rpc<Totals>("biz_preview", 
 export const payOrder = (shop: string, id: string, mode: "cash" | "upi" | "card", consent: boolean) =>
   rpc<Order>("biz_pay_order", { p_shop: shop, p_order: id, p_mode: mode, p_series: "A", p_consent: consent });
 export const cancelOrder = (shop: string, id: string) => rpc("biz_cancel_order", { p_shop: shop, p_order: id });
+export const sendToKitchen = (shop: string, id: string) => rpc<{ id: string; no: number } | null>("biz_send_to_kitchen", { p_shop: shop, p_order: id });
+export const kitchenTickets = (shop: string) => rpc<Ticket[]>("biz_kitchen", { p_shop: shop });
+export const setTicketStatus = (shop: string, id: string, status: Ticket["status"]) => rpc("biz_ticket_status", { p_shop: shop, p_ticket: id, p_status: status });
 export const startRedemption = (shop: string, id: string, points: number) =>
   rpc<{ request_id: string; points: number; discount: number }>("biz_start_redemption", { p_shop: shop, p_order: id, p_points: points });
 export const applyRedemption = (shop: string, id: string, request: string | null) =>

@@ -66,6 +66,39 @@
 .cart-total b { font: 800 28px var(--f-display); color: var(--ink) }
 .cart footer .btn { padding: 16px; font-size: 17px }
 
+.cart-line.sent .cart-name { color: var(--muted) }
+.cart-line:not(.sent) { box-shadow: inset 3px 0 0 var(--brand); padding-left: 10px; margin-left: -10px }
+.cart-name { border: 0; background: none; padding: 0; text-align: left; font: 600 15px var(--f-body); color: var(--ink); cursor: pointer }
+.cart-name small { display: block; color: var(--warn); font-weight: 600; font-size: 12.5px }
+.cart-actions { display: grid; grid-template-columns: 3fr 2fr; gap: 8px }
+.cart-actions .btn { white-space: nowrap; font-size: 15.5px; padding-left: 10px; padding-right: 10px }
+.tile { position: relative }
+.tile-ready { position: absolute; top: 12px; right: 12px; background: var(--good); color: #fff; font: 800 12px var(--f-body); padding: 4px 10px; border-radius: 99px }
+
+/* kitchen: three columns of tickets */
+.kitchen { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 14px; align-items: start }
+.k-col { display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+.k-col h2 { display: flex; align-items: center; gap: 10px; font-size: 16px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 4px 4px 0 }
+.k-col h2 span { background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 0 10px; font-size: 14px; color: var(--ink) }
+.ticket { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 6px 18px rgb(22 24 29 / .06); overflow: hidden }
+.k-new .ticket { border-top: 5px solid var(--brand) }
+.k-cooking .ticket { border-top: 5px solid var(--accent) }
+.k-ready .ticket { border-top: 5px solid var(--good) }
+.ticket.cancelled { opacity: .6 }
+.ticket-body { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 14px 16px; font: inherit; color: inherit; cursor: pointer }
+.ticket header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px }
+.ticket header b { font: 800 22px var(--f-display) }
+.ticket header span { font-weight: 700; font-size: 16px }
+.ticket time { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600 }
+.ticket time.late { color: var(--bad) }
+.ticket ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px }
+.ticket li { font-size: 17px; font-weight: 600 }
+.ticket li b { font-weight: 800 }
+.ticket li small { display: block; color: var(--warn); font-size: 14px }
+.ticket li.minus { color: var(--bad); text-decoration: line-through }
+.ticket-cancel { color: var(--bad); font-weight: 800; margin-bottom: 6px }
+.ticket-back { position: absolute; bottom: 8px; right: 8px; width: 34px; height: 34px; border-radius: 17px; border: 1px solid var(--line); background: var(--surface); font: 700 18px var(--f-body); cursor: pointer; color: var(--muted) }
+
 /* bill: invoice | customer & payment */
 .bill { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; padding: 20px; align-items: start; max-width: 1100px; width: 100%; margin: 0 auto }
 .bill-side { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px;
@@ -128,6 +161,7 @@
 .billing { max-width: 640px }
 
 @media (max-width: 900px) {
+  .kitchen { grid-template-columns: 1fr }
   .order { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; height: auto; min-height: calc(100dvh - 57px) }
   .cats { flex-direction: row; overflow-x: auto; border: 0; border-bottom: 1px solid var(--line); padding: 10px }
   .cats button { white-space: nowrap; padding: 9px 14px }

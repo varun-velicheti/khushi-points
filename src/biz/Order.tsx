@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { errorText, rpc } from "../lib";
 import { useShop } from "../shop";
-import { cancelOrder, getOrder, saveOrder, type Item, type Order } from "./api";
+import { cancelOrder, getOrder, lineKey, saveOrder, sendToKitchen, type Item, type Order } from "./api";
 import { useBiz } from "./BizApp";
 import { rupees, totals, type Line } from "./money";
 
@@ -18,6 +18,8 @@ export default function OrderScreen() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Draft | null>(null);
   const [saved, setSaved] = useState(false);           // exists in the database
+  const [sent, setSent] = useState<Record<string, number>>({});   // what the kitchen already has
+  const [sentNo, setSentNo] = useState<number | null>(null);
   const [cat, setCat] = useState<string | null>(null);
   const [soldOutMode, setSoldOutMode] = useState(false);
   const [err, setErr] = useState("");
@@ -30,7 +32,7 @@ export default function OrderScreen() {
       if (stale) return;
       if (o.status === "paid") return navigate(`/biz/b/${o.id}`, { replace: true });
       if (o.status !== "open") return navigate("/biz", { replace: true });
-      setOrder(o); setSaved(true);
+      setOrder(o); setSaved(true); setSent(o.sent ?? {});
     }).catch(() => {
       if (stale) return;
       const table = params.get("table");
@@ -56,6 +58,11 @@ export default function OrderScreen() {
 
   if (!order) return <div className="biz-pad hint">Loading…</div>;
 
+  // what changed since the last send: per dish, now minus already sent (removed dishes count too)
+  const now: Record<string, number> = {};
+  order.lines.forEach((l) => { now[lineKey(l)] = (now[lineKey(l)] ?? 0) + l.qty; });
+  const changes = [...new Set([...Object.keys(now), ...Object.keys(sent)])].reduce((a, k) => a + Math.abs((now[k] ?? 0) - (sent[k] ?? 0)), 0);
+
   const change = (lines: Line[]) => { dirty.current = true; setOrder({ ...order, lines }); };
   async function tapItem(i: Item) {
     if (soldOutMode) {
@@ -69,6 +76,20 @@ export default function OrderScreen() {
   }
   const step = (k: number, d: number) => change(order.lines.flatMap((l, j) => (j !== k ? [l] : l.qty + d > 0 ? [{ ...l, qty: l.qty + d }] : [])));
 
+  async function send() {
+    try {
+      await saveOrder(shopId, order!); dirty.current = false; setSaved(true);
+      const k = await sendToKitchen(shopId, order!.id);
+      const o = await getOrder(shopId, order!.id);
+      setSent(o.sent ?? {}); setSentNo(k?.no ?? null); setErr("");
+    } catch (e) { setErr(errorText(e)); }
+  }
+  function noteFor(k: number) {
+    const l = order!.lines[k];
+    const n = window.prompt(`Note for ${l.name}`, l.note ?? "");
+    if (n === null) return;
+    change(order!.lines.map((x, j) => (j === k ? { ...x, note: n.trim() || null } : x)));
+  }
   async function bill() {
     try { await saveOrder(shopId, order!); dirty.current = false; navigate(`/biz/b/${order!.id}`); }
     catch (e) { setErr(errorText(e)); }
@@ -105,8 +126,8 @@ export default function OrderScreen() {
         <header><b>{tableName ?? "Takeaway"}</b><button className="btn link small" onClick={clear}>{saved ? "Cancel order" : "Close"}</button></header>
         <div className="cart-lines">
           {order.lines.map((l, k) => (
-            <div className="cart-line" key={k}>
-              <span className="cart-name">{l.name}</span>
+            <div className={`cart-line${(sent[lineKey(l)] ?? 0) >= l.qty ? " sent" : ""}`} key={k}>
+              <button className="cart-name" onClick={() => noteFor(k)}>{l.name}{l.note && <small>{l.note}</small>}</button>
               <span className="stepper">
                 <button onClick={() => step(k, -1)} aria-label={`One less ${l.name}`}>−</button>
                 <b>{l.qty}</b>
@@ -119,7 +140,10 @@ export default function OrderScreen() {
         {err && <div className="msg err">{err}</div>}
         <footer>
           <div className="cart-total"><span>{order.lines.reduce((a, l) => a + l.qty, 0)} items</span><b>{rupees(t.total)}</b></div>
-          <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>
+          <div className="cart-actions">
+            <button className="btn alt" disabled={changes === 0} onClick={send}>{changes ? `Send to kitchen · ${changes}` : sentNo ? `Sent · #${sentNo}` : "Sent"}</button>
+            <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>
+          </div>
         </footer>
       </section>
     </div>

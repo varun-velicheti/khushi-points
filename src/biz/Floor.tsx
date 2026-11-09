@@ -41,6 +41,7 @@ export default function Floor() {
             <span className="tile-name">Takeaway {i + 1}</span>
             <b>{rupees(o.total ?? 0)}</b>
             <span className="tile-time">{minutes(o.opened_at)} min</span>
+            {o.kitchen === "ready" && <span className="tile-ready">Ready</span>}
           </button>
         ))}
         {menu.tables.map((t) => {
@@ -49,6 +50,7 @@ export default function Floor() {
             <button key={t.id} className={`tile${o ? " busy" : ""}`} onClick={() => open(o, t.id)}>
               <span className="tile-name">{t.name}</span>
               {o ? <><b>{rupees(o.total ?? 0)}</b><span className="tile-time">{minutes(o.opened_at)} min</span></> : <span className="tile-free">Free</span>}
+              {o?.kitchen === "ready" && <span className="tile-ready">Ready</span>}
             </button>
           );
         })}
