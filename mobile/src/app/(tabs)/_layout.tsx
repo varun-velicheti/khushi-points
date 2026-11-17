@@ -36,7 +36,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="qr" options={{ title: "My QR", tabBarIcon: icon("qr-code", "qr-code-outline") }} />
       <Tabs.Screen name="offers" options={{ title: "Offers", tabBarIcon: icon("pricetags", "pricetags-outline"),
         tabBarBadge: offers > 0 ? (offers > 9 ? "9+" : offers) : undefined,
-        tabBarBadgeStyle: { backgroundColor: c.brand, color: c.brandInk, fontFamily: F.bold, fontSize: 11 } }} />
+        tabBarBadgeStyle: { backgroundColor: c.indigo, color: "#FFFFFF", fontFamily: F.bold, fontSize: 11 } }} />
       <Tabs.Screen name="me" options={{ title: "Profile", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );

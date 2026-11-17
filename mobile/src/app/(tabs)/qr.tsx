@@ -17,7 +17,7 @@ export default function MyQR() {
     <LinearGradient colors={[c.gradTop, c.gradBottom]} style={{ flex: 1, paddingTop: insets.top + 12, paddingHorizontal: 20 }}>
       <View style={{ alignItems: "center", gap: 6, marginBottom: 18 }}>
         <LogoMark size={44} />
-        <K w="heavy" s={22} c={c.onBrand} accessibilityRole="header">My QR</K>
+        <K w="heavy" s={22} c={c.onBrand} accessibilityRole="header" style={{ letterSpacing: -0.5 }}>My QR</K>
         <K s={14} c={c.onBrandMuted} style={{ textAlign: "center" }}>Show this at the counter to earn or use points</K>
       </View>
       <View style={{ backgroundColor: c.surface, borderRadius: 28, padding: 22, alignItems: "center", gap: 12 }}>

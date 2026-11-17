@@ -97,7 +97,7 @@ export default function SignIn() {
         <LinearGradient colors={[c.gradTop, c.gradBottom]} start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 1 }}
           style={{ paddingTop: insets.top + 36, paddingBottom: 64, paddingHorizontal: 24, alignItems: "center", gap: 12 }}>
           <LogoMark size={92} />
-          <K w="heavy" s={28} c={c.onBrand} accessibilityRole="header" style={{ textAlign: "center" }}>kushly</K>
+          <K w="heavy" s={28} c={c.onBrand} accessibilityRole="header" style={{ letterSpacing: -0.5, textAlign: "center" }}>kushly</K>
           <K w="semibold" s={15} c={c.onBrandMuted} style={{ textAlign: "center" }}>
             Your points from every local shop you love, in one place.
           </K>

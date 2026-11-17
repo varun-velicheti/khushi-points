@@ -39,7 +39,7 @@ export function GradientHeader({ title, left, right, children, tall = false }: {
       <View style={{ flexDirection: "row", alignItems: "center", minHeight: 44 }}>
         <View style={{ width: 44, alignItems: "flex-start" }}>{left}</View>
         <View style={{ flex: 1, alignItems: "center" }}>
-          {title ? <K w="heavy" s={20} c={c.onBrand} numberOfLines={1} accessibilityRole="header">{title}</K> : null}
+          {title ? <K w="heavy" s={20} c={c.onBrand} numberOfLines={1} accessibilityRole="header" style={{ letterSpacing: -0.4 }}>{title}</K> : null}
         </View>
         <View style={{ width: 44, alignItems: "flex-end" }}>{right}</View>
       </View>
@@ -53,7 +53,7 @@ export function HeaderButton({ icon, onPress, label }: { icon: IconName; onPress
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={8}
       style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center",
-        backgroundColor: "rgba(255,255,255,0.18)", borderWidth: 1, borderColor: "rgba(255,255,255,0.35)", opacity: pressed ? 0.7 : 1 })}>
+        backgroundColor: pressed ? "rgba(20,21,63,0.16)" : "rgba(20,21,63,0.08)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
       <Ionicons name={icon} size={20} color={c.onBrand} />
     </Pressable>
   );
@@ -91,15 +91,15 @@ export function Btn({ title, onPress, kind = "primary", busy, disabled, icon, st
   disabled?: boolean; icon?: IconName; style?: StyleProp<ViewStyle>;
 }) {
   const c = useColors();
-  const bg = { primary: c.brand, gold: c.accent, alt: c.brandSoft, danger: c.badBg, link: "transparent", white: "#FFFFFF" }[kind];
-  const fg = { primary: c.brandInk, gold: c.accentInk, alt: c.brandText, danger: c.bad, link: c.brandText, white: c.brandText }[kind];
+  const bg = { primary: c.indigo, gold: c.accent, alt: c.brandSoft, danger: c.badBg, link: "transparent", white: "#FFFFFF" }[kind];
+  const fg = { primary: "#FFFFFF", gold: c.accentInk, alt: c.brandText, danger: c.bad, link: c.brandText, white: c.brandText }[kind];
   return (
     <Pressable onPress={onPress} disabled={disabled || busy} accessibilityRole="button" accessibilityLabel={title}
-      style={({ pressed }) => [s.btn, { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
+      style={({ pressed }) => [s.btn, { backgroundColor: bg, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
         kind === "link" && { paddingHorizontal: 0, minHeight: 36 }, style]}>
       {busy ? <ActivityIndicator color={fg} /> : <>
         {icon ? <Ionicons name={icon} size={19} color={fg} /> : null}
-        <K w="bold" s={16} c={fg}>{title}</K>
+        <K w="bold" s={16} c={fg} style={{ letterSpacing: -0.1 }}>{title}</K>
       </>}
     </Pressable>
   );

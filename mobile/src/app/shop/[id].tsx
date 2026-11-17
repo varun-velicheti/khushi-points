@@ -51,7 +51,7 @@ export default function ShopPage() {
             <View style={{ borderRadius: 40, borderWidth: 4, borderColor: "rgba(255,255,255,0.35)" }}>
               <ShopAvatar cat={s.category} logo={s.logo_path} size={68} onBrand />
             </View>
-            <K w="heavy" s={22} c={c.onBrand} accessibilityRole="header" style={{ textAlign: "center" }}>{s.name}</K>
+            <K w="heavy" s={22} c={c.onBrand} accessibilityRole="header" style={{ letterSpacing: -0.5, textAlign: "center" }}>{s.name}</K>
             <K w="semibold" s={13} c={c.onBrandMuted} style={{ textAlign: "center" }}>{[category(s.category).label, place].filter(Boolean).join(" · ")}</K>
           </View>
         </GradientHeader>

@@ -2,9 +2,10 @@
 // brand: fills (headers, buttons, badges); brandInk/onBrand: text on brand; brandText: coloured text and icons on white.
 const light = {
   bg: "#F6F7FA", surface: "#FFFFFF", sunk: "#F1F2F6", ink: "#16181D", muted: "#5F6472", line: "#E6E8EE",
-  brand: "#F4A21B", brandDeep: "#D98A0A", brandSoft: "#FDF1DC", brandInk: "#23246B", brandText: "#23246B",
-  onBrand: "#23246B", onBrandMuted: "rgba(35, 36, 107, 0.78)",
-  gradTop: "#F7B640", gradBottom: "#F09A12",
+  brand: "#F4A21B", brandDeep: "#D98A0A", brandSoft: "#FDF1DC", brandInk: "#14153F", brandText: "#23246B",
+  // Solid deep ink on marigold (never see-through: that turns brown on orange). Hierarchy by size and weight.
+  onBrand: "#14153F", onBrandMuted: "#2C2D63",
+  gradTop: "#F9B53D", gradBottom: "#F4A21B",
   accent: "#F4A21B", accentInk: "#23246B", indigo: "#23246B", coral: "#FF7A59", teal: "#2BB5A0", cream: "#FBF8F2",
   good: "#16A35A", goodBg: "#E3F6EA", bad: "#D93848", badBg: "#FDE8EA", warn: "#B26A00", warnBg: "#FFF3DC",
   shadow: "rgba(22, 24, 29, 0.08)",

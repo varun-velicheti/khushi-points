@@ -13,8 +13,12 @@
   color-scheme: light;
 }
 /* Rewards: marigold fills with indigo text on them; darker marigold for coloured text on white */
-.p-rewards { --brand: var(--marigold); --brand-deep: #8F5A00; --brand-ink: var(--indigo); --brand-soft: #FDF1DC; --brand-text: #8F5A00;
-  --brand-glow: rgb(244 162 27 / .35); --grad-top: #F7B640; --grad-bottom: #F09A12; --brand-grad: linear-gradient(135deg, #F7B640, #F09A12) }
+.p-rewards { --brand: var(--marigold); --brand-deep: var(--indigo); --brand-ink: #14153F; --brand-soft: #FDF1DC; --brand-text: var(--indigo);
+  --brand-glow: rgb(244 162 27 / .3); --grad-top: #F9B53D; --grad-bottom: #F4A21B; --brand-grad: linear-gradient(135deg, #F9B53D, #F4A21B) }
+/* On marigold, actions are indigo with white text: crisp contrast; marigold stays the product colour. */
+.p-rewards .product { background: var(--marigold); color: #14153F; padding: 3px 10px; border-radius: 999px; font-size: 13px; letter-spacing: -.01em }
+.p-rewards nav.tabs a.active { font-weight: 700 }
+.p-rewards .btn:not(.alt):not(.link):not(.danger):not(.gold) { background: var(--indigo); color: #FFFFFF; box-shadow: 0 6px 14px rgb(35 36 107 / .22) }
 .p-campaigns { --brand: var(--coral); --brand-deep: #A6371C; --brand-ink: var(--indigo); --brand-soft: #FFEDE7; --brand-text: #A6371C;
   --brand-glow: rgb(255 122 89 / .35); --brand-grad: linear-gradient(135deg, #FF8E72, #F56A47) }
 .p-people { --brand: var(--teal); --brand-deep: #0E6E60; --brand-ink: var(--indigo); --brand-soft: #E2F5F1; --brand-text: #0E6E60;
@@ -74,7 +78,10 @@ input.code { font-family: var(--f-mono); font-size: 24px; letter-spacing: .4em; 
 .hint { font-size: 14px; line-height: 1.55; color: var(--muted) }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 14px; padding: 14px 22px;
-  font: 700 15.5px var(--f-body); cursor: pointer; background: var(--brand-grad); color: var(--brand-ink); text-decoration: none; box-shadow: 0 6px 14px var(--brand-glow) }
+  font: 700 15.5px var(--f-body); cursor: pointer; background: var(--brand-grad); color: var(--brand-ink); text-decoration: none; box-shadow: 0 6px 14px var(--brand-glow);
+  letter-spacing: -0.01em; transition: transform .12s ease, filter .12s ease }
+.btn:hover { filter: brightness(1.06) }
+.btn:active { transform: scale(.97) }
 .btn.alt { background: var(--brand-soft); color: var(--brand-deep); box-shadow: none }
 .btn.gold { background: var(--brand-grad); color: var(--brand-ink) }
 .btn.small { padding: 9px 16px; font-size: 14px }
