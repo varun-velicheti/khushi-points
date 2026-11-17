@@ -148,14 +148,14 @@ export function flush(): Promise<void> {
           let r: Order;
           try {
             r = await rpc<Order>("biz_pay_order", { p_shop: op.shop, p_order: op.id, p_mode: op.mode, p_series: op.series,
-              p_consent: op.consent, p_seq: op.seq, p_paid_at: op.paid_at, p_payments: op.payments ?? null });
+              p_consent: op.consent, p_seq: op.seq, p_paid_at: op.paid_at, ...(op.payments ? { p_payments: op.payments } : {}) });
           } catch (e) {
             if (!/INVOICE_TAKEN/.test((e as Error).message)) throw e;
             await claimDevice(op.shop);   // number used elsewhere: catch up and take the next one
             const d = read<Device>(key(op.shop, "device"), { series: op.series, fy: "", last: op.seq });
             write(key(op.shop, "device"), { ...d, last: d.last + 1 });
             r = await rpc<Order>("biz_pay_order", { p_shop: op.shop, p_order: op.id, p_mode: op.mode, p_series: d.series,
-              p_consent: op.consent, p_seq: d.last + 1, p_paid_at: op.paid_at, p_payments: op.payments ?? null });
+              p_consent: op.consent, p_seq: d.last + 1, p_paid_at: op.paid_at, ...(op.payments ? { p_payments: op.payments } : {}) });
           }
           remember(op.shop, r);
           if (r.txn_id) supabase.functions.invoke("push", { body: { action: "earn", shop_id: op.shop, txn_id: r.txn_id } }).catch(() => {});
