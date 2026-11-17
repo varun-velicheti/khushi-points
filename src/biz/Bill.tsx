@@ -240,6 +240,7 @@ export function Invoice({ order, tot, shop, table }: { order: Order; tot: Totals
             <span>{new Date(r.at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span></div>
           {r.lines.map((l, k) => <div className="credit-line" key={k}><span>{l.qty} × {l.name}</span><span>−{paise(l.price * l.qty)}</span></div>)}
           <div className="credit-line"><b>Refunded by {r.mode.toUpperCase()}{r.reason ? ` · ${r.reason}` : ""}</b><b>−{rupees(r.totals.total)}</b></div>
+          {r.points_back ? <div className="credit-line"><span>Points taken back</span><span>−{r.points_back}</span></div> : null}
         </section>
       ))}
     </article>

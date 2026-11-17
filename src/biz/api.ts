@@ -15,7 +15,7 @@ export type OptionGroup = { name: string; pick: "one" | "many"; choices: { name:
 export type Table = { id: string; name: string; sort: number };
 export type Payment = { mode: "cash" | "upi" | "card"; amount: number };
 // A credit note: items of a paid bill given back. Lines are the order's lines with the refunded qty and their index `i`.
-export type Refund = { id: string; no: number; credit_no: string; at: string; lines: (Line & { i: number })[]; totals: Totals; mode: Payment["mode"]; reason: string | null };
+export type Refund = { id: string; no: number; credit_no: string; at: string; lines: (Line & { i: number })[]; totals: Totals; mode: Payment["mode"]; reason: string | null; points_back?: number };
 // Staff who say who they are with a PIN on a shared device (names and roles only; PINs stay on the server).
 export type Staff = { id: string; name: string; role: "cashier" | "manager" };
 export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[]; staff?: Staff[] };
