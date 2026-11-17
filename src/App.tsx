@@ -66,12 +66,12 @@ function Layout() {
   const { current, memberships, selectShop, isAdmin } = useShop();
   if (!current) return null;
   return (
-    <div className="wrap">
+    <div className="wrap p-rewards">
       <header className="top">
         <div className="brand">
-          <img className="logo" src="/icon.svg" alt="" />
+          <img className="logo product-icon" src="/rewards.svg" alt="" />
           <div style={{ minWidth: 0 }}>
-            <h1 className="wordmark">kushly</h1>
+            <h1><span className="wordmark">kushly</span> <span className="product">Rewards</span></h1>
             <div className="shop">{current.shop.name} · {current.role === "owner" ? "Owner" : "Cashier"}</div>
           </div>
         </div>
@@ -81,7 +81,7 @@ function Layout() {
               {memberships.map((m) => <option key={m.shop.id} value={m.shop.id}>{m.shop.name}</option>)}
             </select>
           )}
-          {current.shop.biz_enabled && <Link className="btn alt small" to="/biz">POS</Link>}
+          {current.shop.biz_enabled && <Link className="btn alt small" to="/biz"><img src="/pos.svg" alt="" className="btn-icon" />POS</Link>}
           {isAdmin && <Link className="btn alt small" to="/admin">Admin</Link>}
           <button className="btn alt small" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
@@ -93,7 +93,7 @@ function Layout() {
       </nav>
       <Outlet key={current.shop.id} />
       <footer className="foot">
-        <span>Kushly</span>
+        <span>Kushly Rewards</span>
         <Link to="/privacy">Privacy policy</Link>
         <Link to="/terms">Terms</Link>
       </footer>

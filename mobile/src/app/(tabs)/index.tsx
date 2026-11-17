@@ -41,14 +41,14 @@ export default function Home() {
       header={
         <GradientHeader tall left={<LogoMark size={38} />} title="kushly"
           right={<HeaderButton icon="notifications-outline" label="Offers" onPress={() => router.navigate("/offers")} />}>
-          <K w="semibold" s={14} c="rgba(255,255,255,0.9)" style={{ marginTop: 10 }}>{first ? `Hi ${first}, welcome back` : "Welcome back"}</K>
+          <K w="semibold" s={14} c={c.onBrandMuted} style={{ marginTop: 10 }}>{first ? `Hi ${first}, welcome back` : "Welcome back"}</K>
         </GradientHeader>
       }>
       {/* points summary */}
       <Card onPress={() => router.navigate("/qr")} accessibilityLabel={`${total} points across ${list?.length ?? 0} shops. Show my QR`}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="star" size={28} color={c.brand} />
+            <Ionicons name="star" size={28} color={c.brandText} />
           </View>
           <View style={{ flex: 1 }}>
             <K s={13} c={c.muted}>Your points</K>
@@ -80,7 +80,7 @@ export default function Home() {
       {list?.length === 0 && (
         <Card style={{ alignItems: "center", paddingVertical: 26, gap: 10 }}>
           <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="storefront" size={34} color={c.brand} />
+            <Ionicons name="storefront" size={34} color={c.brandText} />
           </View>
           <K w="heavy" s={18} style={{ textAlign: "center" }}>Start earning at Kushly shops</K>
           <K s={14} c={c.muted} style={{ textAlign: "center" }}>Show your QR at the counter when you pay. Points from each shop appear here.</K>
@@ -133,11 +133,11 @@ export default function Home() {
               <LinearGradient colors={[c.gradTop, c.gradBottom]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={{ width: 250, minHeight: 128, borderRadius: 20, padding: 16, gap: 6, justifyContent: "space-between" }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Ionicons name="pricetag" size={14} color="#FFFFFF" />
-                  <K w="bold" s={12} c="rgba(255,255,255,0.9)" numberOfLines={1} style={{ flex: 1 }}>{o.shop_name}</K>
+                  <Ionicons name="pricetag" size={14} color={c.onBrand} />
+                  <K w="bold" s={12} c={c.onBrandMuted} numberOfLines={1} style={{ flex: 1 }}>{o.shop_name}</K>
                 </View>
-                <K w="heavy" s={17} c="#FFFFFF" numberOfLines={2}>{o.title}</K>
-                <K w="semibold" s={12} c="rgba(255,255,255,0.85)">{o.valid_until ? `Valid until ${new Date(o.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "Tap to see the shop"}</K>
+                <K w="heavy" s={17} c={c.onBrand} numberOfLines={2}>{o.title}</K>
+                <K w="semibold" s={12} c={c.onBrandMuted}>{o.valid_until ? `Valid until ${new Date(o.valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "Tap to see the shop"}</K>
               </LinearGradient>
             </Pressable>
           )} />

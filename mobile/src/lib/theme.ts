@@ -1,9 +1,11 @@
-// Kushly look: navy brand with orange, coral and teal accents (from the logo), white rounded cards.
+// Kushly customer app = the shopper side of kushly Rewards: marigold, with indigo text on it.
+// brand: fills (headers, buttons, badges); brandInk/onBrand: text on brand; brandText: coloured text and icons on white.
 const light = {
   bg: "#F6F7FA", surface: "#FFFFFF", sunk: "#F1F2F6", ink: "#16181D", muted: "#5F6472", line: "#E6E8EE",
-  brand: "#23256B", brandDeep: "#181A52", brandSoft: "#ECECF7", brandInk: "#FFFFFF",
-  gradTop: "#2F3290", gradBottom: "#1B1D58",
-  accent: "#F3A31A", accentInk: "#23256B", coral: "#FF7A5A", teal: "#2BB5A0", cream: "#FBF8F2",
+  brand: "#F4A21B", brandDeep: "#D98A0A", brandSoft: "#FDF1DC", brandInk: "#23246B", brandText: "#23246B",
+  onBrand: "#23246B", onBrandMuted: "rgba(35, 36, 107, 0.78)",
+  gradTop: "#F7B640", gradBottom: "#F09A12",
+  accent: "#F4A21B", accentInk: "#23246B", indigo: "#23246B", coral: "#FF7A59", teal: "#2BB5A0", cream: "#FBF8F2",
   good: "#16A35A", goodBg: "#E3F6EA", bad: "#D93848", badBg: "#FDE8EA", warn: "#B26A00", warnBg: "#FFF3DC",
   shadow: "rgba(22, 24, 29, 0.08)",
 };

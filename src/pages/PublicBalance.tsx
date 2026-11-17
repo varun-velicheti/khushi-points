@@ -29,7 +29,7 @@ export default function PublicBalance() {
     <div className="wrap narrow">
       <div className="brand" style={{ marginTop: 24 }}>
         <img className="logo" src="/icon.svg" alt="" />
-        <div><h1>{shop.shop}</h1><div className="shop">Loyalty points · Kushly</div></div>
+        <div><h1>{shop.shop}</h1><div className="shop">kushly Rewards</div></div>
       </div>
       <form className="panel stack" style={{ marginTop: 20 }} onSubmit={check} autoComplete="off">
         <div><h2>Check your points</h2>

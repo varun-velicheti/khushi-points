@@ -97,8 +97,8 @@ export default function SignIn() {
         <LinearGradient colors={[c.gradTop, c.gradBottom]} start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 1 }}
           style={{ paddingTop: insets.top + 36, paddingBottom: 64, paddingHorizontal: 24, alignItems: "center", gap: 12 }}>
           <LogoMark size={92} />
-          <K w="heavy" s={28} c="#FFFFFF" accessibilityRole="header" style={{ textAlign: "center" }}>kushly</K>
-          <K w="semibold" s={15} c="rgba(255,255,255,0.92)" style={{ textAlign: "center" }}>
+          <K w="heavy" s={28} c={c.onBrand} accessibilityRole="header" style={{ textAlign: "center" }}>kushly</K>
+          <K w="semibold" s={15} c={c.onBrandMuted} style={{ textAlign: "center" }}>
             Your points from every local shop you love, in one place.
           </K>
         </LinearGradient>
@@ -158,8 +158,8 @@ export default function SignIn() {
           <View style={{ flex: 1 }} />
           <K s={12} c={c.muted} style={{ textAlign: "center" }}>
             By continuing you agree to the{" "}
-            <Text style={{ color: c.brand }} onPress={() => WebBrowser.openBrowserAsync(`${WEB}/terms`)}>Terms</Text> and{" "}
-            <Text style={{ color: c.brand }} onPress={() => WebBrowser.openBrowserAsync(`${WEB}/privacy`)}>Privacy policy</Text>.
+            <Text style={{ color: c.brandText }} onPress={() => WebBrowser.openBrowserAsync(`${WEB}/terms`)}>Terms</Text> and{" "}
+            <Text style={{ color: c.brandText }} onPress={() => WebBrowser.openBrowserAsync(`${WEB}/privacy`)}>Privacy policy</Text>.
           </K>
         </View>
       </ScrollView>

@@ -26,7 +26,7 @@ export default function TabsLayout() {
       <Ionicons name={focused ? on : off} size={size} color={color} />;
   return (
     <Tabs screenOptions={{
-      headerShown: false, tabBarActiveTintColor: c.brand, tabBarInactiveTintColor: c.muted,
+      headerShown: false, tabBarActiveTintColor: c.brandText, tabBarInactiveTintColor: c.muted,
       tabBarLabelStyle: { fontFamily: F.semibold, fontSize: 11.5 },
       tabBarStyle: { backgroundColor: c.surface, borderTopWidth: 0, height: 64 + insets.bottom, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 8),
         shadowColor: c.shadow, shadowOffset: { width: 0, height: -4 }, shadowOpacity: 1, shadowRadius: 12, elevation: 12 },
@@ -36,7 +36,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="qr" options={{ title: "My QR", tabBarIcon: icon("qr-code", "qr-code-outline") }} />
       <Tabs.Screen name="offers" options={{ title: "Offers", tabBarIcon: icon("pricetags", "pricetags-outline"),
         tabBarBadge: offers > 0 ? (offers > 9 ? "9+" : offers) : undefined,
-        tabBarBadgeStyle: { backgroundColor: c.brand, color: "#FFFFFF", fontFamily: F.bold, fontSize: 11 } }} />
+        tabBarBadgeStyle: { backgroundColor: c.brand, color: c.brandInk, fontFamily: F.bold, fontSize: 11 } }} />
       <Tabs.Screen name="me" options={{ title: "Profile", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );

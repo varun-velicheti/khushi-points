@@ -51,8 +51,8 @@ export default function ShopPage() {
             <View style={{ borderRadius: 40, borderWidth: 4, borderColor: "rgba(255,255,255,0.35)" }}>
               <ShopAvatar cat={s.category} logo={s.logo_path} size={68} onBrand />
             </View>
-            <K w="heavy" s={22} c="#FFFFFF" accessibilityRole="header" style={{ textAlign: "center" }}>{s.name}</K>
-            <K w="semibold" s={13} c="rgba(255,255,255,0.9)" style={{ textAlign: "center" }}>{[category(s.category).label, place].filter(Boolean).join(" · ")}</K>
+            <K w="heavy" s={22} c={c.onBrand} accessibilityRole="header" style={{ textAlign: "center" }}>{s.name}</K>
+            <K w="semibold" s={13} c={c.onBrandMuted} style={{ textAlign: "center" }}>{[category(s.category).label, place].filter(Boolean).join(" · ")}</K>
           </View>
         </GradientHeader>
       }>
@@ -60,8 +60,8 @@ export default function ShopPage() {
       {note ? (
         <Card style={{ backgroundColor: c.brandSoft, gap: 6 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Ionicons name="mail-open" size={18} color={c.brand} />
-            <K w="bold" s={13} c={c.brand}>A note from {s.name} · {when(note.created_at)}</K>
+            <Ionicons name="mail-open" size={18} color={c.brandText} />
+            <K w="bold" s={13} c={c.brandText}>A note from {s.name} · {when(note.created_at)}</K>
           </View>
           <K w="semibold" s={16}>{note.message}</K>
           {note.gift_title ? <K s={13} c={c.muted}>Your welcome-back gift, {note.gift_title}, is waiting below. Show it at the counter.</K> : null}
@@ -72,7 +72,7 @@ export default function ShopPage() {
       <Card>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="star" size={28} color={c.brand} />
+            <Ionicons name="star" size={28} color={c.brandText} />
           </View>
           <View style={{ flex: 1 }}>
             <K s={13} c={c.muted}>Your points here</K>
@@ -94,7 +94,7 @@ export default function ShopPage() {
       <Card>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: d.is_regular ? c.accent : c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name={d.is_regular ? "star" : "star-outline"} size={22} color={d.is_regular ? "#FFFFFF" : c.brand} />
+            <Ionicons name={d.is_regular ? "star" : "star-outline"} size={22} color={d.is_regular ? c.onBrand : c.brandText} />
           </View>
           <View style={{ flex: 1 }}>
             <K w="bold" s={16}>{d.is_regular ? `You're a Regular here` : `${Math.max(0, s.regular_visits - d.visits_90d)} more visit${s.regular_visits - d.visits_90d === 1 ? "" : "s"} to become a Regular`}</K>
@@ -133,13 +133,13 @@ export default function ShopPage() {
           {(d.programs ?? []).map((p, i) => (
             <View key={p.id} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line }}>
               <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name={p.trigger === "regular" ? "star" : "gift-outline"} size={18} color={c.brand} />
+                <Ionicons name={p.trigger === "regular" ? "star" : "gift-outline"} size={18} color={c.brandText} />
               </View>
               <View style={{ flex: 1 }}>
                 <K w="semibold" s={15}>{p.title}</K>
                 <K s={12.5} c={c.muted}>{p.trigger === "visits" ? `Every ${p.every_visits} visits` : "For Regulars"}{p.details ? ` · ${p.details}` : ""}</K>
               </View>
-              <K w="bold" s={12.5} c={c.brand} style={{ textAlign: "right" }}>
+              <K w="bold" s={12.5} c={c.brandText} style={{ textAlign: "right" }}>
                 {p.trigger === "regular" && d.is_regular ? "Unlocked" : `${p.visits_left} more visit${p.visits_left === 1 ? "" : "s"}`}
               </K>
             </View>
@@ -153,7 +153,7 @@ export default function ShopPage() {
 
       <Card style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name={d.following ? "heart" : "heart-outline"} size={20} color={c.brand} />
+          <Ionicons name={d.following ? "heart" : "heart-outline"} size={20} color={c.brandText} />
         </View>
         <View style={{ flex: 1 }}>
           <K w="bold" s={15}>Follow {s.name}</K>
@@ -166,7 +166,7 @@ export default function ShopPage() {
       {d.offers.map((o) => (
         <Card key={o.id} style={{ borderLeftWidth: 4, borderLeftColor: c.brand }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Ionicons name="pricetag" size={16} color={c.brand} />
+            <Ionicons name="pricetag" size={16} color={c.brandText} />
             <K w="heavy" s={16} style={{ flex: 1 }}>{o.title}</K>
           </View>
           {o.body ? <K s={14} c={c.muted}>{o.body}</K> : null}
@@ -194,7 +194,7 @@ export default function ShopPage() {
           return (
             <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line }}>
               <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name={icon} size={18} color={c.brand} />
+                <Ionicons name={icon} size={18} color={c.brandText} />
               </View>
               <View style={{ flex: 1, gap: 1 }}>
                 <K w="semibold" s={15} style={{ textDecorationLine: h.undone ? "line-through" : "none" }}>{title}{h.undone ? " (undone)" : ""}</K>
@@ -212,7 +212,7 @@ export default function ShopPage() {
   function Fact({ top, label }: { top: string; label: string }) {
     return (
       <View style={{ flex: 1, backgroundColor: c.sunk, borderRadius: 14, paddingVertical: 10, alignItems: "center" }}>
-        <K w="heavy" s={16} c={c.brand}>{top}</K>
+        <K w="heavy" s={16} c={c.brandText}>{top}</K>
         <K s={11.5} c={c.muted}>{label}</K>
       </View>
     );
@@ -223,10 +223,10 @@ export default function ShopPage() {
       <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? "link" : undefined}
         style={{ flexDirection: "row", gap: 12, alignItems: "center", paddingVertical: 6 }}>
         <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name={icon} size={16} color={c.brand} />
+          <Ionicons name={icon} size={16} color={c.brandText} />
         </View>
         <K s={14} style={{ flex: 1 }}>{text}</K>
-        {action ? <K w="bold" s={14} c={c.brand}>{action}</K> : null}
+        {action ? <K w="bold" s={14} c={c.brandText}>{action}</K> : null}
       </Pressable>
     );
   }

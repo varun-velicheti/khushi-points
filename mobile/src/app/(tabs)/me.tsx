@@ -84,7 +84,7 @@ export default function Profile() {
     <Page overlap={46} header={
       <GradientHeader title="Profile" tall>
         <View style={{ alignItems: "center", marginTop: 6 }}>
-          <K w="semibold" s={14} c="rgba(255,255,255,0.92)">{me?.phone ? `+91 ${me.phone.slice(0, 5)} ${me.phone.slice(5)}` : isPhoneLogin ? " " : me?.email}</K>
+          <K w="semibold" s={14} c={c.onBrandMuted}>{me?.phone ? `+91 ${me.phone.slice(0, 5)} ${me.phone.slice(5)}` : isPhoneLogin ? " " : me?.email}</K>
         </View>
       </GradientHeader>
     }>

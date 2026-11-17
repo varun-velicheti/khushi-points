@@ -37,9 +37,9 @@ export default function BizApp() {
   useEffect(() => onSync(setSync), []);
 
   return (
-    <div className="biz">
+    <div className="biz p-pos">
       <header className="biz-top">
-        <Link to="/biz" className="biz-brand"><img src="/icon.svg" alt="" /><b className="wordmark">kushly</b><span>POS · {current!.shop.name}</span></Link>
+        <Link to="/biz" className="biz-brand"><img src="/pos.svg" alt="" /><b className="wordmark">kushly</b><span className="product">POS</span><span>{current!.shop.name}</span></Link>
         {sync && (!sync.online || sync.waiting > 0 || sync.failed.length > 0) && (
           <button className={`sync${sync.failed.length ? " bad" : sync.online ? "" : " off"}`} onClick={() => { if (sync.failed.length) alert(sync.failed.join("\n")); else flush(); }}>
             {sync.failed.length ? `${sync.failed.length} not sent` : sync.online ? `Sending ${sync.waiting}` : sync.waiting ? `Offline · ${sync.waiting}` : "Offline"}
@@ -51,11 +51,11 @@ export default function BizApp() {
           <NavLink to="/biz/bills">Bills</NavLink>
           {owner && <NavLink to="/biz/reports">Reports</NavLink>}
           {owner && <NavLink to="/biz/setup">Setup</NavLink>}
-          <Link to="/">Points</Link>
+          <Link to="/"><img src="/rewards.svg" alt="" className="btn-icon" />Rewards</Link>
         </nav>
       </header>
       {err && !menu ? (
-        <div className="biz-empty"><h2>{err}</h2><Link className="btn alt" to="/">Back to Points</Link></div>
+        <div className="biz-empty"><h2>{err}</h2><Link className="btn alt" to="/">Back to Rewards</Link></div>
       ) : !menu ? <div className="biz-pad hint">Loading…</div> : (
         <BizContext.Provider value={{ menu, reload, owner }}>
           <Routes>

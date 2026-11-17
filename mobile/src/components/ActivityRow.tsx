@@ -10,13 +10,13 @@ export default function ActivityRow({ a, first }: { a: Activity; first: boolean 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderTopWidth: first ? 0 : 1, borderTopColor: c.line }}>
       <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: earn ? c.goodBg : c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-        <Ionicons name={earn ? "add" : "gift"} size={20} color={earn ? c.good : c.brand} />
+        <Ionicons name={earn ? "add" : "gift"} size={20} color={earn ? c.good : c.brandText} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <K w="semibold" s={14.5} numberOfLines={1}>{earn ? "Points earned" : "Points used"} · {a.shop_name}</K>
         <K s={12} c={c.muted}>{when(a.at)} · bill {inr(a.amount)}</K>
       </View>
-      <K w="heavy" s={16} c={earn ? c.good : c.brand}>{earn ? "+" : "−"}{a.points}</K>
+      <K w="heavy" s={16} c={earn ? c.good : c.brandText}>{earn ? "+" : "−"}{a.points}</K>
     </View>
   );
 }

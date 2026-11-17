@@ -17,12 +17,12 @@ export default function MyQR() {
     <LinearGradient colors={[c.gradTop, c.gradBottom]} style={{ flex: 1, paddingTop: insets.top + 12, paddingHorizontal: 20 }}>
       <View style={{ alignItems: "center", gap: 6, marginBottom: 18 }}>
         <LogoMark size={44} />
-        <K w="heavy" s={22} c="#FFFFFF" accessibilityRole="header">My QR</K>
-        <K s={14} c="rgba(255,255,255,0.9)" style={{ textAlign: "center" }}>Show this at the counter to earn or use points</K>
+        <K w="heavy" s={22} c={c.onBrand} accessibilityRole="header">My QR</K>
+        <K s={14} c={c.onBrandMuted} style={{ textAlign: "center" }}>Show this at the counter to earn or use points</K>
       </View>
       <View style={{ backgroundColor: c.surface, borderRadius: 28, padding: 22, alignItems: "center", gap: 12 }}>
         {!me ? <Loading /> : <>
-          <View style={{ backgroundColor: "#FFFFFF", padding: 14, borderRadius: 18, borderWidth: 1, borderColor: "#F2E4E7" }}
+          <View style={{ backgroundColor: "#FFFFFF", padding: 14, borderRadius: 18, borderWidth: 1, borderColor: c.line }}
             accessible accessibilityLabel={`Your Kushly QR, member code ${me.member_code}`}>
             <QRCode value={`KP:${me.member_code}`} size={220} color="#1F1416" backgroundColor="#FFFFFF" />
           </View>
@@ -32,7 +32,7 @@ export default function MyQR() {
           <K w="heavy" s={28} selectable style={{ letterSpacing: 4 }}>{me.member_code}</K>
           {me.name ? <K w="semibold" s={16}>{me.name}</K> : null}
           <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", backgroundColor: c.brandSoft, borderRadius: 14, padding: 12 }}>
-            <Ionicons name="shield-checkmark" size={18} color={c.brand} />
+            <Ionicons name="shield-checkmark" size={18} color={c.brandText} />
             <K s={13} c={c.ink} style={{ flex: 1 }}>The cashier scans this to add points. To use points, you approve on this phone, so nobody else can spend them.</K>
           </View>
         </>}

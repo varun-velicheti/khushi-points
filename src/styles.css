@@ -1,14 +1,24 @@
-/* Kushly: navy brand with orange, coral and teal accents (from the logo), white rounded cards. */
+/* Kushly: one colour per product, from the logo's four shapes.
+   POS = indigo (default), Rewards = marigold (.p-rewards), Campaigns = coral, People = teal.
+   --brand is the product colour for fills; --brand-ink is text on it; --brand-text is product-coloured text on white. */
 :root {
   --bg: #F6F7FA; --surface: #FFFFFF; --sunk: #F1F2F6; --ink: #16181D; --muted: #5F6472; --line: #E6E8EE;
-  --brand: #23256B; --brand-deep: #181A52; --brand-ink: #FFFFFF; --brand-soft: #ECECF7; --accent: #F3A31A; --accent-ink: #23256B;
-  --orange: #F3A31A; --coral: #FF7A5A; --teal: #2BB5A0; --cream: #FBF8F2;
+  --indigo: #23246B; --marigold: #F4A21B; --coral: #FF7A59; --teal: #2BB5A0; --cream: #FBF8F2; --orange: var(--marigold);
+  --brand: var(--indigo); --brand-deep: #181A52; --brand-ink: #FFFFFF; --brand-soft: #ECECF7; --brand-text: var(--indigo);
+  --brand-glow: rgb(35 36 107 / .25); --accent: var(--marigold); --accent-ink: var(--indigo);
   --grad-top: #2F3290; --grad-bottom: #1B1D58; --brand-grad: linear-gradient(135deg, #2F3290, #1B1D58);
   --good: #14804A; --good-bg: #E3F6EA; --bad: #C42536; --bad-bg: #FDE8EA; --warn: #8F5500; --warn-bg: #FFF3DC;
   --f-display: "Plus Jakarta Sans", system-ui, sans-serif; --f-body: "Plus Jakarta Sans", system-ui, sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
   color-scheme: light;
 }
+/* Rewards: marigold fills with indigo text on them; darker marigold for coloured text on white */
+.p-rewards { --brand: var(--marigold); --brand-deep: #8F5A00; --brand-ink: var(--indigo); --brand-soft: #FDF1DC; --brand-text: #8F5A00;
+  --brand-glow: rgb(244 162 27 / .35); --grad-top: #F7B640; --grad-bottom: #F09A12; --brand-grad: linear-gradient(135deg, #F7B640, #F09A12) }
+.p-campaigns { --brand: var(--coral); --brand-deep: #A6371C; --brand-ink: var(--indigo); --brand-soft: #FFEDE7; --brand-text: #A6371C;
+  --brand-glow: rgb(255 122 89 / .35); --brand-grad: linear-gradient(135deg, #FF8E72, #F56A47) }
+.p-people { --brand: var(--teal); --brand-deep: #0E6E60; --brand-ink: var(--indigo); --brand-soft: #E2F5F1; --brand-text: #0E6E60;
+  --brand-glow: rgb(43 181 160 / .35); --brand-grad: linear-gradient(135deg, #3CC3AE, #22A08C) }
 
 * { box-sizing: border-box }
 html, body { margin: 0 }
@@ -22,9 +32,13 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); fon
 
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0 }
-.logo { width: 40px; height: 40px; border-radius: 11px; display: block; flex: none; box-shadow: 0 4px 12px rgb(35 37 107 / .25) }
+.btn-icon { width: 14px; height: 14px; display: inline-block; vertical-align: -1px; margin-right: 6px }
+.logo.product-icon { box-shadow: none; border-radius: 0; width: 34px; height: 34px }
+.logo { width: 40px; height: 40px; border-radius: 11px; display: block; flex: none; box-shadow: 0 4px 12px var(--brand-glow) }
 /* the brand name, set like the logo's wordmark */
-.wordmark { font-family: "Poppins", var(--f-display) !important; font-weight: 700 !important; text-transform: lowercase; letter-spacing: -.03em; color: var(--brand) }
+.wordmark { font-family: "Poppins", var(--f-display) !important; font-weight: 700 !important; text-transform: lowercase; letter-spacing: -.03em; color: var(--indigo) }
+/* product name next to the wordmark, in the product colour */
+.product { display: inline-flex; align-items: center; gap: 6px; font: 700 15px var(--f-body); color: var(--brand-text) }
 h1 { font-family: var(--f-display); font-weight: 800; letter-spacing: -.01em; font-size: 24px; margin: 0; line-height: 1.1 }
 .shop { color: var(--muted); font-size: 14px; margin-top: 2px }
 .top-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
@@ -34,7 +48,7 @@ nav.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px soli
 nav.tabs a { flex: 1; text-align: center; padding: 11px 8px; border-radius: 12px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px }
 nav.tabs a { transition: background .15s, color .15s }
 nav.tabs a:hover:not(.active) { background: var(--brand-soft); color: var(--brand-deep) }
-nav.tabs a.active { background: var(--brand-grad); color: var(--brand-ink); box-shadow: 0 6px 14px rgb(35 37 107 / .28) }
+nav.tabs a.active { background: var(--brand-grad); color: var(--brand-ink); box-shadow: 0 6px 14px var(--brand-glow) }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px }
 
 .page { margin-top: 24px; display: flex; flex-direction: column; gap: 24px }
@@ -60,11 +74,11 @@ input.code { font-family: var(--f-mono); font-size: 24px; letter-spacing: .4em; 
 .hint { font-size: 14px; line-height: 1.55; color: var(--muted) }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 14px; padding: 14px 22px;
-  font: 700 15.5px var(--f-body); cursor: pointer; background: var(--brand-grad); color: var(--brand-ink); text-decoration: none; box-shadow: 0 6px 14px rgb(35 37 107 / .25) }
+  font: 700 15.5px var(--f-body); cursor: pointer; background: var(--brand-grad); color: var(--brand-ink); text-decoration: none; box-shadow: 0 6px 14px var(--brand-glow) }
 .btn.alt { background: var(--brand-soft); color: var(--brand-deep); box-shadow: none }
 .btn.gold { background: var(--brand-grad); color: var(--brand-ink) }
 .btn.small { padding: 9px 16px; font-size: 14px }
-.btn.link { background: none; color: var(--brand); padding: 6px 0; font-weight: 600; box-shadow: none }
+.btn.link { background: none; color: var(--brand-text); padding: 6px 0; font-weight: 600; box-shadow: none }
 .btn.danger { background: var(--bad-bg); color: var(--bad); box-shadow: none }
 .btn:disabled { opacity: .5; cursor: not-allowed }
 .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center }
@@ -100,7 +114,7 @@ tr.click:hover td { background: var(--brand-soft) }
 .chip { display: inline-block; white-space: nowrap; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--sunk); color: var(--muted) }
 .chip.earn { background: var(--good-bg); color: var(--good) }
 .chip.redeem, .chip.locked { background: var(--warn-bg); color: var(--warn) }
-.chip.pin { color: var(--brand) }
+.chip.pin { color: var(--brand-text) }
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; box-shadow: 0 8px 24px rgb(22 24 29 / .05); border-top: 4px solid var(--brand); display: flex; flex-direction: column; gap: 6px }
@@ -120,7 +134,7 @@ tr.undone td { color: var(--muted) }
 .r.undone span { text-decoration: line-through; opacity: .6 }
 
 /* landing */
-.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); margin: 0 }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand-text); margin: 0 }
 .hero { margin-top: 48px; display: flex; flex-direction: column; gap: 16px; max-width: 680px }
 .hero-h { font-family: var(--f-display); font-weight: 800; font-size: clamp(36px, 8vw, 60px); line-height: 1.02; letter-spacing: -.015em; margin: 0; text-wrap: balance }
 .hero-p { font-size: 18px; color: var(--muted); margin: 0; max-width: 60ch }
@@ -205,7 +219,7 @@ tr.undone td { color: var(--muted) }
 .waiting .big { font-size: 56px }
 .pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--accent) }
 @media (prefers-reduced-motion: no-preference) { .pulse { animation: pulse 1.2s ease-in-out infinite } @keyframes pulse { 50% { transform: scale(1.6); opacity: .4 } } }
-details.extra summary { cursor: pointer; color: var(--brand); font-weight: 600; font-size: 15px }
+details.extra summary { cursor: pointer; color: var(--brand-text); font-weight: 600; font-size: 15px }
 details.extra[open] summary { margin-bottom: 10px }
 textarea { width: 100%; font: 500 16px var(--f-body); line-height: 1.5; padding: 13px 15px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); resize: vertical }
 
@@ -218,7 +232,7 @@ textarea { width: 100%; font: 500 16px var(--f-body); line-height: 1.5; padding:
 
 /* shop logo picker + delete shop */
 .logo-pick { display: flex; gap: 18px; align-items: center; flex-wrap: wrap }
-.logo-preview { width: 88px; height: 88px; border-radius: 22px; overflow: hidden; flex: none; background: var(--brand-soft); color: var(--brand);
+.logo-preview { width: 88px; height: 88px; border-radius: 22px; overflow: hidden; flex: none; background: var(--brand-soft); color: var(--brand-text);
   display: grid; place-items: center; font: 800 34px var(--f-display); border: 1px solid var(--line) }
 .logo-preview img { width: 100%; height: 100%; object-fit: cover; display: block }
 .danger-zone { border-color: #F4C5CB }
@@ -235,7 +249,7 @@ textarea { width: 100%; font: 500 16px var(--f-body); line-height: 1.5; padding:
 .pills button { flex: none; border: 0; background: var(--surface); color: var(--ink); padding: 11px 22px; border-radius: 99px;
   font: 600 15px var(--f-body); cursor: pointer; box-shadow: 0 2px 8px rgb(22 24 29 / .06); white-space: nowrap }
 .pills button:hover:not([aria-pressed="true"]) { color: var(--brand-deep) }
-.pills button[aria-pressed="true"] { background: var(--orange); color: var(--brand) }
+.pills button[aria-pressed="true"] { background: var(--indigo); color: #FFFFFF }
 .kpis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) }
 .kpi-link { text-align: left; font: inherit; color: inherit; cursor: pointer; transition: transform .12s, box-shadow .12s }
 .kpi-link:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgb(22 24 29 / .09) }

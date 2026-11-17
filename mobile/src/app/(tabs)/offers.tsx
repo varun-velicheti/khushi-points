@@ -28,7 +28,7 @@ export default function Offers() {
       {list?.length === 0 && (
         <Card style={{ alignItems: "center", paddingVertical: 28, gap: 8 }}>
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="pricetags" size={28} color={c.brand} />
+            <Ionicons name="pricetags" size={28} color={c.brandText} />
           </View>
           <K w="bold" s={16}>No offers right now</K>
           <K s={14} c={c.muted} style={{ textAlign: "center" }}>You follow a shop automatically after your first bill there.</K>
@@ -39,11 +39,11 @@ export default function Offers() {
           {/* shop logo, or a ticket-style badge */}
           {o.logo_path ? <ShopAvatar logo={o.logo_path} size={64} /> : (
             <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="gift" size={30} color={c.brand} />
+              <Ionicons name="gift" size={30} color={c.brandText} />
             </View>
           )}
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <K w="bold" s={12.5} c={c.brand} numberOfLines={1}>{o.shop_name}</K>
+            <K w="bold" s={12.5} c={c.brandText} numberOfLines={1}>{o.shop_name}</K>
             <K w="heavy" s={16} numberOfLines={2}>{o.title}</K>
             {o.body ? <K s={13} c={c.muted} numberOfLines={2}>{o.body}</K> : null}
             <K s={12} c={o.valid_until ? c.warn : c.muted}>{o.valid_until ? `Valid until ${shortDate(o.valid_until)}` : when(o.created_at)}</K>

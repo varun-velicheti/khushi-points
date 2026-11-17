@@ -21,11 +21,18 @@ export function K({ w = "regular", s = 15, c, style, ...rest }: TextProps & {
 
 export const logoMark = require("../../assets/logo-mark.png");
 
+// Sits on an indigo tile so all four logo shapes show on the marigold header.
 export function LogoMark({ size = 36 }: { size?: number }) {
-  return <Image source={logoMark} style={{ width: size, height: size }} accessibilityIgnoresInvertColors />;
+  const c = useColors();
+  const pad = Math.round(size * 0.14);
+  return (
+    <View style={{ backgroundColor: c.indigo, borderRadius: Math.round(size * 0.28), padding: pad }}>
+      <Image source={logoMark} style={{ width: size - pad * 2, height: size - pad * 2 }} accessibilityIgnoresInvertColors />
+    </View>
+  );
 }
 
-// Coral gradient band at the top of a screen. Content below can overlap it (see Page).
+// Marigold gradient band at the top of a screen. Content below can overlap it (see Page).
 export function GradientHeader({ title, left, right, children, tall = false }: {
   title?: string; left?: ReactNode; right?: ReactNode; children?: ReactNode; tall?: boolean;
 }) {
@@ -38,7 +45,7 @@ export function GradientHeader({ title, left, right, children, tall = false }: {
       <View style={{ flexDirection: "row", alignItems: "center", minHeight: 44 }}>
         <View style={{ width: 44, alignItems: "flex-start" }}>{left}</View>
         <View style={{ flex: 1, alignItems: "center" }}>
-          {title ? <K w="heavy" s={20} c="#FFFFFF" numberOfLines={1} accessibilityRole="header">{title}</K> : null}
+          {title ? <K w="heavy" s={20} c={c.onBrand} numberOfLines={1} accessibilityRole="header">{title}</K> : null}
         </View>
         <View style={{ width: 44, alignItems: "flex-end" }}>{right}</View>
       </View>
@@ -48,11 +55,12 @@ export function GradientHeader({ title, left, right, children, tall = false }: {
 }
 
 export function HeaderButton({ icon, onPress, label }: { icon: IconName; onPress: () => void; label: string }) {
+  const c = useColors();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={8}
       style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center",
         backgroundColor: "rgba(255,255,255,0.18)", borderWidth: 1, borderColor: "rgba(255,255,255,0.35)", opacity: pressed ? 0.7 : 1 })}>
-      <Ionicons name={icon} size={20} color="#FFFFFF" />
+      <Ionicons name={icon} size={20} color={c.onBrand} />
     </Pressable>
   );
 }
@@ -90,7 +98,7 @@ export function Btn({ title, onPress, kind = "primary", busy, disabled, icon, st
 }) {
   const c = useColors();
   const bg = { primary: c.brand, gold: c.accent, alt: c.brandSoft, danger: c.badBg, link: "transparent", white: "#FFFFFF" }[kind];
-  const fg = { primary: c.brandInk, gold: c.accentInk, alt: c.brand, danger: c.bad, link: c.brand, white: c.brand }[kind];
+  const fg = { primary: c.brandInk, gold: c.accentInk, alt: c.brandText, danger: c.bad, link: c.brandText, white: c.brandText }[kind];
   return (
     <Pressable onPress={onPress} disabled={disabled || busy} accessibilityRole="button" accessibilityLabel={title}
       style={({ pressed }) => [s.btn, { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
@@ -110,7 +118,7 @@ export function IconTile({ icon, label, onPress }: { icon: IconName; label: stri
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
       style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 8, opacity: pressed ? 0.7 : 1 })}>
       <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-        <Ionicons name={icon} size={26} color={c.brand} />
+        <Ionicons name={icon} size={26} color={c.brandText} />
       </View>
       <K w="semibold" s={13} style={{ textAlign: "center" }}>{label}</K>
     </Pressable>
@@ -128,7 +136,7 @@ export function ShopAvatar({ cat, logo, size = 48, onBrand = false }: { cat?: st
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center",
       backgroundColor: onBrand ? "#FFFFFF" : c.brandSoft }}>
-      <Ionicons name={category(cat).icon as IconName} size={size * 0.46} color={c.brand} />
+      <Ionicons name={category(cat).icon as IconName} size={size * 0.46} color={c.brandText} />
     </View>
   );
 }
@@ -139,7 +147,7 @@ export function RegularBadge({ compact = false }: { compact?: boolean }) {
   if (compact) return (
     <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: c.accent, borderWidth: 2, borderColor: "#FFFFFF",
       alignItems: "center", justifyContent: "center" }} accessibilityLabel="Regular">
-      <Ionicons name="star" size={12} color="#FFFFFF" />
+      <Ionicons name="star" size={12} color={c.onBrand} />
     </View>
   );
   return (
@@ -157,7 +165,7 @@ export function SectionTitle({ title, action, onAction }: { title: string; actio
       <K w="heavy" s={18} accessibilityRole="header">{title}</K>
       {action && onAction ? (
         <Pressable onPress={onAction} accessibilityRole="button" hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <K w="bold" s={14} c={c.brand}>{action}</K><Ionicons name="arrow-forward" size={16} color={c.brand} />
+          <K w="bold" s={14} c={c.brandText}>{action}</K><Ionicons name="arrow-forward" size={16} color={c.brandText} />
         </Pressable>
       ) : null}
     </View>
@@ -172,7 +180,7 @@ export function ListRow({ icon, label, detail, right, onPress, danger }: {
   const body = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 12 }}>
       <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: danger ? c.badBg : c.brandSoft, alignItems: "center", justifyContent: "center" }}>
-        <Ionicons name={icon} size={19} color={danger ? c.bad : c.brand} />
+        <Ionicons name={icon} size={19} color={danger ? c.bad : c.brandText} />
       </View>
       <View style={{ flex: 1 }}>
         <K w="semibold" s={15} c={danger ? c.bad : c.ink}>{label}</K>
@@ -204,7 +212,7 @@ export function Label({ children, style }: { children: ReactNode; style?: StyleP
 
 export function Loading() {
   const c = useColors();
-  return <View style={{ padding: 40, alignItems: "center" }}><ActivityIndicator color={c.brand} /></View>;
+  return <View style={{ padding: 40, alignItems: "center" }}><ActivityIndicator color={c.brandText} /></View>;
 }
 
 export const s = StyleSheet.create({
