@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Khushi Points",
+    "name": "Kushly",
     "slug": "khushi-points",
     "scheme": "khushipoints",
     "version": "1.0.0",
@@ -18,7 +18,7 @@
     "android": {
       "package": "app.khushipoints",
       "adaptiveIcon": {
-        "backgroundColor": "#F0475A",
+        "backgroundColor": "#23256B",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -35,7 +35,7 @@
       [
         "expo-notifications",
         {
-          "color": "#F0475A"
+          "color": "#23256B"
         }
       ],
       "expo-apple-authentication",
@@ -45,7 +45,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 170,
           "resizeMode": "contain",
-          "backgroundColor": "#F0475A"
+          "backgroundColor": "#23256B"
         }
       ]
     ],

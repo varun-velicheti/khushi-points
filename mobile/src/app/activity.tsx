@@ -20,7 +20,7 @@ export default function ActivityScreen() {
       <K s={13.5} c={c.muted} style={{ marginTop: 16 }}>Points you earned and used, at all your shops.</K>
       {err ? <Note kind="err">{err}</Note> : null}
       {!list && !err && <Loading />}
-      {list?.length === 0 && <Card><K c={c.muted}>Nothing yet. Show your QR at a Khushi shop to start.</K></Card>}
+      {list?.length === 0 && <Card><K c={c.muted}>Nothing yet. Show your QR at a Kushly shop to start.</K></Card>}
       {list && list.length > 0 && (
         <Card style={{ gap: 0, paddingVertical: 6 }}>
           {list.map((a, i) => <ActivityRow key={i} a={a} first={i === 0} />)}

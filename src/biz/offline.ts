@@ -1,4 +1,4 @@
-// Offline for Khushi Biz: the device keeps the menu, open orders and a queue of changes ("outbox").
+// Offline for Kushly POS: the device keeps the menu, open orders and a queue of changes ("outbox").
 // Every change is stored here first, then sent to the server in order. Without internet the queue waits;
 // when the connection is back it is sent. Saving and paying are safe to repeat on the server, so a
 // change sent twice does no harm. Each device numbers its own invoices (series A, B, ...).
@@ -52,6 +52,7 @@ function fyOf(d: Date, tz: string) {
 }
 
 // Claims (or re-claims) this device's series and catches up with the server's last number.
+export const hasDevice = (shop: string) => !!read<Device | null>(key(shop, "device"), null);
 export async function claimDevice(shop: string) {
   const mine = read<Device | null>(key(shop, "device"), null);
   const r = await rpc<Device>("biz_claim_series", { p_shop: shop, p_name: navigator.userAgent.slice(0, 40), p_series: mine?.series ?? null });

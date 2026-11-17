@@ -23,7 +23,7 @@ export default function MyQR() {
       <View style={{ backgroundColor: c.surface, borderRadius: 28, padding: 22, alignItems: "center", gap: 12 }}>
         {!me ? <Loading /> : <>
           <View style={{ backgroundColor: "#FFFFFF", padding: 14, borderRadius: 18, borderWidth: 1, borderColor: "#F2E4E7" }}
-            accessible accessibilityLabel={`Your Khushi Points QR, member code ${me.member_code}`}>
+            accessible accessibilityLabel={`Your Kushly QR, member code ${me.member_code}`}>
             <QRCode value={`KP:${me.member_code}`} size={220} color="#1F1416" backgroundColor="#FFFFFF" />
           </View>
           {/* dashed tear line, like a pass */}

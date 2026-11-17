@@ -8,7 +8,7 @@ export default function Landing() {
         <header className="top">
           <div className="brand">
             <img className="logo" src="/icon.svg" alt="" />
-            <h1 style={{ fontSize: 21 }}>Khushi Points</h1>
+            <h1 className="wordmark" style={{ fontSize: 26 }}>kushly</h1>
           </div>
           <Link className="btn alt small" to="/login">Sign in</Link>
         </header>
@@ -16,7 +16,7 @@ export default function Landing() {
         <section className="hero">
           <p className="eyebrow">For kirana, clothing, salons, bakeries and every small shop</p>
           <h2 className="hero-h">Loyalty points for your shop. No SMS, no WhatsApp spam.</h2>
-          <p className="hero-p">Your customers keep points from every Khushi shop in one free app. They earn on each bill, redeem by tapping Approve in the app, and get your offers as app notifications. Nothing lands in their SMS or WhatsApp.</p>
+          <p className="hero-p">Your customers keep points from every Kushly shop in one free app. They earn on each bill, redeem by tapping Approve in the app, and get your offers as app notifications. Nothing lands in their SMS or WhatsApp.</p>
           <div className="actions">
             <Link className="btn gold" to="/login?mode=signup">Start free</Link>
             <Link className="btn link" to="/login">I already have an account</Link>
@@ -42,9 +42,9 @@ export default function Landing() {
               <p className="hint">Loyalty software, a WhatsApp provider subscription, and a charge for every OTP message.</p>
             </div>
             <div className="panel accent">
-              <p className="label">Khushi Points</p>
+              <p className="label">Kushly</p>
               <p className="price">Under ₹500<span> a month</span></p>
-              <p className="hint">No per-message charges. Offers and redemptions go through the free Khushi Points app.</p>
+              <p className="hint">No per-message charges. Offers and redemptions go through the free Kushly app.</p>
             </div>
           </div>
           <p className="hint">Typical market prices from public listings, October 2026. Your costs depend on your provider.</p>
@@ -63,7 +63,7 @@ export default function Landing() {
         </section>
 
         <footer className="foot">
-          <span>© {new Date().getFullYear()} Khushi Points</span>
+          <span>© {new Date().getFullYear()} Kushly</span>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
         </footer>

@@ -1,9 +1,9 @@
-// Khushi Points look: warm coral gradient, white rounded cards, soft-pink icon circles.
+// Kushly look: navy brand with orange, coral and teal accents (from the logo), white rounded cards.
 const light = {
   bg: "#F6F7FA", surface: "#FFFFFF", sunk: "#F1F2F6", ink: "#16181D", muted: "#5F6472", line: "#E6E8EE",
-  brand: "#F0475A", brandDeep: "#E3354D", brandSoft: "#FFE9EC", brandInk: "#FFFFFF",
-  gradTop: "#FF6B6B", gradBottom: "#E9354F",
-  accent: "#F5A524", accentInk: "#3A2600",
+  brand: "#23256B", brandDeep: "#181A52", brandSoft: "#ECECF7", brandInk: "#FFFFFF",
+  gradTop: "#2F3290", gradBottom: "#1B1D58",
+  accent: "#F3A31A", accentInk: "#23256B", coral: "#FF7A5A", teal: "#2BB5A0", cream: "#FBF8F2",
   good: "#16A35A", goodBg: "#E3F6EA", bad: "#D93848", badBg: "#FDE8EA", warn: "#B26A00", warnBg: "#FFF3DC",
   shadow: "rgba(22, 24, 29, 0.08)",
 };

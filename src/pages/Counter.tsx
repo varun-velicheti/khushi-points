@@ -161,7 +161,7 @@ function Earn({ shop }: { shop: Shop }) {
         p_shop: shop.id, ...whoArgs(who), p_bill_no: billNo || null, p_amount: amt, p_name: name || null,
         p_consent: consent, p_note: note || null,
       });
-      const appLine = r.has_app ? " It shows in their Khushi Points app now." : " Ask them to install the Khushi Points app to see and use their points.";
+      const appLine = r.has_app ? " It shows in their Kushly app now." : " Ask them to install the Kushly app to see and use their points.";
       if (r.has_app) supabase.functions.invoke("push", { body: { action: "earn", shop_id: shop.id, txn_id: r.txn_id } }).catch(() => {});
       setResult(r.topped_up
         ? { kind: "ok", txnId: r.txn_id, title: `${r.points} points added · bigger bill today`,
@@ -329,7 +329,7 @@ function Redeem({ shop }: { shop: Shop }) {
         <div className="waiting">
           <span className="pulse" aria-hidden="true" />
           <h2>Waiting for {req.name} to approve</h2>
-          <p className="sub" style={{ margin: 0 }}>Ask them to open the Khushi Points app and tap <b>Approve</b>.</p>
+          <p className="sub" style={{ margin: 0 }}>Ask them to open the Kushly app and tap <b>Approve</b>.</p>
           <div className="big" aria-live="polite">{Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}</div>
         </div>
         <div className="actions" style={{ justifyContent: "center" }}><button className="btn alt" onClick={cancel}>Cancel</button></div>
@@ -343,8 +343,8 @@ function Redeem({ shop }: { shop: Shop }) {
       <CustomerPicker id="r-who" value={raw} onChange={setRaw} shop={shop} onLookup={onLookup} />
       <div><label htmlFor="r-bill">Today's bill (₹)</label><input id="r-bill" inputMode="decimal" value={bill} onChange={(e) => setBill(e.target.value)} /></div>
       {who && info && !info.exists && <div className="msg info">This customer has no points at {shop.name} yet.</div>}
-      {who && info?.exists && !info.has_app && <div className="msg info"><strong>Needs the Khushi Points app</strong>
-        {info.name} has {info.balance} points. To use them, they install the Khushi Points app and sign in with {info.mobile ? maskMobile(info.mobile) : "their number"}.</div>}
+      {who && info?.exists && !info.has_app && <div className="msg info"><strong>Needs the Kushly app</strong>
+        {info.name} has {info.balance} points. To use them, they install the Kushly app and sign in with {info.mobile ? maskMobile(info.mobile) : "their number"}.</div>}
       {info?.exists && info.has_app && (
         <div className="preview">
           <span>{info.name} has <b style={{ fontSize: 16 }}>{info.balance}</b> pts {billAmt ? `· max ${maxPts} on this bill` : ""}</span>
@@ -380,7 +380,7 @@ function BalanceCheck({ shop, initial }: { shop: Shop; initial: string }) {
           <div className="r"><span>{b.name}</span><span>{b.mobile ? fmtMobile(b.mobile) : "App member"}</span></div>
           <div className="r tot"><span>Balance</span><span>{b.balance} pts = {inr(b.value!)}</span></div>
           {!!b.expiring_30d && <div className="r" style={{ color: "var(--warn)" }}><span>Expiring within 30 days</span><span>{b.expiring_30d} pts</span></div>}
-          <div className="r"><span>Khushi Points app</span><span>{b.has_app ? "Yes, can redeem" : "Not yet"}</span></div>
+          <div className="r"><span>Kushly app</span><span>{b.has_app ? "Yes, can redeem" : "Not yet"}</span></div>
           <div style={{ marginTop: 8, borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
             {b.recent?.map((t, i) => (
               <div className={`r${t.undone ? " undone" : ""}`} key={i}>

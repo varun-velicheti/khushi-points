@@ -1,18 +1,18 @@
-/* Khushi Biz: full-height POS layout. Uses the Khushi Points colour tokens. */
+/* Kushly POS: full-height layout. Uses the shared colour tokens in styles.css. */
 .biz { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg) }
 .biz-pad { padding: 20px max(16px, env(safe-area-inset-left, 0px)) 32px }
 .biz-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; background: var(--surface);
   border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5 }
 .biz-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); min-width: 0 }
 .biz-brand img { width: 32px; height: 32px; border-radius: 9px }
-.biz-brand b { font: 800 17px var(--f-display); white-space: nowrap }
+.biz-brand b { font-size: 22px; white-space: nowrap }
 .biz-brand span { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .biz-top nav { display: flex; gap: 4px }
 .sync { margin-left: auto; border: 0; border-radius: 99px; padding: 6px 12px; font: 700 13px var(--f-body); cursor: pointer; background: var(--sunk); color: var(--muted) }
 .sync.off { background: var(--warn-bg); color: var(--warn) }
 .sync.bad { background: var(--bad-bg); color: var(--bad) }
 .biz-top nav a { padding: 8px 14px; border-radius: 99px; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 14.5px; white-space: nowrap }
-.biz-top nav a.active { background: var(--ink); color: var(--surface) }
+.biz-top nav a.active { background: var(--brand); color: var(--brand-ink) }
 .biz-top nav a:last-child { color: var(--brand-deep) }
 .biz-empty { margin: 80px auto; text-align: center; display: flex; flex-direction: column; gap: 14px; align-items: center }
 
@@ -26,7 +26,7 @@
 .tile b { font: 800 20px var(--f-display); color: var(--brand-deep) }
 .tile-free { color: var(--good); font-weight: 700; font-size: 14px }
 .tile-time { color: var(--muted); font-size: 13px }
-.tile.busy { background: var(--brand-soft); border-color: #F7C6CE }
+.tile.busy { background: var(--brand-soft); border-color: #D6D7EE }
 .tile-new { border-style: dashed; justify-content: center; align-items: center; gap: 8px; background: transparent; box-shadow: none }
 .tile-new b { color: var(--brand-deep) }
 .tile-new input { width: 100% }

@@ -31,7 +31,7 @@ const MESSAGES: Record<string, string> = {
   OTP_RATE_LIMIT: "Too many codes asked for this number. Wait 15 minutes and try again.",
   SMS_FAILED: "We could not send the code. Check the number and try again.",
   SIGNIN_FAILED: "Sign-in did not work. Try again.",
-  PHONE_IN_USE: "This number is already linked to another Khushi Points account.",
+  PHONE_IN_USE: "This number is already linked to another Kushly account.",
   REQUEST_EXPIRED: "This request expired. Ask the cashier to send it again.",
   REQUEST_CANCELLED: "The cashier cancelled this request.",
   REQUEST_DONE: "Already approved.",

@@ -118,7 +118,7 @@ function Profile({ shop }: { shop: Shop }) {
     try {
       const s = await rpc<Shop>("update_shop_settings", { p_shop: shop.id, p: f });
       updateShop(s);
-      setMsg({ kind: "ok", text: "Saved. Customers see this in the Khushi Points app." });
+      setMsg({ kind: "ok", text: "Saved. Customers see this in the Kushly app." });
     } catch (err) { setMsg({ kind: "err", text: errorText(err) }); }
   }
   return (
@@ -342,7 +342,7 @@ function Settings({ shop }: { shop: Shop }) {
             </label>
           ))}
         </div>
-        <p className="hint">Sent in the Khushi Points app at 10:30 AM, once each. Pick up to 3. Customers can turn reminders off.</p>
+        <p className="hint">Sent in the Kushly app at 10:30 AM, once each. Pick up to 3. Customers can turn reminders off.</p>
       </div>
       <div className="actions"><button className="btn">Save rules</button></div>
       {msg && <div className={`msg ${msg.kind}`} role="status">{msg.text}</div>}
@@ -723,7 +723,7 @@ function WinBack({ shop }: { shop: Shop }) {
   return (
     <div className="panel stack">
       <div><h2>Bring customers back</h2>
-        <p className="sub">Send one personal note to customers who have not visited in 30 days. It arrives in their Khushi Points app. Each customer gets at most one note every 60 days, and you can send once a week.</p></div>
+        <p className="sub">Send one personal note to customers who have not visited in 30 days. It arrives in their Kushly app. Each customer gets at most one note every 60 days, and you can send once a week.</p></div>
       {p && (
         <div className="kpis">
           <div className="kpi"><div className="k">Not back in 30 days</div><div className="v">{p.lapsed}</div><div className="n">Last visit 30 to 120 days ago</div></div>

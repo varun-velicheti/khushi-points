@@ -39,7 +39,7 @@ export default function Home() {
   return (
     <Page refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} overlap={56}
       header={
-        <GradientHeader tall left={<LogoMark size={38} />} title="Khushi Points"
+        <GradientHeader tall left={<LogoMark size={38} />} title="kushly"
           right={<HeaderButton icon="notifications-outline" label="Offers" onPress={() => router.navigate("/offers")} />}>
           <K w="semibold" s={14} c="rgba(255,255,255,0.9)" style={{ marginTop: 10 }}>{first ? `Hi ${first}, welcome back` : "Welcome back"}</K>
         </GradientHeader>
@@ -82,7 +82,7 @@ export default function Home() {
           <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: c.brandSoft, alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="storefront" size={34} color={c.brand} />
           </View>
-          <K w="heavy" s={18} style={{ textAlign: "center" }}>Start earning at Khushi shops</K>
+          <K w="heavy" s={18} style={{ textAlign: "center" }}>Start earning at Kushly shops</K>
           <K s={14} c={c.muted} style={{ textAlign: "center" }}>Show your QR at the counter when you pay. Points from each shop appear here.</K>
           <Btn title="Show my QR" icon="qr-code" onPress={() => router.navigate("/qr")} style={{ alignSelf: "stretch" }} />
           {!me?.phone ? <K s={13} c={c.muted} style={{ textAlign: "center" }}>Got points before? Add your mobile number in Profile to see them.</K> : null}

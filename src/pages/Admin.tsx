@@ -89,7 +89,7 @@ export default function Admin() {
       <header className="top">
         <div className="brand">
           <img className="logo" src="/icon.svg" alt="" />
-          <div><h1>Khushi Points</h1><div className="shop">Admin · {session?.user.email}</div></div>
+          <div><h1 className="wordmark">kushly</h1><div className="shop">Admin · {session?.user.email}</div></div>
         </div>
         <div className="top-actions">
           <button className="btn alt small" onClick={load}>Refresh</button>
@@ -159,7 +159,7 @@ export default function Admin() {
                       <div><dt>Plan</dt><dd className="cap">{r.plan}</dd></div>
                     </dl>
                     <label className="switch admin-biz" htmlFor={`biz-${r.shop_id}`}>
-                      <span>Khushi Biz</span>
+                      <span>POS</span>
                       <input id={`biz-${r.shop_id}`} type="checkbox" role="switch" checked={r.biz_enabled}
                         onChange={(e) => rpc("admin_set_biz", { p_shop: r.shop_id, p_on: e.target.checked }).then(() => { load(); reloadShops(); }).catch((err) => alert(errorText(err)))} />
                     </label>

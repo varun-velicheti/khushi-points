@@ -1,6 +1,6 @@
-// Khushi Biz data: one call to load the menu, one to save a whole order, one to pay it.
+// Kushly POS data: one call to load the menu, one to save a whole order, one to pay it.
 import { rpc } from "../lib";
-import { cancelLocal, flush, getLocal, hasPending, isNetworkError, mergeOpen, payLocal, remember, saveLocal } from "./offline";
+import { cancelLocal, claimDevice, flush, getLocal, hasDevice, hasPending, isNetworkError, mergeOpen, payLocal, remember, saveLocal } from "./offline";
 import { totals } from "./money";
 import type { Line, Totals } from "./money";
 
@@ -53,6 +53,7 @@ export async function preview(shop: string, id: string, menu: Menu) {
 }
 // Paid on the device straight away (own invoice number), sent to the server now or when back online.
 export async function payOrder(shop: string, menu: Menu, id: string, mode: "cash" | "upi" | "card", consent: boolean) {
+  if (!hasDevice(shop)) await claimDevice(shop).catch(() => {});   // first bill on this device: get its invoice series
   payLocal(shop, menu, id, mode, consent);
   await flush();
   return getLocal(shop, id)!;

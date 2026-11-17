@@ -13,7 +13,7 @@ import Reports from "./Reports";
 import Bills from "./Bills";
 import "./biz.css";
 
-// Khushi Biz: restaurant & café POS. Floor -> Order -> Bill. Setup is for the owner.
+// Kushly POS: restaurant & café POS. Floor -> Order -> Bill. Setup is for the owner.
 type Ctx = { menu: Menu; reload: () => Promise<void>; owner: boolean };
 const BizContext = createContext<Ctx | null>(null);
 export const useBiz = () => useContext(BizContext)!;
@@ -39,7 +39,7 @@ export default function BizApp() {
   return (
     <div className="biz">
       <header className="biz-top">
-        <Link to="/biz" className="biz-brand"><img src="/icon.svg" alt="" /><b>Khushi Biz</b><span>{current!.shop.name}</span></Link>
+        <Link to="/biz" className="biz-brand"><img src="/icon.svg" alt="" /><b className="wordmark">kushly</b><span>POS · {current!.shop.name}</span></Link>
         {sync && (!sync.online || sync.waiting > 0 || sync.failed.length > 0) && (
           <button className={`sync${sync.failed.length ? " bad" : sync.online ? "" : " off"}`} onClick={() => { if (sync.failed.length) alert(sync.failed.join("\n")); else flush(); }}>
             {sync.failed.length ? `${sync.failed.length} not sent` : sync.online ? `Sending ${sync.waiting}` : sync.waiting ? `Offline · ${sync.waiting}` : "Offline"}
@@ -51,11 +51,11 @@ export default function BizApp() {
           <NavLink to="/biz/bills">Bills</NavLink>
           {owner && <NavLink to="/biz/reports">Reports</NavLink>}
           {owner && <NavLink to="/biz/setup">Setup</NavLink>}
-          <Link to="/">Khushi Points</Link>
+          <Link to="/">Points</Link>
         </nav>
       </header>
       {err && !menu ? (
-        <div className="biz-empty"><h2>{err}</h2><Link className="btn alt" to="/">Back to Khushi Points</Link></div>
+        <div className="biz-empty"><h2>{err}</h2><Link className="btn alt" to="/">Back to Points</Link></div>
       ) : !menu ? <div className="biz-pad hint">Loading…</div> : (
         <BizContext.Provider value={{ menu, reload, owner }}>
           <Routes>

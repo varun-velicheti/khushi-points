@@ -42,7 +42,7 @@ export default function Scanner({ onResult, onClose }: { onResult: (text: string
     <div className="scanner" role="dialog" aria-label="Scan customer's app QR">
       <div className="scanner-box">
         {err ? <p className="msg err">{err}</p> : <video ref={video} playsInline muted />}
-        <p className="hint" style={{ color: "#fff" }}>Point the camera at the QR in the customer's Khushi Points app.</p>
+        <p className="hint" style={{ color: "#fff" }}>Point the camera at the QR in the customer's Kushly app.</p>
         <button className="btn alt" onClick={onClose}>Close</button>
       </div>
     </div>

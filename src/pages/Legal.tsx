@@ -9,7 +9,7 @@ function Page({ title, children }: { title: string; children: ReactNode }) {
     <div className="wrap narrow legal">
       <Link to="/" className="brand" style={{ marginTop: 24, textDecoration: "none", color: "inherit" }}>
         <img className="logo" src="/icon.svg" alt="" />
-        <h1 style={{ fontSize: 21 }}>Khushi Points</h1>
+        <h1 className="wordmark" style={{ fontSize: 26 }}>kushly</h1>
       </Link>
       <article className="panel" style={{ marginTop: 20 }}>
         <h2>{title}</h2>
@@ -28,14 +28,14 @@ const contact = SUPPORT_EMAIL
 export function Privacy() {
   return (
     <Page title="Privacy policy">
-      <p>Khushi Points is a loyalty points service used by shops. This policy explains what we collect and why, in line with India's Digital Personal Data Protection Act, 2023.</p>
+      <p>Kushly is a loyalty points service used by shops. This policy explains what we collect and why, in line with India's Digital Personal Data Protection Act, 2023.</p>
 
       <h3>If you collect points at a shop</h3>
-      <p>The shop is responsible for your data, and Khushi Points stores it for them. We keep:</p>
+      <p>The shop is responsible for your data, and Kushly stores it for them. We keep:</p>
       <ul>
         <li>Your mobile number, and a name if you gave one</li>
         <li>Your bills at that shop: bill number, amount, date and points</li>
-        <li>If you use the Khushi Points app: your name, your sign-in (Google, Apple or mobile number), the shops you follow, and a notification token for your phone</li>
+        <li>If you use the Kushly app: your name, your sign-in (Google, Apple or mobile number), the shops you follow, and a notification token for your phone</li>
       </ul>
       <p>We use this only to give and redeem your points, and to show you offers from shops you follow. We send a one-time code by SMS only when you ask for one to sign in. We do not sell your data, share it with other shops, or send you advertising by SMS or WhatsApp. You can unfollow any shop to stop its offers.</p>
       <p>The shop asks for your agreement before adding your number. You can ask the shop to delete your number, points and history at any time. Deleted data cannot be recovered.</p>
@@ -52,7 +52,7 @@ export function Privacy() {
       </ul>
 
       <h3>How long we keep it</h3>
-      <p>As long as the shop uses Khushi Points, or until the customer or shop asks us to delete it. Points expire on the schedule the shop sets, but the history stays until deletion.</p>
+      <p>As long as the shop uses Kushly, or until the customer or shop asks us to delete it. Points expire on the schedule the shop sets, but the history stays until deletion.</p>
 
       <h3>Security</h3>
       <p>Each shop can see only its own customers. Points can only be used after you approve in your own app. Connections are encrypted.</p>
@@ -66,10 +66,10 @@ export function Privacy() {
 export function Terms() {
   return (
     <Page title="Terms of use">
-      <p>These terms apply to shops and staff who use Khushi Points. By creating an account you agree to them.</p>
+      <p>These terms apply to shops and staff who use Kushly. By creating an account you agree to them.</p>
 
       <h3>The service</h3>
-      <p>Khushi Points lets a shop give loyalty points to customers by mobile number or app QR, and let them redeem points as a discount that the customer approves in the Khushi Points app. During the pilot the service is free and features may change.</p>
+      <p>Kushly lets a shop give loyalty points to customers by mobile number or app QR, and let them redeem points as a discount that the customer approves in the Kushly app. During the pilot the service is free and features may change.</p>
 
       <h3>Your responsibilities as a shop</h3>
       <ul>
