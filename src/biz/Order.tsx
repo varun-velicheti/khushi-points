@@ -6,7 +6,7 @@ import { cancelOrder, getOrder, lineKey, sameOpts, saveOrder, sendToKitchen, typ
 import { useBiz } from "./BizApp";
 import { rupees, totals, type Line } from "./money";
 
-type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name">;
+type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name" | "staff_id">;
 
 // Take an order: tap items to add them; the order saves itself. Bill when done.
 export default function OrderScreen() {
@@ -14,7 +14,7 @@ export default function OrderScreen() {
   const [params] = useSearchParams();
   const { current } = useShop();
   const shopId = current!.shop.id;
-  const { menu, reload } = useBiz();
+  const { menu, reload, staff } = useBiz();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Draft | null>(null);
   const [saved, setSaved] = useState(false);           // exists in the database
@@ -38,7 +38,7 @@ export default function OrderScreen() {
     }).catch(() => {
       if (stale) return;
       const table = params.get("table");
-      setOrder({ id: id!, kind: table ? "dine_in" : "takeaway", table_id: table, lines: [], customer_mobile: null, customer_member: null, customer_name: null });
+      setOrder({ id: id!, kind: table ? "dine_in" : "takeaway", table_id: table, lines: [], customer_mobile: null, customer_member: null, customer_name: null, staff_id: staff?.id ?? null });
     });
     return () => { stale = true; };
   }, [shopId, id]); // eslint-disable-line react-hooks/exhaustive-deps

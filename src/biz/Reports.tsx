@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { errorText, rpc } from "../lib";
 import { useShop } from "../shop";
 import { paise, rupees } from "./money";
+import { useBiz } from "./BizApp";
 
 type Report = {
   bills: number; sales: number; taxable: number; gst: number; discount: number;
@@ -13,6 +14,7 @@ type Report = {
   // sales, GST, items and modes are already net of refunds; these are the credit notes themselves
   refunds?: { count: number; amount: number };
   credit_notes?: { credit_no: string; at: string; mode: string; taxable: number; cgst: number; sgst: number; total: number }[];
+  by_staff?: { name: string; bills: number; sales: number }[];
 };
 
 // Dates as the shop's days (yyyy-mm-dd), counted on this device.
@@ -35,10 +37,21 @@ export default function Reports() {
   const [r, setR] = useState<Report | null>(null);
   const [err, setErr] = useState("");
   const [from, to] = range(kind);
+  // with staff PINs, a manager's PIN opens reports (the approval lasts 10 minutes, then it asks again)
+  const { askManager } = useBiz();
+  const [approval, setApproval] = useState<string | null | undefined>(undefined);
+  const [cancelled, setCancelled] = useState(false);
   useEffect(() => {
+    if (approval !== undefined || cancelled) return;
+    askManager().then((a) => (a === undefined ? setCancelled(true) : setApproval(a)));
+  }, [approval, cancelled, askManager]);
+  useEffect(() => {
+    if (approval === undefined) return;
     setR(null);
-    rpc<Report>("biz_report", { p_shop: shop.id, p_from: from, p_to: to }).then((x) => { setR(x); setErr(""); }).catch((e) => setErr(errorText(e)));
-  }, [shop.id, from, to]);
+    rpc<Report>("biz_report", { p_shop: shop.id, p_from: from, p_to: to, ...(approval ? { p_approval: approval } : {}) })
+      .then((x) => { setR(x); setErr(""); })
+      .catch((e) => { if (/MANAGER_ONLY/.test(String((e as Error).message))) setApproval(undefined); else setErr(errorText(e)); });
+  }, [shop.id, from, to, approval]);
 
   function csv() {
     if (!r) return;
@@ -60,7 +73,9 @@ export default function Reports() {
         <button className="btn alt small" disabled={!r?.invoices.length} onClick={csv}>Download CSV</button>
       </div>
       {err && <div className="msg err">{err}</div>}
-      {!r ? <p className="hint">Loading…</p> : <>
+      {cancelled && approval === undefined ? (
+        <div className="biz-empty"><h2>Needs a manager’s PIN</h2><button className="btn alt" onClick={() => setCancelled(false)}>Enter PIN</button></div>
+      ) : !r ? <p className="hint">Loading…</p> : <>
         <div className="kpis kpis-3">
           <div className="kpi"><div className="k">Sales</div><div className="v">{rupees(r.sales)}</div><div className="n">{r.bills} bills{r.refunds?.count ? ` · ${rupees(r.refunds.amount)} refunded` : ""}</div></div>
           <div className="kpi"><div className="k">Average bill</div><div className="v">{rupees(r.bills ? Math.round(r.sales / r.bills) : 0)}</div><div className="n">{r.discount > 0 ? `${rupees(r.discount)} paid with points` : " "}</div></div>
@@ -100,6 +115,16 @@ export default function Reports() {
             <div className="tbl-wrap"><table>
               <thead><tr><th>Item</th><th className="num">Qty</th><th className="num">Amount</th></tr></thead>
               <tbody>{r.items.map((i) => <tr key={i.name}><td>{i.name}</td><td className="num">{qty(i.qty)}</td><td className="num">{rupees(i.amount)}</td></tr>)}</tbody>
+            </table></div>
+          </section>
+        )}
+
+        {(r.by_staff ?? []).some((s) => s.name !== "Not set") && (
+          <section className="panel">
+            <h2>Staff</h2>
+            <div className="tbl-wrap"><table>
+              <thead><tr><th>Name</th><th className="num">Bills</th><th className="num">Sales</th></tr></thead>
+              <tbody>{r.by_staff!.map((s) => <tr key={s.name}><td>{s.name}</td><td className="num">{s.bills}</td><td className="num">{rupees(s.sales)}</td></tr>)}</tbody>
             </table></div>
           </section>
         )}

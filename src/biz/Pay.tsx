@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { errorText } from "../lib";
 import { refundOrder, type BizShop, type Order, type Payment } from "./api";
+import { useBiz } from "./BizApp";
 import { rupees, totals, type Line } from "./money";
 
 type Mode = Payment["mode"];
@@ -99,14 +100,17 @@ export function RefundSheet({ order, shopId, inclusive, onDone, onClose }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [refundId] = useState(() => crypto.randomUUID());
+  const { askManager } = useBiz();
   const chosen = order.lines.map((l, i) => ({ ...l, qty: qty[i] ?? 0, i })).filter((l) => l.qty > 0);
   const t = order.totals!;
   const g = chosen.reduce((a, l) => a + gross(l, inclusive), 0);
   const amount = totals(chosen, inclusive, t.items > 0 ? r2((t.discount * g) / t.items) : 0).total;
 
   async function refund() {
+    const approval = await askManager();
+    if (approval === undefined) return;
     setBusy(true); setErr("");
-    try { onDone(await refundOrder(shopId, order.id, chosen.map((l) => ({ i: l.i, qty: l.qty })), mode, reason.trim(), refundId)); }
+    try { onDone(await refundOrder(shopId, order.id, chosen.map((l) => ({ i: l.i, qty: l.qty })), mode, reason.trim(), refundId, approval)); }
     catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   }
   return (

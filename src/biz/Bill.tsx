@@ -153,7 +153,8 @@ export default function BillScreen() {
 
 function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals; shop: BizShop; table: string | null; onChange: (o: Order) => void }) {
   const navigate = useNavigate();
-  const { owner } = useBiz();
+  const { owner, staffOn, askManager } = useBiz();
+  const canManage = owner || staffOn;
   const { current } = useShop();
   const [err, setErr] = useState("");
   const [refunding, setRefunding] = useState(false);
@@ -163,7 +164,9 @@ function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals
   async function voidBill() {
     const reason = window.prompt(`Void ${order.invoice_no}? Points from this bill are taken back and stock is returned.\n\nReason`, "");
     if (reason === null) return;
-    try { onChange(await rpc<Order>("biz_void_order", { p_shop: current!.shop.id, p_order: order.id, p_reason: reason })); }
+    const approval = await askManager();
+    if (approval === undefined) return;
+    try { onChange(await rpc<Order>("biz_void_order", { p_shop: current!.shop.id, p_order: order.id, p_reason: reason, ...(approval ? { p_approval: approval } : {}) })); }
     catch (e) { setErr(errorText(e)); }
   }
   return (
@@ -180,8 +183,8 @@ function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals
         <button className="btn" onClick={() => navigate("/biz")}>Next order</button>
         <button className="btn alt" onClick={() => window.print()}>Print</button>
         <button className="btn link small" onClick={() => navigate("/biz/bills")}>All bills</button>
-        {owner && !isVoid && canRefund && <button className="btn link small" onClick={() => setRefunding(true)}>Refund items</button>}
-        {owner && !isVoid && <button className="btn link small del" onClick={voidBill}>Void bill</button>}
+        {canManage && !isVoid && canRefund && <button className="btn link small" onClick={() => setRefunding(true)}>Refund items</button>}
+        {canManage && !isVoid && <button className="btn link small del" onClick={voidBill}>Void bill</button>}
       </section>
       {refunding && <RefundSheet order={order} shopId={current!.shop.id} inclusive={shop.gst_inclusive}
         onDone={(o) => { onChange(o); setRefunding(false); }} onClose={() => setRefunding(false)} />}
@@ -228,6 +231,7 @@ export function Invoice({ order, tot, shop, table }: { order: Order; tot: Totals
           ))}</tbody>
         </table>
       )}
+      {order.staff && <footer>Billed by {order.staff}</footer>}
       {paid && order.payments?.[0] && <footer>Paid by {order.payments.length > 1
         ? order.payments.map((p) => `${p.mode.toUpperCase()} ${paise(p.amount)}`).join(" · ") : order.payments[0].mode.toUpperCase()}</footer>}
       {(order.refunds ?? []).map((r) => (

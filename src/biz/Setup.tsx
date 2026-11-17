@@ -18,12 +18,14 @@ export default function Setup() {
         <NavLink to="/biz/setup/menu">{({ isActive }) => <button aria-pressed={isActive}>Menu</button>}</NavLink>
         <NavLink to="/biz/setup/tables">{({ isActive }) => <button aria-pressed={isActive}>Tables</button>}</NavLink>
         <NavLink to="/biz/setup/stock">{({ isActive }) => <button aria-pressed={isActive}>Stock{low > 0 && <span className="pill-badge">{low}</span>}</button>}</NavLink>
+        <NavLink to="/biz/setup/staff">{({ isActive }) => <button aria-pressed={isActive}>Staff</button>}</NavLink>
         <NavLink to="/biz/setup/billing">{({ isActive }) => <button aria-pressed={isActive}>Billing</button>}</NavLink>
       </nav>
       <Routes>
         <Route path="menu" element={<MenuSetup />} />
         <Route path="tables" element={<TablesSetup />} />
         <Route path="stock" element={<StockSetup />} />
+        <Route path="staff" element={<StaffSetup />} />
         <Route path="billing" element={<BillingSetup />} />
         <Route path="*" element={<Navigate to="menu" replace />} />
       </Routes>
@@ -151,6 +153,49 @@ function ItemFields({ d, set }: { d: Draft; set: (d: Draft) => void }) {
       {d.options.length < 6 && <button type="button" className="btn link small" onClick={() => set({ ...d, options: [...d.options, { name: "", pick: "one", text: "" }] })}>+ Options</button>}
     </div>
   </>;
+}
+
+/* ---------------------------------------------------------------- staff */
+
+// Staff PINs for a shared counter device. Managers approve voids, refunds and reports.
+type StaffDraft = { id?: string; name: string; role: "cashier" | "manager"; pin: string };
+function StaffSetup() {
+  const { menu } = useBiz();
+  const { call, err } = useCall();
+  const [d, setD] = useState<StaffDraft>({ name: "", role: "cashier", pin: "" });
+  const [editing, setEditing] = useState<StaffDraft | null>(null);
+  const save = (x: StaffDraft) => call("biz_staff_save", { p: { ...x, pin: x.pin || null } });
+  const fields = (x: StaffDraft, set: (x: StaffDraft) => void, isNew: boolean) => <>
+    <input aria-label="Name" placeholder="Name" value={x.name} maxLength={40} onChange={(e) => set({ ...x, name: e.target.value })} />
+    <select aria-label="Role" value={x.role} onChange={(e) => set({ ...x, role: e.target.value as StaffDraft["role"] })} className="w-gst">
+      <option value="cashier">Cashier</option><option value="manager">Manager</option>
+    </select>
+    <input aria-label="PIN" placeholder={isNew ? "PIN" : "New PIN"} inputMode="numeric" maxLength={6} value={x.pin} className="w-price"
+      onChange={(e) => set({ ...x, pin: e.target.value.replace(/\D/g, "") })} />
+  </>;
+  return (
+    <div className="stack">
+      <form className="item-form" onSubmit={async (e) => { e.preventDefault(); if (await save(d)) setD({ name: "", role: "cashier", pin: "" }); }}>
+        {fields(d, setD, true)}
+        <button className="btn" disabled={!d.name.trim() || d.pin.length < 4}>Add</button>
+      </form>
+      {err && <div className="msg err">{err}</div>}
+      <section className="menu-group">
+        {(menu.staff ?? []).map((s) => editing?.id === s.id ? (
+          <form key={s.id} className="item-form editing" onSubmit={async (e) => { e.preventDefault(); if (await save(editing)) setEditing(null); }}>
+            {fields(editing, setEditing as (x: StaffDraft) => void, false)}
+            <button className="btn">Save</button>
+            <button type="button" className="btn alt" onClick={() => setEditing(null)}>Cancel</button>
+            <button type="button" className="btn link small del" onClick={async () => { if (window.confirm(`Remove ${s.name}?`) && await call("biz_staff_remove", { p_id: s.id })) setEditing(null); }}>Remove</button>
+          </form>
+        ) : (
+          <button key={s.id} className="menu-row staff-row" onClick={() => setEditing({ id: s.id, name: s.name, role: s.role, pin: "" })}>
+            <span className="menu-name">{s.name}</span><span className="menu-gst">{s.role === "manager" ? "Manager" : "Cashier"}</span>
+          </button>
+        ))}
+      </section>
+    </div>
+  );
 }
 
 /* ---------------------------------------------------------------- tables */

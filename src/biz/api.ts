@@ -16,7 +16,9 @@ export type Table = { id: string; name: string; sort: number };
 export type Payment = { mode: "cash" | "upi" | "card"; amount: number };
 // A credit note: items of a paid bill given back. Lines are the order's lines with the refunded qty and their index `i`.
 export type Refund = { id: string; no: number; credit_no: string; at: string; lines: (Line & { i: number })[]; totals: Totals; mode: Payment["mode"]; reason: string | null };
-export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[] };
+// Staff who say who they are with a PIN on a shared device (names and roles only; PINs stay on the server).
+export type Staff = { id: string; name: string; role: "cashier" | "manager" };
+export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[]; staff?: Staff[] };
 
 export type Order = {
   id: string; kind: "dine_in" | "takeaway"; table_id: string | null; status: "open" | "paid" | "cancelled" | "void"; lines: Line[];
@@ -24,7 +26,7 @@ export type Order = {
   opened_at: string; updated_at: string; paid_at: string | null; invoice_no: string | null; totals: Totals | null;
   payments: Payment[] | null; points_earned: number | null; points_error: string | null;
   total?: number; table?: string | null; txn_id?: number | null;
-  void_reason?: string | null; voided_at?: string | null; refunds?: Refund[];
+  void_reason?: string | null; voided_at?: string | null; refunds?: Refund[]; staff_id?: string | null; staff?: string | null;
   sent?: Record<string, number>; kitchen?: "new" | "cooking" | "ready" | null;
 };
 
@@ -38,7 +40,7 @@ export const lineKey = (l: { item_id?: string | null; name: string; note?: strin
 export const sameOpts = (a?: string[] | null, b?: string[] | null) => (a ?? []).join("\u0001") === (b ?? []).join("\u0001");
 
 export const loadMenu = (shop: string) => rpc<Menu>("biz_menu", { p_shop: shop });
-type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name">;
+type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name" | "staff_id">;
 
 // Orders go through the device's offline store (offline.ts): read from the server when possible,
 // changes stored on the device first and sent in order.
@@ -68,9 +70,9 @@ export async function payOrder(shop: string, menu: Menu, id: string, mode: "cash
 }
 export const cancelOrder = async (shop: string, id: string) => cancelLocal(shop, id);
 // Refunds need the internet (owner only). The id is made here so a retry does not refund twice.
-export async function refundOrder(shop: string, id: string, lines: { i: number; qty: number }[], mode: Payment["mode"], reason: string, refundId: string) {
+export async function refundOrder(shop: string, id: string, lines: { i: number; qty: number }[], mode: Payment["mode"], reason: string, refundId: string, approval?: string | null) {
   await flush();
-  const o = await rpc<Order>("biz_refund_order", { p_shop: shop, p_order: id, p_id: refundId, p_lines: lines, p_mode: mode, p_reason: reason || null });
+  const o = await rpc<Order>("biz_refund_order", { p_shop: shop, p_order: id, p_id: refundId, p_lines: lines, p_mode: mode, p_reason: reason || null, ...(approval ? { p_approval: approval } : {}) });
   remember(shop, o); return o;
 }
 // Points need the internet (the customer approves in their app); send queued changes first.

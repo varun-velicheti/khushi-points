@@ -53,7 +53,7 @@ select t.check(((select i from jsonb_array_elements((public.biz_stock(:'shop'))-
 select public.biz_pay_order(:'shop', 'dddddddd-0000-0000-0000-000000000001', 'upi');
 select t.check(((select i from jsonb_array_elements((public.biz_stock(:'shop'))->'items') i where i->>'name' = 'Coke')->>'stock')::numeric = 27, 'still 27');
 select t.check(jsonb_array_length((public.biz_stock(:'shop'))->'moves') = 3, 'log: count, add, sale');
-select t.expect_error($$ select public.biz_report('$$ || :'shop' || $$', current_date, current_date) $$, 'OWNER_ONLY');
+select t.expect_error($$ select public.biz_report('$$ || :'shop' || $$', current_date, current_date) $$, 'MANAGER_ONLY');
 -- second bill, cash
 select public.biz_save_order(:'shop', '{"id":"dddddddd-0000-0000-0000-000000000002","kind":"takeaway","lines":[{"name":"Chai","price":30,"qty":1,"gst_rate":5}]}');
 select public.biz_pay_order(:'shop', 'dddddddd-0000-0000-0000-000000000002', 'cash');
@@ -89,6 +89,6 @@ select t.expect_error($$ select public.biz_void_order('$$ || :'shop' || $$', 'dd
 reset role;
 select t.as_user('22222222-2222-2222-2222-222222222222');
 set role authenticated;
-select t.expect_error($$ select public.biz_void_order('$$ || :'shop' || $$', 'dddddddd-0000-0000-0000-000000000002') $$, 'OWNER_ONLY');
+select t.expect_error($$ select public.biz_void_order('$$ || :'shop' || $$', 'dddddddd-0000-0000-0000-000000000002') $$, 'MANAGER_ONLY');
 reset role;
 select 'ALL TESTS PASSED' as result;

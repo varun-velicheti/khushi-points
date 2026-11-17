@@ -6,7 +6,7 @@ import { rpc, supabase } from "../lib";
 import type { Menu, Order, Payment } from "./api";
 import { totals } from "./money";
 
-type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name">;
+type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name" | "staff_id">;
 type Op =
   | { kind: "save"; shop: string; order: Draft }
   | { kind: "pay"; shop: string; id: string; mode: string; consent: boolean; series: string; seq: number; paid_at: string; payments?: Payment[] | null }
