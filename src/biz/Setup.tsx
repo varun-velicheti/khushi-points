@@ -45,9 +45,19 @@ function useCall() {
 
 /* ---------------------------------------------------------------- menu */
 
-type Draft = { id?: string; name: string; price: string; gst_rate: number; category_id: string; veg: boolean; available: boolean };
-const blank = (cat = ""): Draft => ({ name: "", price: "", gst_rate: 5, category_id: cat, veg: true, available: true });
-const toDraft = (i: Item): Draft => ({ id: i.id, name: i.name, price: String(i.price), gst_rate: Number(i.gst_rate), category_id: i.category_id ?? "", veg: i.veg, available: i.available });
+// An option group is typed as one line of choices: "Small, Large +15, Jumbo +25".
+type OptDraft = { name: string; pick: "one" | "many"; text: string };
+type Draft = { id?: string; name: string; price: string; gst_rate: number; category_id: string; veg: boolean; available: boolean; options: OptDraft[] };
+const blank = (cat = ""): Draft => ({ name: "", price: "", gst_rate: 5, category_id: cat, veg: true, available: true, options: [] });
+const toDraft = (i: Item): Draft => ({ id: i.id, name: i.name, price: String(i.price), gst_rate: Number(i.gst_rate), category_id: i.category_id ?? "", veg: i.veg, available: i.available,
+  options: (i.options ?? []).map((g) => ({ name: g.name, pick: g.pick, text: g.choices.map((c) => (Number(c.price) > 0 ? `${c.name} +${Number(c.price)}` : c.name)).join(", ") })) });
+const parseOptions = (o: OptDraft[]) => o.filter((g) => g.name.trim() && g.text.trim()).map((g) => ({
+  name: g.name.trim(), pick: g.pick,
+  choices: g.text.split(",").map((s) => s.trim()).filter(Boolean).map((s) => {
+    const m = s.match(/^(.*?)\s*\+\s*₹?\s*(\d+(?:\.\d+)?)$/);
+    return m ? { name: m[1].trim(), price: Number(m[2]) } : { name: s, price: 0 };
+  }),
+}));
 
 function MenuSetup() {
   const { menu } = useBiz();
@@ -60,7 +70,7 @@ function MenuSetup() {
     e.preventDefault();
     if (await call("biz_save_category", { p_id: null, p_name: newCat, p_sort: menu.categories.length + 1 })) setNewCat("");
   }
-  const save = (d: Draft) => call("biz_save_item", { p: { ...d, price: Number(d.price), category_id: d.category_id || null } });
+  const save = (d: Draft) => call("biz_save_item", { p: { ...d, price: Number(d.price), category_id: d.category_id || null, options: parseOptions(d.options) } });
   async function add(e: FormEvent) {
     e.preventDefault();
     if (await save(draft)) setDraft(blank(draft.category_id));
@@ -100,7 +110,7 @@ function MenuSetup() {
           ) : (
             <button key={i.id} className={`menu-row${i.available ? "" : " out"}`} onClick={() => setEditing(toDraft(i))}>
               <span className={`dot ${i.veg ? "veg" : "nonveg"}`} />
-              <span className="menu-name">{i.name}</span>
+              <span className="menu-name">{i.name}{i.options?.length ? <small>{i.options.map((g) => g.name).join(" · ")}</small> : null}</span>
               <span className="menu-gst">{Number(i.gst_rate)}%</span>
               <span className="menu-price">{rupees(i.price)}</span>
             </button>
@@ -124,6 +134,22 @@ function ItemFields({ d, set }: { d: Draft; set: (d: Draft) => void }) {
       {menu.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
     </select>
     <button type="button" className={`veg-toggle ${d.veg ? "veg" : "nonveg"}`} onClick={() => set({ ...d, veg: !d.veg })}>{d.veg ? "Veg" : "Non-veg"}</button>
+    <div className="opt-edit">
+      {d.options.map((g, k) => {
+        const put = (x: Partial<OptDraft>) => set({ ...d, options: d.options.map((y, j) => (j === k ? { ...y, ...x } : y)) });
+        return (
+          <div className="opt-row" key={k}>
+            <input aria-label="Option name" placeholder="Size" value={g.name} maxLength={30} onChange={(e) => put({ name: e.target.value })} />
+            <select aria-label="How many can be picked" value={g.pick} onChange={(e) => put({ pick: e.target.value as OptDraft["pick"] })}>
+              <option value="one">Pick one</option><option value="many">Pick any</option>
+            </select>
+            <input aria-label="Choices" placeholder="Small, Large +15" value={g.text} onChange={(e) => put({ text: e.target.value })} />
+            <button type="button" className="btn link small" aria-label="Remove option" onClick={() => set({ ...d, options: d.options.filter((_, j) => j !== k) })}>×</button>
+          </div>
+        );
+      })}
+      {d.options.length < 6 && <button type="button" className="btn link small" onClick={() => set({ ...d, options: [...d.options, { name: "", pick: "one", text: "" }] })}>+ Options</button>}
+    </div>
   </>;
 }
 

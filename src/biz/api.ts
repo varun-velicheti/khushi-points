@@ -9,7 +9,9 @@ export type BizShop = { id: string; name: string; legal_name: string | null; gst
   max_redeem_pct: number; logo_path: string | null; kitchen: boolean; timezone: string };
 export type Category = { id: string; name: string; sort: number };
 export type Item = { id: string; category_id: string | null; name: string; price: number; gst_rate: number; hsn: string | null;
-  veg: boolean; available: boolean; sort: number; track_stock?: boolean; stock?: number; low_stock?: number };
+  veg: boolean; available: boolean; sort: number; track_stock?: boolean; stock?: number; low_stock?: number; options?: OptionGroup[] };
+// Sizes or add-ons: pick one (radio) or many; each choice adds its price to the item's.
+export type OptionGroup = { name: string; pick: "one" | "many"; choices: { name: string; price: number }[] };
 export type Table = { id: string; name: string; sort: number };
 export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[] };
 
@@ -27,7 +29,10 @@ export type Ticket = { id: string; no: number; status: "new" | "cooking" | "read
   order_id: string; kind: string; table: string | null; cancelled: boolean; lines: { key: string; name: string; qty: number; note: string | null }[] };
 
 // Same as _biz_line_key: one dish = same item with the same note.
-export const lineKey = (l: { item_id?: string | null; name: string; note?: string | null }) => `${l.item_id ?? l.name}|${l.note ?? ""}`;
+// Same as _biz_line_key in the database: lines differ by item, note and options.
+export const lineKey = (l: { item_id?: string | null; name: string; note?: string | null; opts?: string[] | null }) =>
+  `${l.item_id ?? l.name}|${l.note ?? ""}${l.opts?.length ? `|${l.opts.join(", ")}` : ""}`;
+export const sameOpts = (a?: string[] | null, b?: string[] | null) => (a ?? []).join("\u0001") === (b ?? []).join("\u0001");
 
 export const loadMenu = (shop: string) => rpc<Menu>("biz_menu", { p_shop: shop });
 type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name">;

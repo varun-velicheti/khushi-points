@@ -1,6 +1,7 @@
 // Bill totals, same rules as _biz_totals in the database (which has the final say).
 // Line totals include GST; a discount lowers every line by the same share; the total is rounded to the rupee.
-export type Line = { item_id?: string | null; name: string; price: number; qty: number; gst_rate: number; hsn?: string | null; note?: string | null };
+export type Line = { item_id?: string | null; name: string; price: number; qty: number; gst_rate: number; hsn?: string | null; note?: string | null;
+  opts?: string[] | null };  // picked option names; price already includes their extras
 export type Totals = { items: number; discount: number; taxable: number; cgst: number; sgst: number; round_off: number; total: number;
   by_rate: { rate: number; taxable: number; tax: number }[] };
 

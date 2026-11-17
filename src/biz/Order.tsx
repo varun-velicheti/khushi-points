@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { errorText, rpc } from "../lib";
 import { useShop } from "../shop";
-import { cancelOrder, getOrder, lineKey, saveOrder, sendToKitchen, type Item, type Order } from "./api";
+import { cancelOrder, getOrder, lineKey, sameOpts, saveOrder, sendToKitchen, type Item, type Order } from "./api";
 import { useBiz } from "./BizApp";
 import { rupees, totals, type Line } from "./money";
 
@@ -22,6 +22,8 @@ export default function OrderScreen() {
   const [sentNo, setSentNo] = useState<number | null>(null);
   const [cat, setCat] = useState<string | null>(null);
   const [soldOutMode, setSoldOutMode] = useState(false);
+  const [q, setQ] = useState("");
+  const [pick, setPick] = useState<{ item: Item | null; line: number | null } | null>(null);   // options panel
   const [err, setErr] = useState("");
   const dirty = useRef(false);
 
@@ -52,7 +54,11 @@ export default function OrderScreen() {
     return () => clearTimeout(t);
   }, [order, saved, shopId]);
 
-  const items = useMemo(() => menu.items.filter((i) => !cat || i.category_id === cat), [menu.items, cat]);
+  // typing searches the whole menu; otherwise the chosen category
+  const items = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return menu.items.filter((i) => (s ? i.name.toLowerCase().includes(s) : !cat || i.category_id === cat));
+  }, [menu.items, cat, q]);
   const t = totals(order?.lines ?? [], menu.shop.gst_inclusive);
   const tableName = menu.tables.find((x) => x.id === order?.table_id)?.name;
 
@@ -72,9 +78,14 @@ export default function OrderScreen() {
     if (!i.available) return;
     const r = room(i.id);
     if (r !== null && r <= 0) return;
-    const at = order!.lines.findIndex((l) => l.item_id === i.id && !l.note);
-    if (at >= 0) change(order!.lines.map((l, k) => (k === at ? { ...l, qty: l.qty + 1 } : l)));
-    else change([...order!.lines, { item_id: i.id, name: i.name, price: Number(i.price), qty: 1, gst_rate: Number(i.gst_rate), hsn: i.hsn }]);
+    if (i.options?.length) return setPick({ item: i, line: null });
+    addLine({ item_id: i.id, name: i.name, price: Number(i.price), qty: 1, gst_rate: Number(i.gst_rate), hsn: i.hsn });
+  }
+  // the same dish with the same options and no note adds up on one line
+  function addLine(n: Line) {
+    const at = n.note ? -1 : order!.lines.findIndex((l) => l.item_id === n.item_id && !l.note && sameOpts(l.opts, n.opts));
+    if (at >= 0) change(order!.lines.map((l, k) => (k === at ? { ...l, qty: l.qty + n.qty } : l)));
+    else change([...order!.lines, n]);
   }
   const step = (k: number, d: number) => change(order.lines.flatMap((l, j) => (j !== k ? [l] : l.qty + d > 0 ? [{ ...l, qty: l.qty + d }] : [])));
   // how many more of this item can still be added (null: stock not counted)
@@ -92,11 +103,11 @@ export default function OrderScreen() {
       setSent(o.sent ?? {}); setSentNo(k?.no ?? null); setErr("");
     } catch (e) { setErr(errorText(e)); }
   }
-  function noteFor(k: number) {
-    const l = order!.lines[k];
-    const n = window.prompt(`Note for ${l.name}`, l.note ?? "");
-    if (n === null) return;
-    change(order!.lines.map((x, j) => (j === k ? { ...x, note: n.trim() || null } : x)));
+  // options panel result: a new line, or the edited line
+  function picked(n: Line) {
+    if (pick?.line == null) addLine(n);
+    else change(order!.lines.map((x, j) => (j === pick.line ? n : x)));
+    setPick(null);
   }
   async function bill() {
     try { await saveOrder(shopId, order!); dirty.current = false; navigate(`/biz/b/${order!.id}`); }
@@ -117,6 +128,7 @@ export default function OrderScreen() {
       </aside>
 
       <section className={`items${soldOutMode ? " editing" : ""}`}>
+        <input className="item-search" type="search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search the menu" />
         {items.map((i) => {
           const qty = order.lines.filter((l) => l.item_id === i.id).reduce((a, l) => a + l.qty, 0);
           const left = i.track_stock ? Number(i.stock ?? 0) - qty : null;
@@ -138,7 +150,8 @@ export default function OrderScreen() {
         <div className="cart-lines">
           {order.lines.map((l, k) => (
             <div className={`cart-line${!menu.shop.kitchen || (sent[lineKey(l)] ?? 0) >= l.qty ? " sent" : ""}`} key={k}>
-              <button className="cart-name" onClick={() => noteFor(k)}>{l.name}{l.note && <small>{l.note}</small>}</button>
+              <button className="cart-name" onClick={() => setPick({ item: menu.items.find((x) => x.id === l.item_id) ?? null, line: k })}>
+                {l.name}{l.opts?.length ? <small className="opts">{l.opts.join(", ")}</small> : null}{l.note && <small>{l.note}</small>}</button>
               <span className="stepper">
                 <button onClick={() => step(k, -1)} aria-label={`One less ${l.name}`}>−</button>
                 <b>{l.qty}</b>
@@ -159,6 +172,61 @@ export default function OrderScreen() {
           ) : <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>}
         </footer>
       </section>
+      {pick && <Options item={pick.item} line={pick.line == null ? null : order.lines[pick.line]} room={pick.item ? room(pick.item.id) : null}
+        onDone={picked} onClose={() => setPick(null)} />}
+    </div>
+  );
+}
+
+// Pick a size and add-ons, add a note. Editing a line starts from what it has.
+function Options({ item, line, room, onDone, onClose }: {
+  item: Item | null; line: Line | null; room: number | null; onDone: (l: Line) => void; onClose: () => void;
+}) {
+  const groups = item?.options ?? [];
+  const base = Number(item?.price ?? 0);
+  const [chosen, setChosen] = useState<string[][]>(() => groups.map((g) => {
+    const had = g.choices.filter((c) => line?.opts?.includes(c.name)).map((c) => c.name);
+    return had.length || g.pick === "many" ? had : [g.choices[0].name];
+  }));
+  const [note, setNote] = useState(line?.note ?? "");
+  const [qty, setQty] = useState(line?.qty ?? 1);
+  const extra = groups.reduce((a, g, gi) => a + g.choices.filter((c) => chosen[gi].includes(c.name)).reduce((s, c) => s + Number(c.price), 0), 0);
+  // a line whose item left the menu keeps its price; only its note can change
+  const price = item && groups.length ? base + extra : line?.price ?? base;
+  const max = room === null ? 999 : room + (line?.qty ?? 0);
+  const toggle = (gi: number, name: string) => setChosen(chosen.map((c, i) => (i !== gi ? c
+    : groups[gi].pick === "one" ? [name] : c.includes(name) ? c.filter((x) => x !== name) : [...c, name])));
+  function done() {
+    const opts = groups.flatMap((g, gi) => g.choices.filter((c) => chosen[gi].includes(c.name)).map((c) => c.name));
+    const from = line ?? { item_id: item!.id, name: item!.name, gst_rate: Number(item!.gst_rate), hsn: item!.hsn, price, qty };
+    onDone({ ...from, price, qty, note: note.trim() || null, opts: groups.length ? (opts.length ? opts : null) : line?.opts ?? null });
+  }
+  return (
+    <div className="sheet-bg" onClick={onClose}>
+      <form className="sheet" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); done(); }}>
+        <header><b>{item?.name ?? line?.name}</b><button type="button" className="btn link small" onClick={onClose}>Close</button></header>
+        {groups.map((g, gi) => (
+          <fieldset key={gi} className="opt-group">
+            <legend>{g.name}</legend>
+            <div className="opt-choices">
+              {g.choices.map((c) => (
+                <button type="button" key={c.name} aria-pressed={chosen[gi].includes(c.name)} onClick={() => toggle(gi, c.name)}>
+                  {c.name}{Number(c.price) > 0 && <small>+{rupees(c.price)}</small>}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+        <input placeholder="Note" value={note} maxLength={100} onChange={(e) => setNote(e.target.value)} aria-label="Note for the kitchen" />
+        <footer>
+          <span className="stepper">
+            <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} aria-label="One less">−</button>
+            <b>{qty}</b>
+            <button type="button" onClick={() => setQty(qty + 1)} disabled={qty >= max} aria-label="One more">+</button>
+          </span>
+          <button className="btn" type="submit" disabled={qty > max}>{line ? "Update" : "Add"} · {rupees(price * qty)}</button>
+        </footer>
+      </form>
     </div>
   );
 }

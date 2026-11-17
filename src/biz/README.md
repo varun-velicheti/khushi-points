@@ -11,6 +11,7 @@ Setup: menu, tables, billing (owner only)
 ## Data (supabase/migrations/20261108000000_biz.sql)
 - `menu_categories`, `menu_items`, `dining_tables`: the menu. Read with `biz_menu(shop)` (one call).
 - `biz_orders`: one row per order, items in `lines` (jsonb). The id is made on the device.
+- Item options: `menu_items.options` holds groups `{name, pick: one|many, choices: [{name, price}]}`. A line keeps the picked names in `opts`; its `price` already includes the extras, so totals, GST, points and stock need nothing new. Kitchen tickets show "Chai (Large, Ginger)".
 - `biz_save_order(shop, order)`: create/update an open order. Safe to repeat.
 - `biz_pay_order(shop, order, mode, series, consent)`: totals, invoice number, payment, then points via `add_bill`. Safe to repeat.
 - `_biz_totals(lines, inclusive, discount)`: the bill maths. `money.ts` mirrors it for live totals; the database decides.

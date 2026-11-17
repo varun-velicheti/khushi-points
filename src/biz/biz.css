@@ -227,3 +227,28 @@
   .invoice { position: absolute; left: 0; top: 0; width: 76mm; max-width: 76mm; border: 0; border-radius: 0; padding: 0; font-size: 11px; color: #000 }
   .inv-tot .grand { font-size: 15px }
 }
+
+/* search and the options panel */
+.item-search { grid-column: 1 / -1; width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; font: 500 15px var(--f-body); background: var(--surface) }
+.cart-name small.opts { color: var(--muted) }
+.sheet-bg { position: fixed; inset: 0; background: rgb(20 21 63 / .35); display: grid; place-items: center; z-index: 50; padding: 16px }
+.sheet { width: min(460px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--surface); border-radius: 20px;
+  padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 24px 60px rgb(20 21 63 / .25) }
+.sheet header, .sheet footer { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.sheet header b { font: 700 19px var(--f-display) }
+.sheet input { border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; font: 500 15px var(--f-body) }
+.sheet footer .btn { flex: 1 }
+.opt-group { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px }
+.opt-group legend { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 0; margin-bottom: 8px }
+.opt-choices { display: flex; flex-wrap: wrap; gap: 8px }
+.opt-choices button { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; font: 600 15px var(--f-body);
+  color: var(--ink); cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; transition: transform .1s ease }
+.opt-choices button small { color: var(--muted); font-weight: 600 }
+.opt-choices button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface) }
+.opt-choices button[aria-pressed="true"] small { color: rgb(255 255 255 / .75) }
+.opt-choices button:active { transform: scale(.96) }
+.opt-edit { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; align-items: flex-start }
+.opt-row { display: grid; grid-template-columns: 140px 120px 1fr auto; gap: 8px; width: 100% }
+.opt-row input, .opt-row select { width: 100% }
+.menu-name small { display: block; color: var(--muted); font-weight: 500; font-size: 12.5px }
+@media (max-width: 640px) { .opt-row { grid-template-columns: 1fr 1fr auto } .opt-row input:nth-child(3) { grid-column: 1 / -1; grid-row: 2 } }

@@ -208,7 +208,7 @@ export function Invoice({ order, tot, shop, table }: { order: Order; tot: Totals
       <table className="inv-lines">
         <tbody>
           {order.lines.map((l, i) => (
-            <tr key={i}><td>{l.name}<small>{l.qty} × {paise(l.price)}</small></td><td>{paise(l.price * l.qty)}</td></tr>
+            <tr key={i}><td>{l.name}{l.opts?.length ? <small>{l.opts.join(", ")}</small> : null}<small>{l.qty} × {paise(l.price)}</small></td><td>{paise(l.price * l.qty)}</td></tr>
           ))}
         </tbody>
       </table>
