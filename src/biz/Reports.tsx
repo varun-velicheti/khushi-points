@@ -10,6 +10,9 @@ type Report = {
   by_day: { day: string; bills: number; sales: number }[];
   items: { name: string; qty: number; amount: number }[];
   invoices: { invoice_no: string; paid_at: string; mode: string; taxable: number; cgst: number; sgst: number; discount: number; round_off: number; total: number }[];
+  // sales, GST, items and modes are already net of refunds; these are the credit notes themselves
+  refunds?: { count: number; amount: number };
+  credit_notes?: { credit_no: string; at: string; mode: string; taxable: number; cgst: number; sgst: number; total: number }[];
 };
 
 // Dates as the shop's days (yyyy-mm-dd), counted on this device.
@@ -22,7 +25,7 @@ function range(kind: string): [string, string] {
   return [iso(t), iso(t)];
 }
 const RANGES = [["today", "Today"], ["yesterday", "Yesterday"], ["month", "This month"], ["last", "Last month"]] as const;
-const MODE = { upi: "UPI", cash: "Cash", card: "Card" } as Record<string, string>;
+const MODE = { upi: "UPI", cash: "Cash", card: "Card", split: "Split" } as Record<string, string>;
 const qty = (n: number) => Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
 export default function Reports() {
@@ -40,7 +43,9 @@ export default function Reports() {
   function csv() {
     if (!r) return;
     const rows = [["Invoice", "Date", "Payment", "Taxable", "CGST", "SGST", "Points discount", "Round off", "Total"],
-      ...r.invoices.map((i) => [i.invoice_no, new Date(i.paid_at).toLocaleString("en-IN"), MODE[i.mode] ?? i.mode, i.taxable, i.cgst, i.sgst, i.discount, i.round_off, i.total])];
+      ...r.invoices.map((i) => [i.invoice_no, new Date(i.paid_at).toLocaleString("en-IN"), MODE[i.mode] ?? i.mode, i.taxable, i.cgst, i.sgst, i.discount, i.round_off, i.total]),
+      // credit notes as negative rows, so the file adds up to the net figures
+      ...(r.credit_notes ?? []).map((c) => [c.credit_no, new Date(c.at).toLocaleString("en-IN"), `Refund ${MODE[c.mode] ?? c.mode}`, -c.taxable, -c.cgst, -c.sgst, 0, 0, -c.total])];
     const blob = new Blob([rows.map((x) => x.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = `${shop.name}-invoices-${from}-to-${to}.csv`; a.click();
@@ -57,7 +62,7 @@ export default function Reports() {
       {err && <div className="msg err">{err}</div>}
       {!r ? <p className="hint">Loading…</p> : <>
         <div className="kpis kpis-3">
-          <div className="kpi"><div className="k">Sales</div><div className="v">{rupees(r.sales)}</div><div className="n">{r.bills} bills</div></div>
+          <div className="kpi"><div className="k">Sales</div><div className="v">{rupees(r.sales)}</div><div className="n">{r.bills} bills{r.refunds?.count ? ` · ${rupees(r.refunds.amount)} refunded` : ""}</div></div>
           <div className="kpi"><div className="k">Average bill</div><div className="v">{rupees(r.bills ? Math.round(r.sales / r.bills) : 0)}</div><div className="n">{r.discount > 0 ? `${rupees(r.discount)} paid with points` : " "}</div></div>
           <div className="kpi"><div className="k">GST</div><div className="v">{rupees(r.gst)}</div><div className="n">on {rupees(r.taxable)}</div></div>
         </div>

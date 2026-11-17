@@ -252,3 +252,22 @@
 .opt-row input, .opt-row select { width: 100% }
 .menu-name small { display: block; color: var(--muted); font-weight: 500; font-size: 12.5px }
 @media (max-width: 640px) { .opt-row { grid-template-columns: 1fr 1fr auto } .opt-row input:nth-child(3) { grid-column: 1 / -1; grid-row: 2 } }
+
+/* split bill and refunds */
+.split { display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--surface) }
+.split header { display: flex; justify-content: space-between; align-items: center }
+.split header b { font: 700 18px var(--f-display); font-variant-numeric: tabular-nums }
+.split input { border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; font: 600 16px var(--f-body); font-variant-numeric: tabular-nums }
+.split-part { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 12px; background: var(--sunk) }
+.split-part b { font-variant-numeric: tabular-nums }
+.split-how { display: flex; flex-wrap: wrap; gap: 8px }
+.split-how button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 8px 14px; font: 600 14px var(--f-body); color: var(--ink); cursor: pointer }
+.split-how button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface) }
+.split-items { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto }
+.refund-lines { display: flex; flex-direction: column }
+.refund-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line) }
+.refund-line span small { display: block; color: var(--muted); font-size: 12.5px }
+.refund-line.gone { opacity: .5 }
+.credit { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 4px }
+.credit-line { display: flex; justify-content: space-between; font-size: 14px; font-variant-numeric: tabular-nums }
+.bill-row b small.refunded { display: block; color: var(--bad); font-size: 12px; font-weight: 600 }

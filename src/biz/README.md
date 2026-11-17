@@ -12,6 +12,8 @@ Setup: menu, tables, billing (owner only)
 - `menu_categories`, `menu_items`, `dining_tables`: the menu. Read with `biz_menu(shop)` (one call).
 - `biz_orders`: one row per order, items in `lines` (jsonb). The id is made on the device.
 - Item options: `menu_items.options` holds groups `{name, pick: one|many, choices: [{name, price}]}`. A line keeps the picked names in `opts`; its `price` already includes the extras, so totals, GST, points and stock need nothing new. Kitchen tickets show "Chai (Large, Ginger)".
+- Split bills: `biz_pay_order(..., p_payments)` takes parts `[{mode, amount}]` that must add up to the total; one invoice. Evenly / by item / by amount is worked out on the device (`Pay.tsx`).
+- Refunds: `biz_refund_order(shop, order, id, [{i, qty}], mode, reason)` (owner) writes a credit note `<invoice>-R<n>` to `biz_refunds`, returns counted stock, and comes off reports and the GST summary. Points the bill gave stay; voiding the whole bill takes them back.
 - `biz_save_order(shop, order)`: create/update an open order. Safe to repeat.
 - `biz_pay_order(shop, order, mode, series, consent)`: totals, invoice number, payment, then points via `add_bill`. Safe to repeat.
 - `_biz_totals(lines, inclusive, discount)`: the bill maths. `money.ts` mirrors it for live totals; the database decides.

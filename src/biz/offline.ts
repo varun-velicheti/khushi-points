@@ -3,13 +3,13 @@
 // when the connection is back it is sent. Saving and paying are safe to repeat on the server, so a
 // change sent twice does no harm. Each device numbers its own invoices (series A, B, ...).
 import { rpc, supabase } from "../lib";
-import type { Menu, Order } from "./api";
+import type { Menu, Order, Payment } from "./api";
 import { totals } from "./money";
 
 type Draft = Pick<Order, "id" | "kind" | "table_id" | "lines" | "customer_mobile" | "customer_member" | "customer_name">;
 type Op =
   | { kind: "save"; shop: string; order: Draft }
-  | { kind: "pay"; shop: string; id: string; mode: string; consent: boolean; series: string; seq: number; paid_at: string }
+  | { kind: "pay"; shop: string; id: string; mode: string; consent: boolean; series: string; seq: number; paid_at: string; payments?: Payment[] | null }
   | { kind: "cancel"; shop: string; id: string };
 type Device = { series: string; fy: string; last: number };
 export type SyncState = { online: boolean; waiting: number; failed: string[] };
@@ -81,7 +81,8 @@ export function saveLocal(shop: string, draft: Draft): Order {
   return o;
 }
 
-export function payLocal(shop: string, menu: Menu, id: string, mode: "cash" | "upi" | "card", consent: boolean): Order {
+// `parts`: a split bill paid in parts that add up to the total (as worked out on the bill screen).
+export function payLocal(shop: string, menu: Menu, id: string, mode: "cash" | "upi" | "card", consent: boolean, parts?: Payment[] | null): Order {
   const all = localOrders(shop);
   const o = all[id];
   if (!o) throw new Error("NOT_FOUND");
@@ -90,9 +91,9 @@ export function payLocal(shop: string, menu: Menu, id: string, mode: "cash" | "u
   const inv = nextInvoice(shop, menu.shop.timezone, at);
   const t = totals(o.lines, menu.shop.gst_inclusive);
   const paid: Order = { ...o, status: "paid", paid_at: at.toISOString(), invoice_no: inv.invoice_no, totals: t,
-    payments: [{ mode, amount: t.total }], points_earned: null, points_error: null };
+    payments: parts?.length ? parts : [{ mode, amount: t.total }], points_earned: null, points_error: null };
   all[id] = paid; setLocalOrders(shop, all);
-  setOutbox([...outbox(), { kind: "pay", shop, id, mode, consent, series: inv.series, seq: inv.seq, paid_at: paid.paid_at! }]);
+  setOutbox([...outbox(), { kind: "pay", shop, id, mode, consent, series: inv.series, seq: inv.seq, paid_at: paid.paid_at!, payments: parts?.length ? parts : null }]);
   void flush();
   return paid;
 }
@@ -147,14 +148,14 @@ export function flush(): Promise<void> {
           let r: Order;
           try {
             r = await rpc<Order>("biz_pay_order", { p_shop: op.shop, p_order: op.id, p_mode: op.mode, p_series: op.series,
-              p_consent: op.consent, p_seq: op.seq, p_paid_at: op.paid_at });
+              p_consent: op.consent, p_seq: op.seq, p_paid_at: op.paid_at, p_payments: op.payments ?? null });
           } catch (e) {
             if (!/INVOICE_TAKEN/.test((e as Error).message)) throw e;
             await claimDevice(op.shop);   // number used elsewhere: catch up and take the next one
             const d = read<Device>(key(op.shop, "device"), { series: op.series, fy: "", last: op.seq });
             write(key(op.shop, "device"), { ...d, last: d.last + 1 });
             r = await rpc<Order>("biz_pay_order", { p_shop: op.shop, p_order: op.id, p_mode: op.mode, p_series: d.series,
-              p_consent: op.consent, p_seq: d.last + 1, p_paid_at: op.paid_at });
+              p_consent: op.consent, p_seq: d.last + 1, p_paid_at: op.paid_at, p_payments: op.payments ?? null });
           }
           remember(op.shop, r);
           if (r.txn_id) supabase.functions.invoke("push", { body: { action: "earn", shop_id: op.shop, txn_id: r.txn_id } }).catch(() => {});

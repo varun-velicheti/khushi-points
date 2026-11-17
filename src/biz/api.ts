@@ -13,15 +13,18 @@ export type Item = { id: string; category_id: string | null; name: string; price
 // Sizes or add-ons: pick one (radio) or many; each choice adds its price to the item's.
 export type OptionGroup = { name: string; pick: "one" | "many"; choices: { name: string; price: number }[] };
 export type Table = { id: string; name: string; sort: number };
+export type Payment = { mode: "cash" | "upi" | "card"; amount: number };
+// A credit note: items of a paid bill given back. Lines are the order's lines with the refunded qty and their index `i`.
+export type Refund = { id: string; no: number; credit_no: string; at: string; lines: (Line & { i: number })[]; totals: Totals; mode: Payment["mode"]; reason: string | null };
 export type Menu = { shop: BizShop; categories: Category[]; items: Item[]; tables: Table[] };
 
 export type Order = {
   id: string; kind: "dine_in" | "takeaway"; table_id: string | null; status: "open" | "paid" | "cancelled" | "void"; lines: Line[];
   customer_mobile: string | null; customer_member: string | null; customer_name: string | null; redeem_request_id: string | null;
   opened_at: string; updated_at: string; paid_at: string | null; invoice_no: string | null; totals: Totals | null;
-  payments: { mode: string; amount: number }[] | null; points_earned: number | null; points_error: string | null;
+  payments: Payment[] | null; points_earned: number | null; points_error: string | null;
   total?: number; table?: string | null; txn_id?: number | null;
-  void_reason?: string | null; voided_at?: string | null;
+  void_reason?: string | null; voided_at?: string | null; refunds?: Refund[];
   sent?: Record<string, number>; kitchen?: "new" | "cooking" | "ready" | null;
 };
 
@@ -57,13 +60,19 @@ export async function preview(shop: string, id: string, menu: Menu) {
   return totals(getLocal(shop, id)?.lines ?? [], menu.shop.gst_inclusive);
 }
 // Paid on the device straight away (own invoice number), sent to the server now or when back online.
-export async function payOrder(shop: string, menu: Menu, id: string, mode: "cash" | "upi" | "card", consent: boolean) {
+export async function payOrder(shop: string, menu: Menu, id: string, mode: "cash" | "upi" | "card", consent: boolean, parts?: Payment[] | null) {
   if (!hasDevice(shop)) await claimDevice(shop).catch(() => {});   // first bill on this device: get its invoice series
-  payLocal(shop, menu, id, mode, consent);
+  payLocal(shop, menu, id, mode, consent, parts);
   await flush();
   return getLocal(shop, id)!;
 }
 export const cancelOrder = async (shop: string, id: string) => cancelLocal(shop, id);
+// Refunds need the internet (owner only). The id is made here so a retry does not refund twice.
+export async function refundOrder(shop: string, id: string, lines: { i: number; qty: number }[], mode: Payment["mode"], reason: string, refundId: string) {
+  await flush();
+  const o = await rpc<Order>("biz_refund_order", { p_shop: shop, p_order: id, p_id: refundId, p_lines: lines, p_mode: mode, p_reason: reason || null });
+  remember(shop, o); return o;
+}
 // Points need the internet (the customer approves in their app); send queued changes first.
 export const applyRedemption = async (shop: string, id: string, request: string | null) => {
   await flush();

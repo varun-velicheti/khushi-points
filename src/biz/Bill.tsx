@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import QRCode from "qrcode";
 import { errorText, rpc, supabase } from "../lib";
 import { useShop } from "../shop";
 import { CustomerPicker, RewardsDue, type Balance, type Who } from "../pages/Counter";
-import { applyRedemption, getOrder, payOrder, preview, saveOrder, startRedemption, type BizShop, type Order } from "./api";
+import { applyRedemption, getOrder, payOrder, preview, saveOrder, startRedemption, type BizShop, type Order, type Payment } from "./api";
+import { ModeButtons, RefundSheet, SplitPay, UpiQr } from "./Pay";
 import { useBiz } from "./BizApp";
 import { paise, rupees, type Totals } from "./money";
 
@@ -31,6 +31,7 @@ export default function BillScreen() {
   const [waiting, setWaiting] = useState<string | null>(null);   // redemption request waiting for the customer's approval
   const [pts, setPts] = useState("");                            // points to use
   const [note, setNote] = useState("");
+  const [split, setSplit] = useState(false);
 
   const refresh = useCallback(async () => {
     const o = await getOrder(shop.id, id!);
@@ -83,6 +84,7 @@ export default function BillScreen() {
   const n = Math.floor(Number(pts || usable));
   const nOk = n >= menu.shop.min_redeem && n <= usable;
   const needsConsent = !!who?.mobile && info?.exists === false && !info?.has_app;
+  const blocked = !!waiting || (needsConsent && !consent && !!who);
 
   async function usePoints() {
     setErr(""); setNote("");
@@ -92,10 +94,10 @@ export default function BillScreen() {
       setWaiting(r.request_id);
     } catch (e) { setErr(errorText(e)); }
   }
-  async function pay() {
+  async function pay(parts?: Payment[]) {
     setBusy(true); setErr("");
     try {
-      const o = await payOrder(shop.id, menu, order!.id, mode, consent);
+      const o = await payOrder(shop.id, menu, order!.id, parts?.[0]?.mode ?? mode, consent, parts);
       reload().catch(() => {});   // fresh stock counts
       setOrder(o); setTot(o.totals);
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
@@ -131,31 +133,22 @@ export default function BillScreen() {
         )}
         {note && <div className="msg ok">{note}</div>}
 
-        <div className="pay-modes" role="group" aria-label="Payment">
-          {(["upi", "cash", "card"] as Mode[]).map((m) => (
-            <button key={m} aria-pressed={mode === m} onClick={() => setMode(m)}>{m === "upi" ? "UPI" : m === "cash" ? "Cash" : "Card"}</button>
-          ))}
-        </div>
-        {mode === "upi" && <UpiQr shop={menu.shop} amount={tot.total} note={order.id.slice(0, 8)} />}
+        {split ? (
+          <SplitPay total={tot.total} discount={tot.discount} lines={order.lines} inclusive={menu.shop.gst_inclusive} shop={menu.shop}
+            note={order.id.slice(0, 8)} busy={busy} blocked={blocked} onPay={pay} onCancel={() => setSplit(false)} />
+        ) : <>
+          <ModeButtons mode={mode} onChange={setMode} />
+          {mode === "upi" && <UpiQr shop={menu.shop} amount={tot.total} note={order.id.slice(0, 8)} />}
+          <button className="btn pay" disabled={busy || blocked} onClick={() => pay()}>
+            {busy ? "…" : `Paid ${rupees(tot.total)}`}
+          </button>
+          {tot.total > 0 && <button className="btn link small" onClick={() => setSplit(true)}>Split bill</button>}
+        </>}
         {err && <div className="msg err">{err}</div>}
-        <button className="btn pay" disabled={busy || !!waiting || (needsConsent && !consent && !!who)} onClick={pay}>
-          {busy ? "…" : `Paid ${rupees(tot.total)}`}
-        </button>
         <button className="btn link small" onClick={() => navigate(`/biz/o/${order.id}`)}>Edit order</button>
       </section>
     </div>
   );
-}
-
-function UpiQr({ shop, amount, note }: { shop: BizShop; amount: number; note: string }) {
-  const [src, setSrc] = useState("");
-  useEffect(() => {
-    if (!shop.upi_id || amount <= 0) return setSrc("");
-    const url = `upi://pay?pa=${encodeURIComponent(shop.upi_id)}&pn=${encodeURIComponent(shop.legal_name ?? shop.name)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
-    QRCode.toDataURL(url, { margin: 1, width: 360 }).then(setSrc).catch(() => setSrc(""));
-  }, [shop.upi_id, shop.legal_name, shop.name, amount, note]);
-  if (!shop.upi_id) return null;
-  return src ? <figure className="upi"><img src={src} alt={`UPI QR for ${rupees(amount)}`} /><figcaption>{shop.upi_id}</figcaption></figure> : null;
 }
 
 function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals; shop: BizShop; table: string | null; onChange: (o: Order) => void }) {
@@ -163,7 +156,10 @@ function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals
   const { owner } = useBiz();
   const { current } = useShop();
   const [err, setErr] = useState("");
+  const [refunding, setRefunding] = useState(false);
   const isVoid = order.status === "void";
+  const refunded = (order.refunds ?? []).reduce((a, r) => a + Number(r.totals.total), 0);
+  const canRefund = (order.refunds ?? []).reduce((a, r) => a + r.lines.reduce((s, l) => s + l.qty, 0), 0) < order.lines.reduce((a, l) => a + l.qty, 0);
   async function voidBill() {
     const reason = window.prompt(`Void ${order.invoice_no}? Points from this bill are taken back and stock is returned.\n\nReason`, "");
     if (reason === null) return;
@@ -177,14 +173,18 @@ function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals
         {isVoid ? <div className="void-banner">Void{order.void_reason ? ` · ${order.void_reason}` : ""}</div> : <div className="done-mark">✓</div>}
         <h2>{rupees(tot.total)} {isVoid ? "voided" : "paid"}</h2>
         <p className="mono">{order.invoice_no}</p>
+        {refunded > 0 && <div className="msg info">{rupees(refunded)} refunded</div>}
         {!isVoid && order.points_earned ? <div className="msg ok">+{order.points_earned} points</div> : null}
         {order.points_error ? <div className="msg info">{errorText(order.points_error)}</div> : null}
         {err && <div className="msg err">{err}</div>}
         <button className="btn" onClick={() => navigate("/biz")}>Next order</button>
         <button className="btn alt" onClick={() => window.print()}>Print</button>
         <button className="btn link small" onClick={() => navigate("/biz/bills")}>All bills</button>
+        {owner && !isVoid && canRefund && <button className="btn link small" onClick={() => setRefunding(true)}>Refund items</button>}
         {owner && !isVoid && <button className="btn link small del" onClick={voidBill}>Void bill</button>}
       </section>
+      {refunding && <RefundSheet order={order} shopId={current!.shop.id} inclusive={shop.gst_inclusive}
+        onDone={(o) => { onChange(o); setRefunding(false); }} onClose={() => setRefunding(false)} />}
     </div>
   );
 }
@@ -228,7 +228,16 @@ export function Invoice({ order, tot, shop, table }: { order: Order; tot: Totals
           ))}</tbody>
         </table>
       )}
-      {paid && order.payments?.[0] && <footer>Paid by {order.payments[0].mode.toUpperCase()}</footer>}
+      {paid && order.payments?.[0] && <footer>Paid by {order.payments.length > 1
+        ? order.payments.map((p) => `${p.mode.toUpperCase()} ${paise(p.amount)}`).join(" · ") : order.payments[0].mode.toUpperCase()}</footer>}
+      {(order.refunds ?? []).map((r) => (
+        <section className="credit" key={r.id}>
+          <div className="inv-meta"><span>Credit note {r.credit_no}</span>
+            <span>{new Date(r.at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span></div>
+          {r.lines.map((l, k) => <div className="credit-line" key={k}><span>{l.qty} × {l.name}</span><span>−{paise(l.price * l.qty)}</span></div>)}
+          <div className="credit-line"><b>Refunded by {r.mode.toUpperCase()}{r.reason ? ` · ${r.reason}` : ""}</b><b>−{rupees(r.totals.total)}</b></div>
+        </section>
+      ))}
     </article>
   );
 }

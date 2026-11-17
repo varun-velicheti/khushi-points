@@ -5,7 +5,7 @@ import { useShop } from "../shop";
 import { rupees } from "./money";
 
 type BillRow = { id: string; invoice_no: string; paid_at: string; status: "paid" | "void"; total: number; mode: string;
-  table: string | null; items: number; customer: string | null };
+  table: string | null; items: number; customer: string | null; refunded: number | null };
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function range(kind: string): [string, string] {
@@ -16,7 +16,7 @@ function range(kind: string): [string, string] {
   return [iso(t), iso(t)];
 }
 const RANGES = [["today", "Today"], ["yesterday", "Yesterday"], ["week", "7 days"], ["month", "This month"]] as const;
-const MODE: Record<string, string> = { upi: "UPI", cash: "Cash", card: "Card" };
+const MODE: Record<string, string> = { upi: "UPI", cash: "Cash", card: "Card", split: "Split" };
 
 // Every paid (and voided) bill. Tap one to see, reprint or void it.
 export default function Bills() {
@@ -43,7 +43,7 @@ export default function Bills() {
         <input aria-label="Search bills" placeholder="Invoice or mobile" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       {err && <div className="msg err">{err}</div>}
-      {rows && rows.length > 0 && <div className="hint">{paid.length} bills · {rupees(paid.reduce((a, r) => a + Number(r.total), 0))}</div>}
+      {rows && rows.length > 0 && <div className="hint">{paid.length} bills · {rupees(paid.reduce((a, r) => a + Number(r.total) - Number(r.refunded ?? 0), 0))}</div>}
       {rows === null ? <p className="hint">Loading…</p> : rows.length === 0 ? <div className="biz-empty"><h2>No bills</h2></div> : (
         rows.map((r) => (
           <button key={r.id} className={`bill-row${r.status === "void" ? " void" : ""}`} onClick={() => navigate(`/biz/b/${r.id}`)}>
@@ -51,7 +51,7 @@ export default function Bills() {
             <span className="hint">{new Date(r.paid_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</span>
             <span className="hide-sm">{r.table ?? "Takeaway"} · {r.items} items{r.customer ? ` · ${r.customer}` : ""}</span>
             <span className="hint hide-sm">{r.status === "void" ? "Void" : MODE[r.mode] ?? r.mode}</span>
-            <b>{rupees(r.total)}</b>
+            <b>{rupees(r.total)}{r.refunded ? <small className="refunded">−{rupees(r.refunded)}</small> : null}</b>
           </button>
         ))
       )}
