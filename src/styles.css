@@ -37,7 +37,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); fon
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0 }
 .btn-icon { width: 14px; height: 14px; display: inline-block; vertical-align: -1px; margin-right: 6px }
-.logo.product-icon { box-shadow: none; border-radius: 0; width: 34px; height: 34px }
+.logo.product-icon { box-shadow: none; border-radius: 0; width: 40px; height: 40px }
 .logo { width: 40px; height: 40px; border-radius: 11px; display: block; flex: none; box-shadow: 0 4px 12px var(--brand-glow) }
 /* the brand name, set like the logo's wordmark */
 .wordmark { font-family: "Poppins", var(--f-display) !important; font-weight: 700 !important; text-transform: lowercase; letter-spacing: -.03em; color: var(--indigo) }
