@@ -117,7 +117,7 @@ export function Shift({ shop, staff, onClose }: { shop: string; staff: Staff | n
   return (
     <div className="sheet-bg" onClick={onClose}>
       <div className="sheet shift" onClick={(e) => e.stopPropagation()}>
-        <header><b>Cash</b><button type="button" className="btn link small" onClick={onClose}>Close</button></header>
+        <header><b>Cash drawer</b><button type="button" className="btn link small" onClick={onClose}>Close</button></header>
         {!data ? <p className="hint">{err || "Loading…"}</p> : o ? <>
           <dl className="shift-sum">
             <dt>Opened</dt><dd>{time(o.opened_at)}{o.opened_by ? ` · ${o.opened_by}` : ""}</dd>

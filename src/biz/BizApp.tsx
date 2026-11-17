@@ -64,10 +64,10 @@ export default function BizApp() {
           </button>
         )}
         {staffOn && staff && <>
-          <button className="who-btn" onClick={() => setCash(true)}>Cash</button>
+          <button className="who-btn" onClick={() => setCash(true)}>Drawer</button>
           <button className="who-btn" onClick={() => setStaff(null)} title="Switch">{staff.name}</button>
         </>}
-        {!staffOn && <button className="who-btn" onClick={() => setCash(true)}>Cash</button>}
+        {!staffOn && <button className="who-btn" onClick={() => setCash(true)}>Drawer</button>}
         <nav>
           <NavLink to="/biz" className={() => (/^\/biz\/(setup|kitchen|reports|bills)/.test(location.pathname) ? "" : "active")}>Floor</NavLink>
           {menu?.shop.kitchen && <NavLink to="/biz/kitchen">Kitchen</NavLink>}
