@@ -19,17 +19,11 @@ export function K({ w = "regular", s = 15, c, style, ...rest }: TextProps & {
   return <Text {...rest} style={[{ fontFamily: F[w], fontSize: s, color: c ?? col.ink, lineHeight: Math.round(s * 1.35) }, style]} />;
 }
 
-export const logoMark = require("../../assets/logo-mark.png");
+export const logoMark = require("../../assets/logo-tile.png");
 
-// Sits on an indigo tile so all four logo shapes show on the marigold header.
+// The cream app-icon logo; shows all four shapes on the marigold header.
 export function LogoMark({ size = 36 }: { size?: number }) {
-  const c = useColors();
-  const pad = Math.round(size * 0.14);
-  return (
-    <View style={{ backgroundColor: c.indigo, borderRadius: Math.round(size * 0.28), padding: pad }}>
-      <Image source={logoMark} style={{ width: size - pad * 2, height: size - pad * 2 }} accessibilityIgnoresInvertColors />
-    </View>
-  );
+  return <Image source={logoMark} style={{ width: size, height: size }} accessibilityIgnoresInvertColors />;
 }
 
 // Marigold gradient band at the top of a screen. Content below can overlap it (see Page).
