@@ -294,3 +294,6 @@
 .shift-recent div { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 6px 0; font-size: 14px; font-variant-numeric: tabular-nums }
 .shift-recent b.short { color: var(--bad) }
 .staff-row { grid-template-columns: 1fr auto }
+.kpi .n.change { font-weight: 700 } .kpi .n.change.up { color: var(--good) } .kpi .n.change.down { color: var(--bad) }
+.gst-files { display: flex; flex-direction: column; gap: 10px }
+.gst-buttons { display: flex; flex-wrap: wrap; gap: 8px }
