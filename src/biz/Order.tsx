@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { errorText, rpc } from "../lib";
 import { useShop } from "../shop";
-import { cancelOrder, getOrder, lineKey, sameOpts, saveOrder, sendToKitchen, type Item, type Order } from "./api";
+import { cancelOrder, getOrder, lineKey, openOrders, sameOpts, saveOrder, sendToKitchen, type Item, type Order } from "./api";
+import { setCounter } from "./Floor";
 import { useBiz } from "./BizApp";
 import { rupees, totals, type Line } from "./money";
 
@@ -24,6 +25,16 @@ export default function OrderScreen() {
   const [soldOutMode, setSoldOutMode] = useState(false);
   const [q, setQ] = useState("");
   const [pick, setPick] = useState<{ item: Item | null; line: number | null } | null>(null);   // options panel
+  // without tables: other open orders are "held"; Hold parks this one and starts a fresh order
+  const counter = menu.shop.use_tables === false;
+  const [held, setHeld] = useState<Order[]>([]);
+  const [showHeld, setShowHeld] = useState(false);
+  useEffect(() => {
+    if (!counter) return;
+    const load = () => openOrders(shopId, menu).then((all) => setHeld(all.filter((o) => o.id !== id && o.lines.length > 0)
+      .sort((a, b) => b.opened_at.localeCompare(a.opened_at)))).catch(() => {});
+    load(); const i = setInterval(load, 15000); return () => clearInterval(i);
+  }, [counter, shopId, id, menu]);
   const [err, setErr] = useState("");
   const dirty = useRef(false);
 
@@ -113,6 +124,16 @@ export default function OrderScreen() {
     try { await saveOrder(shopId, order!); dirty.current = false; navigate(`/biz/b/${order!.id}`); }
     catch (e) { setErr(errorText(e)); }
   }
+  async function hold() {
+    try {
+      await saveOrder(shopId, order!); dirty.current = false;
+      const next = crypto.randomUUID(); setCounter(shopId, next); navigate(`/biz/o/${next}`);
+    } catch (e) { setErr(errorText(e)); }
+  }
+  async function resume(o: Order) {
+    if (order!.lines.length && dirty.current) { await saveOrder(shopId, order!).catch(() => {}); dirty.current = false; }
+    setShowHeld(false); setCounter(shopId, o.id); navigate(`/biz/o/${o.id}`);
+  }
   async function clear() {
     if (saved && !window.confirm("Cancel this order?")) return;
     if (saved) await cancelOrder(shopId, order!.id).catch(() => {});
@@ -146,7 +167,9 @@ export default function OrderScreen() {
       </section>
 
       <section className="cart">
-        <header><b>{tableName ?? (menu.shop.use_tables === false ? "Order" : "Takeaway")}</b><button className="btn link small" onClick={clear}>{saved ? "Cancel order" : "Close"}</button></header>
+        <header><b>{tableName ?? (counter ? "Order" : "Takeaway")}</b>
+          {counter && held.length > 0 && <button className="btn link small" onClick={() => setShowHeld(true)}>Held · {held.length}</button>}
+          <button className="btn link small" onClick={clear}>{saved ? "Cancel order" : "Close"}</button></header>
         <div className="cart-lines">
           {order.lines.map((l, k) => (
             <div className={`cart-line${!menu.shop.kitchen || (sent[lineKey(l)] ?? 0) >= l.qty ? " sent" : ""}`} key={k}>
@@ -163,8 +186,14 @@ export default function OrderScreen() {
         </div>
         {err && <div className="msg err">{err}</div>}
         <footer>
-          <div className="cart-total"><span>{order.lines.reduce((a, l) => a + l.qty, 0)} items</span><b>{rupees(t.total)}</b></div>
-          {menu.shop.kitchen ? (
+          <div className="cart-total"><span>{(() => { const n = order.lines.reduce((a, l) => a + l.qty, 0); return `${n} ${n === 1 ? "item" : "items"}`; })()}</span><b>{rupees(t.total)}</b></div>
+          {counter ? <>
+            {menu.shop.kitchen && <button className="btn alt" disabled={changes === 0} onClick={send}>{changes ? `Send to kitchen · ${changes}` : sentNo ? `Sent · #${sentNo}` : "Sent"}</button>}
+            <div className="cart-actions hold-bill">
+              <button className="btn alt" disabled={order.lines.length === 0} onClick={hold}>Hold</button>
+              <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>
+            </div>
+          </> : menu.shop.kitchen ? (
             <div className="cart-actions">
               <button className="btn alt" disabled={changes === 0} onClick={send}>{changes ? `Send to kitchen · ${changes}` : sentNo ? `Sent · #${sentNo}` : "Sent"}</button>
               <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>
@@ -172,6 +201,22 @@ export default function OrderScreen() {
           ) : <button className="btn" disabled={order.lines.length === 0} onClick={bill}>Bill</button>}
         </footer>
       </section>
+      {showHeld && (
+        <div className="sheet-bg" onClick={() => setShowHeld(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <header><b>Held orders</b><button type="button" className="btn link small" onClick={() => setShowHeld(false)}>Close</button></header>
+            <div className="held-list">
+              {held.map((o) => (
+                <button key={o.id} className="held-row" onClick={() => resume(o)}>
+                  <span><b>{rupees(o.total ?? totals(o.lines, menu.shop.gst_inclusive).total)}</b>
+                    <small>{o.lines.map((l) => `${l.qty} × ${l.name}`).join(", ")}</small></span>
+                  <span className="hint">{Math.max(0, Math.round((Date.now() - new Date(o.opened_at).getTime()) / 60000))} min</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {pick && <Options item={pick.item} line={pick.line == null ? null : order.lines[pick.line]} room={pick.item ? room(pick.item.id) : null}
         onDone={picked} onClose={() => setPick(null)} />}
     </div>

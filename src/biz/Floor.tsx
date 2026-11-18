@@ -12,6 +12,8 @@ const minutes = (t: string) => Math.max(0, Math.round((Date.now() - new Date(t).
 // Without tables: straight to the counter order this device is on. It stays the same order until it is paid
 // or cancelled, then a fresh one starts.
 const counterKey = (shop: string) => `kb:${shop}:counter`;
+// The order this device's counter is on (held orders stay open; this one is shown).
+export const setCounter = (shop: string, id: string) => { try { localStorage.setItem(counterKey(shop), id); } catch { /* blocked */ } };
 function Counter() {
   const { current } = useShop();
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ function Counter() {
     let id: string | null = null;
     try { id = localStorage.getItem(counterKey(shop)); } catch { /* blocked */ }
     const go = (keep: boolean) => {
-      if (!keep || !id) { id = crypto.randomUUID(); try { localStorage.setItem(counterKey(shop), id); } catch { /* blocked */ } }
+      if (!keep || !id) { id = crypto.randomUUID(); setCounter(shop, id); }
       navigate(`/biz/o/${id}`, { replace: true });
     };
     if (!id) return go(false);

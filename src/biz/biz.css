@@ -313,3 +313,14 @@
 .change.big { width: 100% }
 .change.big b { font-size: 32px }
 .bill-side .change span { font: 700 16px var(--f-body); white-space: nowrap }
+
+/* held orders (no tables) */
+.cart header { gap: 8px } .cart header b { margin-right: auto }
+.held-list { display: flex; flex-direction: column; gap: 8px; max-height: 60dvh; overflow-y: auto }
+.held-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 14px; background: var(--surface); cursor: pointer; font: inherit; color: var(--ink); transition: transform .1s ease }
+.held-row:active { transform: scale(.98) }
+.held-row b { font: 700 17px var(--f-display); font-variant-numeric: tabular-nums }
+.held-row small { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px }
+.cart footer > .btn.alt { width: 100% }
+.cart-actions.hold-bill { grid-template-columns: 1fr 2fr }
