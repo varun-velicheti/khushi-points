@@ -17,6 +17,7 @@ Setup: menu, tables, billing (owner only)
 - Staff PINs: `biz_staff` (owner manages; PINs hashed on the server). `biz_staff_check(shop, pin)` says who it is; a manager also gets an approval token (10 minutes) that `biz_void_order`, `biz_refund_order` and `biz_report` take as `p_approval` (the owner's own login needs none). The device remembers a PIN it checked online only as a hash, so the same person can sign in offline. Bills keep `staff_id`.
 - Cash shifts: `biz_shift_open / biz_shift_close`; expected cash = float + cash parts of bills − cash refunds in the shift.
 - Reports: `biz_report` adds `previous` (same number of days just before), `by_hour`, and `gstr1` (state from the GSTIN, HSN summary net of refunds with no-HSN items as SAC 996331, documents issued). The Reports screen downloads the three GSTR-1 CSVs (B2C sales, HSN, documents) in the GST offline tool layout.
+- Tables switch: `shops.biz_tables` (`use_tables` in `biz_menu`). Off: Floor opens the counter order this device is on (`kb:<shop>:counter`), a fresh one after it is paid or cancelled; no table tiles or takeaways.
 - `biz_save_order(shop, order)`: create/update an open order. Safe to repeat.
 - `biz_pay_order(shop, order, mode, series, consent)`: totals, invoice number, payment, then points via `add_bill`. Safe to repeat.
 - `_biz_totals(lines, inclusive, discount)`: the bill maths. `money.ts` mirrors it for live totals; the database decides.

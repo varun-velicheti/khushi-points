@@ -16,7 +16,7 @@ export default function Setup() {
     <div className="biz-pad setup">
       <nav className="pills">
         <NavLink to="/biz/setup/menu">{({ isActive }) => <button aria-pressed={isActive}>Menu</button>}</NavLink>
-        <NavLink to="/biz/setup/tables">{({ isActive }) => <button aria-pressed={isActive}>Tables</button>}</NavLink>
+        {menu.shop.use_tables !== false && <NavLink to="/biz/setup/tables">{({ isActive }) => <button aria-pressed={isActive}>Tables</button>}</NavLink>}
         <NavLink to="/biz/setup/stock">{({ isActive }) => <button aria-pressed={isActive}>Stock{low > 0 && <span className="pill-badge">{low}</span>}</button>}</NavLink>
         <NavLink to="/biz/setup/staff">{({ isActive }) => <button aria-pressed={isActive}>Staff</button>}</NavLink>
         <NavLink to="/biz/setup/billing">{({ isActive }) => <button aria-pressed={isActive}>Billing</button>}</NavLink>
@@ -240,7 +240,7 @@ function BillingSetup() {
   const { menu } = useBiz();
   const { call, err } = useCall();
   const s = menu.shop;
-  const [f, setF] = useState({ legal_name: s.legal_name ?? "", gstin: s.gstin ?? "", upi_id: s.upi_id ?? "", gst_inclusive: s.gst_inclusive, kitchen: s.kitchen });
+  const [f, setF] = useState({ legal_name: s.legal_name ?? "", gstin: s.gstin ?? "", upi_id: s.upi_id ?? "", gst_inclusive: s.gst_inclusive, kitchen: s.kitchen, use_tables: s.use_tables !== false });
   const [ok, setOk] = useState(false);
   async function save(e: FormEvent) {
     e.preventDefault(); setOk(false);
@@ -257,6 +257,10 @@ function BillingSetup() {
         <button type="button" aria-pressed={f.gst_inclusive} onClick={() => setF({ ...f, gst_inclusive: true })}>Prices include GST</button>
         <button type="button" aria-pressed={!f.gst_inclusive} onClick={() => setF({ ...f, gst_inclusive: false })}>GST added on top</button>
       </div>
+      <label className="switch" htmlFor="bs-tables">
+        <span>Tables</span>
+        <input id="bs-tables" type="checkbox" role="switch" checked={f.use_tables} onChange={(e) => setF({ ...f, use_tables: e.target.checked })} />
+      </label>
       <label className="switch" htmlFor="bs-kitchen">
         <span>Kitchen screen</span>
         <input id="bs-kitchen" type="checkbox" role="switch" checked={f.kitchen} onChange={(e) => setF({ ...f, kitchen: e.target.checked })} />

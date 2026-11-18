@@ -146,7 +146,7 @@ export default function OrderScreen() {
       </section>
 
       <section className="cart">
-        <header><b>{tableName ?? "Takeaway"}</b><button className="btn link small" onClick={clear}>{saved ? "Cancel order" : "Close"}</button></header>
+        <header><b>{tableName ?? (menu.shop.use_tables === false ? "Order" : "Takeaway")}</b><button className="btn link small" onClick={clear}>{saved ? "Cancel order" : "Close"}</button></header>
         <div className="cart-lines">
           {order.lines.map((l, k) => (
             <div className={`cart-line${!menu.shop.kitchen || (sent[lineKey(l)] ?? 0) >= l.qty ? " sent" : ""}`} key={k}>

@@ -69,7 +69,7 @@ export default function BizApp() {
         </>}
         {!staffOn && <button className="who-btn" onClick={() => setCash(true)}>Drawer</button>}
         <nav>
-          <NavLink to="/biz" className={() => (/^\/biz\/(setup|kitchen|reports|bills)/.test(location.pathname) ? "" : "active")}>Floor</NavLink>
+          <NavLink to="/biz" className={() => (/^\/biz\/(setup|kitchen|reports|bills)/.test(location.pathname) ? "" : "active")}>{menu?.shop.use_tables === false ? "Order" : "Floor"}</NavLink>
           {menu?.shop.kitchen && <NavLink to="/biz/kitchen">Kitchen</NavLink>}
           <NavLink to="/biz/bills">Bills</NavLink>
           {(owner || staffOn) && <NavLink to="/biz/reports">Reports</NavLink>}
