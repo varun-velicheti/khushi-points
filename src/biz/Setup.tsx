@@ -49,9 +49,11 @@ function useCall() {
 
 // An option group is typed as one line of choices: "Small, Large +15, Jumbo +25".
 type OptDraft = { name: string; pick: "one" | "many"; text: string };
-type Draft = { id?: string; name: string; price: string; gst_rate: number; category_id: string; veg: boolean; available: boolean; options: OptDraft[] };
-const blank = (cat = ""): Draft => ({ name: "", price: "", gst_rate: 5, category_id: cat, veg: true, available: true, options: [] });
-const toDraft = (i: Item): Draft => ({ id: i.id, name: i.name, price: String(i.price), gst_rate: Number(i.gst_rate), category_id: i.category_id ?? "", veg: i.veg, available: i.available,
+// hsn: HSN/SAC code for GST (4-8 digits); empty is reported as 996331, restaurant service
+type Draft = { id?: string; name: string; price: string; gst_rate: number; hsn: string; category_id: string; veg: boolean; available: boolean; options: OptDraft[] };
+const blank = (cat = ""): Draft => ({ name: "", price: "", gst_rate: 5, hsn: "", category_id: cat, veg: true, available: true, options: [] });
+const hsnOk = (d: Draft) => d.hsn === "" || /^\d{4,8}$/.test(d.hsn);
+const toDraft = (i: Item): Draft => ({ id: i.id, name: i.name, price: String(i.price), gst_rate: Number(i.gst_rate), hsn: i.hsn ?? "", category_id: i.category_id ?? "", veg: i.veg, available: i.available,
   options: (i.options ?? []).map((g) => ({ name: g.name, pick: g.pick, text: g.choices.map((c) => (Number(c.price) > 0 ? `${c.name} +${Number(c.price)}` : c.name)).join(", ") })) });
 const parseOptions = (o: OptDraft[]) => o.filter((g) => g.name.trim() && g.text.trim()).map((g) => ({
   name: g.name.trim(), pick: g.pick,
@@ -95,7 +97,7 @@ function MenuSetup() {
 
       <form className="item-form" onSubmit={add}>
         <ItemFields d={draft} set={setDraft} />
-        <button className="btn" disabled={!draft.name.trim() || draft.price === ""}>Add item</button>
+        <button className="btn" disabled={!draft.name.trim() || draft.price === "" || !hsnOk(draft)}>Add item</button>
       </form>
       {err && <div className="msg err">{err}</div>}
 
@@ -105,7 +107,7 @@ function MenuSetup() {
           {g.items.map((i) => editing?.id === i.id ? (
             <form key={i.id} className="item-form editing" onSubmit={async (e) => { e.preventDefault(); if (await save(editing)) setEditing(null); }}>
               <ItemFields d={editing} set={setEditing as (d: Draft) => void} />
-              <button className="btn">Save</button>
+              <button className="btn" disabled={!hsnOk(editing)}>Save</button>
               <button type="button" className="btn alt" onClick={() => setEditing(null)}>Cancel</button>
               <button type="button" className="btn link small del" onClick={async () => { if (window.confirm(`Remove ${i.name}?`) && await call("biz_archive_item", { p_id: i.id })) setEditing(null); }}>Remove</button>
             </form>
@@ -113,7 +115,7 @@ function MenuSetup() {
             <button key={i.id} className={`menu-row${i.available ? "" : " out"}`} onClick={() => setEditing(toDraft(i))}>
               <span className={`dot ${i.veg ? "veg" : "nonveg"}`} />
               <span className="menu-name">{i.name}{i.options?.length ? <small>{i.options.map((g) => g.name).join(" · ")}</small> : null}</span>
-              <span className="menu-gst">{Number(i.gst_rate)}%</span>
+              <span className="menu-gst">{i.hsn ? `HSN ${i.hsn} · ` : ""}{Number(i.gst_rate)}%</span>
               <span className="menu-price">{rupees(i.price)}</span>
             </button>
           ))}
@@ -128,6 +130,8 @@ function ItemFields({ d, set }: { d: Draft; set: (d: Draft) => void }) {
   return <>
     <input aria-label="Item name" placeholder="Item" value={d.name} maxLength={60} onChange={(e) => set({ ...d, name: e.target.value })} />
     <input aria-label="Price" placeholder="₹" inputMode="decimal" value={d.price} onChange={(e) => set({ ...d, price: e.target.value.replace(/[^\d.]/g, "") })} className="w-price" />
+    <input aria-label="HSN code" placeholder="HSN" inputMode="numeric" maxLength={8} value={d.hsn} title="HSN or SAC code, 4 to 8 digits"
+      onChange={(e) => set({ ...d, hsn: e.target.value.replace(/\D/g, "") })} className={`w-hsn mono${hsnOk(d) ? "" : " bad"}`} />
     <select aria-label="GST" value={d.gst_rate} onChange={(e) => set({ ...d, gst_rate: Number(e.target.value) })} className="w-gst">
       {RATES.map((r) => <option key={r} value={r}>{r}% GST</option>)}
     </select>

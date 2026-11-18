@@ -324,3 +324,4 @@
 .held-row small { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px }
 .cart footer > .btn.alt { width: 100% }
 .cart-actions.hold-bill { grid-template-columns: 1fr 2fr }
+.item-form .w-hsn { width: 104px } .item-form .w-hsn.bad { border-color: var(--bad) }
