@@ -4,7 +4,7 @@ import { errorText, rpc, supabase } from "../lib";
 import { useShop } from "../shop";
 import { CustomerPicker, RewardsDue, type Balance, type Who } from "../pages/Counter";
 import { applyRedemption, getOrder, payOrder, preview, saveOrder, startRedemption, type BizShop, type Order, type Payment } from "./api";
-import { ModeButtons, RefundSheet, SplitPay, UpiQr } from "./Pay";
+import { CashChange, ModeButtons, RefundSheet, SplitPay, UpiQr, cashShort } from "./Pay";
 import { useBiz } from "./BizApp";
 import { paise, rupees, type Totals } from "./money";
 
@@ -26,6 +26,8 @@ export default function BillScreen() {
   const [info, setInfo] = useState<Balance | null>(null);
   const [consent, setConsent] = useState(false);
   const [mode, setMode] = useState<Mode>("upi");
+  const [given, setGiven] = useState("");                        // cash received, to work out the change
+  const [change, setChange] = useState<number | null>(null);     // shown on the paid screen
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [waiting, setWaiting] = useState<string | null>(null);   // redemption request waiting for the customer's approval
@@ -75,7 +77,7 @@ export default function BillScreen() {
   if (!order || !tot) return <div className="biz-pad">{err ? <div className="msg err">{err}</div> : <span className="hint">Loading…</span>}</div>;
   const table = menu.tables.find((x) => x.id === order.table_id)?.name ?? null;
 
-  if (order.status === "paid" || order.status === "void") return <Paid order={order} tot={tot} shop={menu.shop} table={table} onChange={setOrder} />;
+  if (order.status === "paid" || order.status === "void") return <Paid order={order} tot={tot} shop={menu.shop} table={table} onChange={setOrder} change={change} />;
 
   const pv = Number(menu.shop.point_value);
   const cap = Math.floor((tot.total * menu.shop.max_redeem_pct) / 100 / pv);
@@ -98,6 +100,7 @@ export default function BillScreen() {
     setBusy(true); setErr("");
     try {
       const o = await payOrder(shop.id, menu, order!.id, parts?.[0]?.mode ?? mode, consent, parts);
+      if (!parts && mode === "cash" && given !== "") setChange(Math.round((Number(given) - tot!.total) * 100) / 100);
       reload().catch(() => {});   // fresh stock counts
       setOrder(o); setTot(o.totals);
     } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
@@ -139,7 +142,8 @@ export default function BillScreen() {
         ) : <>
           <ModeButtons mode={mode} onChange={setMode} />
           {mode === "upi" && <UpiQr shop={menu.shop} amount={tot.total} note={order.id.slice(0, 8)} />}
-          <button className="btn pay" disabled={busy || blocked} onClick={() => pay()}>
+          {mode === "cash" && tot.total > 0 && <CashChange amount={tot.total} given={given} onGiven={setGiven} />}
+          <button className="btn pay" disabled={busy || blocked || (mode === "cash" && cashShort(tot.total, given))} onClick={() => pay()}>
             {busy ? "…" : `Paid ${rupees(tot.total)}`}
           </button>
           {tot.total > 0 && <button className="btn link small" onClick={() => setSplit(true)}>Split bill</button>}
@@ -151,7 +155,8 @@ export default function BillScreen() {
   );
 }
 
-function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals; shop: BizShop; table: string | null; onChange: (o: Order) => void }) {
+function Paid({ order, tot, shop, table, onChange, change }: { order: Order; tot: Totals; shop: BizShop; table: string | null; onChange: (o: Order) => void;
+  change?: number | null }) {
   const navigate = useNavigate();
   const { owner, staffOn, askManager } = useBiz();
   const canManage = owner || staffOn;
@@ -175,6 +180,7 @@ function Paid({ order, tot, shop, table, onChange }: { order: Order; tot: Totals
       <section className="bill-side done">
         {isVoid ? <div className="void-banner">Void{order.void_reason ? ` · ${order.void_reason}` : ""}</div> : <div className="done-mark">✓</div>}
         <h2>{rupees(tot.total)} {isVoid ? "voided" : "paid"}</h2>
+        {!isVoid && change ? <div className="change big"><span>Give change</span><b>{rupees(change)}</b></div> : null}
         <p className="mono">{order.invoice_no}</p>
         {refunded > 0 && <div className="msg info">{rupees(refunded)} refunded</div>}
         {!isVoid && order.points_earned ? <div className="msg ok">+{order.points_earned} points</div> : null}

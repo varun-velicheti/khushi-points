@@ -18,6 +18,29 @@ export function ModeButtons({ mode, onChange }: { mode: Mode; onChange: (m: Mode
   );
 }
 
+// Cash received and the change to give back. Quick buttons: the exact amount and the next note amounts above it
+// (₹294 -> ₹300, ₹400, ₹500). Left empty, nothing is checked; less than the bill blocks "Paid".
+const NOTES = [10, 20, 50, 100, 200, 500, 2000];
+export const cashShort = (amount: number, given: string) => given !== "" && r2(Number(given)) < amount;
+export function CashChange({ amount, given, onGiven }: { amount: number; given: string; onGiven: (v: string) => void }) {
+  const quick = [...new Set(NOTES.map((n) => Math.ceil(amount / n) * n).filter((v) => v > amount))].sort((a, b) => a - b).slice(0, 3);
+  const got = r2(Number(given));
+  const change = r2(got - amount);
+  return (
+    <div className="cash-change">
+      <input aria-label="Cash received" placeholder="Cash received" inputMode="decimal" value={given}
+        onChange={(e) => onGiven(e.target.value.replace(/[^\d.]/g, ""))} />
+      <div className="cash-quick">
+        <button type="button" aria-pressed={given !== "" && got === amount} onClick={() => onGiven(String(amount))}>Exact</button>
+        {quick.map((v) => <button type="button" key={v} aria-pressed={got === v} onClick={() => onGiven(String(v))}>{rupees(v)}</button>)}
+      </div>
+      {given !== "" && (change >= 0
+        ? <div className="change"><span>Change</span><b>{rupees(change)}</b></div>
+        : <div className="change short"><span>Short by</span><b>{rupees(-change)}</b></div>)}
+    </div>
+  );
+}
+
 export function UpiQr({ shop, amount, note }: { shop: BizShop; amount: number; note: string }) {
   const [src, setSrc] = useState("");
   useEffect(() => {
@@ -39,7 +62,8 @@ export function SplitPay({ total, discount, lines, inclusive, shop, note, busy, 
   const [picked, setPicked] = useState<number[] | null>(null); // by item: lines this person had
   const [amount, setAmount] = useState("");
   const [mode, setMode] = useState<Mode>("upi");
-  const left = r2(total - parts.reduce((a, p) => a + p.amount, 0));
+  const [given, setGiven] = useState("");                        // cash received for this part
+  const left =r2(total - parts.reduce((a, p) => a + p.amount, 0));
   // the next part of an even split; its last part takes whatever is left
   const evenPart = (w: { n: number; from: number; base: number }) => (parts.length - w.from + 1 >= w.n ? left : Math.min(r2(w.base / w.n), left));
   const all = lines.reduce((a, l) => a + gross(l, inclusive), 0);
@@ -49,7 +73,7 @@ export function SplitPay({ total, discount, lines, inclusive, shop, note, busy, 
   function take() {
     if (!(value > 0) || value > left) return;
     setParts([...parts, { mode, amount: value }]);
-    setAmount(""); setPicked(null);
+    setAmount(""); setPicked(null); setGiven("");
   }
   return (
     <div className="split">
@@ -80,7 +104,8 @@ export function SplitPay({ total, discount, lines, inclusive, shop, note, busy, 
           onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} />
         <ModeButtons mode={mode} onChange={setMode} />
         {mode === "upi" && <UpiQr shop={shop} amount={value} note={note} />}
-        <button type="button" className="btn alt" disabled={!(value > 0) || value > left} onClick={take}>Take {rupees(value || 0)}</button>
+        {mode === "cash" && value > 0 && <CashChange amount={value} given={given} onGiven={setGiven} />}
+        <button type="button" className="btn alt" disabled={!(value > 0) || value > left || (mode === "cash" && cashShort(value, given))} onClick={take}>Take {rupees(value || 0)}</button>
       </> : (
         <button type="button" className="btn pay" disabled={busy || blocked} onClick={() => onPay(parts)}>{busy ? "…" : `Paid ${rupees(total)}`}</button>
       )}

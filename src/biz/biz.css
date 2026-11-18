@@ -297,3 +297,19 @@
 .kpi .n.change { font-weight: 700 } .kpi .n.change.up { color: var(--good) } .kpi .n.change.down { color: var(--bad) }
 .gst-files { display: flex; flex-direction: column; gap: 10px }
 .gst-buttons { display: flex; flex-wrap: wrap; gap: 8px }
+
+/* cash received and change */
+.cash-change { display: flex; flex-direction: column; gap: 10px }
+.cash-change input { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: 600 18px var(--f-body); font-variant-numeric: tabular-nums }
+.cash-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px }
+.cash-quick button { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 6px; font: 600 15px var(--f-body);
+  color: var(--ink); cursor: pointer; font-variant-numeric: tabular-nums; transition: transform .1s ease }
+.cash-quick button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface) }
+.cash-quick button:active { transform: scale(.96) }
+.change { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px; border-radius: 14px; background: var(--good-bg); color: var(--good) }
+.change b { font: 800 26px var(--f-display); font-variant-numeric: tabular-nums }
+.change span { font-weight: 700 }
+.change.short { background: var(--bad-bg); color: var(--bad) }
+.change.big { width: 100% }
+.change.big b { font-size: 32px }
+.bill-side .change span { font: 700 16px var(--f-body); white-space: nowrap }
